@@ -2,22 +2,24 @@
 
 ## The rule that governs every pause
 
-> **Pausing may block new risk-taking. Pausing must never block a refund or a withdrawal.**
+> **Pausing may block new risk-taking. Pausing must never block a refund, withdrawal, or terminal
+> resolution of risk the protocol already accepted.**
 
-This is enforced in code, not policy. `refundExpired`, `refundUnfillable` and every `PayoutVault`
-withdrawal path carry no `whenNotPaused` modifier, and an invariant test asserts they still succeed
-against a fully paused deployment. If someone later adds that modifier, the test fails.
+This is enforced in code, not policy. Refunds, withdrawals, BTC reservation expiry, payment
+consumption for an active reservation, terminal minting, and terminal vault credits carry no pause
+guard. Full-deployment regressions raise every incident pause after reservation and prove both
+settlement and expiry still complete.
 
 ## What each pause actually does
 
 | Contract | Pauser blocks | Stays available |
 |---|---|---|
-| `HoodPupOfferEscrow` | `createPaid*`, `createSelfCast`, `settlePaidEvm`, `settleSelfCast`, `approvePaidBtc` | `refundExpired`, `refundUnfillable`, all views |
-| `PayoutVault` | `credit`, `creditRoot`, `creditBatch` | `withdraw`, `withdrawAll`, `withdrawTo`, `withdrawWithAuthorization`, `releaseRootCredit` |
-| `BitcoinOwnershipOracle` | `consumeOwnership`, `consumeBitcoinPayment`, `consumeRootSpend` | `hash*`, `verify*`, all consumption state views |
+| `HoodPupOfferEscrow` | `createPaid*`, `createSelfCast`, `settlePaidEvm`, `settleSelfCast`, `approvePaidBtc`, new BTC reservations | `finalizeBtcSettlement`, `clearBtcReservation`, `refundExpired`, `refundUnfillable`, all views |
+| `PayoutVault` | `credit`, `creditRoot`, `creditBatch` | `creditRefund`, `creditTerminal`, `creditTerminalBatch`, every withdrawal, `releaseRootCredit` |
+| `BitcoinOwnershipOracle` | `consumeOwnership`, `consumeRootSpend` | `consumeBitcoinPayment` for active BTC resolution, `hash*`, `verify*`, all consumption state views |
 | `BtcSolverSettlement` | `reserve` | `expireReservation`, bond credits already earned |
 | `RootOwnershipRegistry` | `bindRootOwner`, `invalidateRoot` | all views, existing epoch state |
-| `HoodPups` | `mintRooted` (via `mintingPaused`) | **all transfers**, approvals, ERC-4907 reads |
+| `HoodPups` | ordinary `mintRooted` | `mintRootedTerminal` from the escrow, **all transfers**, approvals, ERC-4907 reads |
 
 Note the last row. Pausing minting never freezes the NFT. A paused protocol still leaves every
 HoodPup fully transferable, because a token holder's property should not depend on the protocol's
@@ -40,12 +42,12 @@ holders mid-signature and buyers mid-offer.
 
 | Symptom | Pause | Leave running |
 |---|---|---|
-| False attestation suspected | oracle consumption | everything else |
+| False ownership/spend attestation suspected | oracle ownership + Root-spend consumption; pause new solver reservations too | terminal resolution of already-active BTC reservations, refunds, withdrawals |
 | Vault accounting broken | vault credits + escrow settlement | withdrawals (mandatory) |
 | Solver settlement exploited | `BtcSolverSettlement` reservations | EVM settlement, refunds |
 | Manifest wrong | escrow creation | settlement of already-approved offers, refunds |
 | Relayer down | **nothing** | relaying is permissionless; this is not a pause-shaped problem |
-| Bitcoin reorg in progress | oracle consumption | refunds, withdrawals |
+| Bitcoin reorg in progress | ownership/Root-spend consumption and new solver reservations | active BTC terminal resolution, refunds, withdrawals |
 
 The last two matter. Pausing because something is *slow* converts a liveness problem into a bigger
 liveness problem.
@@ -55,7 +57,7 @@ liveness problem.
 ```bash
 # Guardian multisig executes:
 cast send $ORACLE   "pause()" --rpc-url $RH_RPC   # oracle consumption
-cast send $ESCROW   "pause()" --rpc-url $RH_RPC   # new offers + settlement
+cast send $ESCROW   "pauseSettlement()" --rpc-url $RH_RPC   # new offers + ordinary settlement
 cast send $VAULT    "pause()" --rpc-url $RH_RPC   # new credits only
 cast send $SOLVER   "pause()" --rpc-url $RH_RPC   # new reservations
 cast send $HOODPUPS "pauseMinting()" --rpc-url $RH_RPC
@@ -66,7 +68,8 @@ Then, immediately:
 1. Post a status notice. State what is paused, what still works, and that withdrawals and refunds
    are unaffected.
 2. Snapshot the block number so the investigation has a clean boundary.
-3. Tell relayers and solvers to stop submitting — their transactions will revert and waste gas.
+3. Tell relayers to stop ordinary ownership/spend submissions and solvers to stop reserving. A
+   solver with an active reservation should continue settlement or allow canonical expiry.
 
 ## While paused
 
@@ -74,10 +77,12 @@ Users can still:
 
 - withdraw everything in `PayoutVault`,
 - refund expired offers,
+- settle or expire an already-active BTC reservation,
 - transfer, approve and read HoodPups,
 - read every view on every contract.
 
-Users cannot create offers, settle, reserve, or bind a new Root owner.
+Users cannot create offers, settle through the ordinary EVM/self-cast paths, approve new BTC
+offers, reserve, or bind/invalidate a Root owner.
 
 **Offers keep expiring while paused.** An offer that expires during a pause becomes refundable —
 which is correct, and is why refunds cannot be pausable. If a pause runs long, expect a wave of
@@ -118,6 +123,6 @@ migrate.
 
 ## Testing
 
-`test/invariant/` includes an invariant that pauses every pausable contract and asserts that
-refunds and withdrawals still succeed (protocol invariant **I12**). It is not optional and must not
-be skipped for speed.
+`test/invariant/` covers refunds and withdrawals under pause (protocol invariant **I12**), and
+`test/integration/FullFlow.t.sol` pauses every BTC dependency after reservation and proves both
+settlement and expiry complete. Neither layer is optional.

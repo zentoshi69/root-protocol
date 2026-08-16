@@ -255,24 +255,20 @@ contract HoodPupOfferEscrowFuzzTest is EscrowFixture {
         assertEq(vault.claimable(proposed), 0, "nobody but the reserved solver is ever paid");
     }
 
-    /// @notice A reservation can never outlive the offer, or the escrow's 24-hour ceiling.
-    /// @dev The bound that makes "a buyer's escrow can never be frozen indefinitely" true. Any
-    ///      accepted window must satisfy both caps; any rejected one must violate at least one.
+    /// @notice A reservation may outlive the offer but can never exceed the shared protocol ceiling.
     function testFuzz_ReservationWindowIsAlwaysBounded(uint64 requested) public {
         bytes32 offerId = _createBtc(0, 50_000);
         _approveBtc(offerId, 0);
 
-        uint64 offerExpiry = escrow.getOffer(offerId).expiry;
         uint64 cap = uint64(block.timestamp) + escrow.MAX_RESERVATION_WINDOW();
-        uint64 ceiling = cap < offerExpiry ? cap : offerExpiry;
-        requested = uint64(bound(requested, 0, uint256(offerExpiry) + 30 days));
+        uint64 ceiling = cap;
+        requested = uint64(bound(requested, 0, uint256(cap) + 30 days));
 
         vm.prank(btcSettlement);
         if (requested > block.timestamp && requested <= ceiling) {
             escrow.markBtcReserved(offerId, solver, requested);
             uint64 stored = escrow.getOffer(offerId).reservationExpiry;
             assertEq(stored, requested, "stored verbatim, never silently clamped");
-            assertLe(stored, offerExpiry, "never outlives the offer");
             assertLe(uint256(stored), block.timestamp + escrow.MAX_RESERVATION_WINDOW(), "never exceeds the ceiling");
         } else {
             vm.expectRevert(
@@ -284,26 +280,23 @@ contract HoodPupOfferEscrowFuzzTest is EscrowFixture {
         }
     }
 
-    /// @notice However long a reserved offer is left alone, the buyer can always get out.
-    /// @dev Drives the worst realistic combination: the solver contract's role is revoked AND the
-    ///      escrow is paused, then time passes by a fuzzed amount.
+    /// @notice The canonical coordinator can release after any bounded reservation and refunds stay live paused.
     function testFuzz_AReservedEscrowIsNeverPermanentlyTrapped(uint64 window, uint64 extraDelay) public {
         bytes32 offerId = _createBtc(0, 50_000);
         _approveBtc(offerId, 0);
-        uint64 offerExpiry = escrow.getOffer(offerId).expiry;
         uint64 cap = uint64(block.timestamp) + escrow.MAX_RESERVATION_WINDOW();
-        uint64 ceiling = cap < offerExpiry ? cap : offerExpiry;
-        uint64 chosen = uint64(bound(window, block.timestamp + 1, ceiling));
+        uint64 chosen = uint64(bound(window, block.timestamp + 1, cap));
         _reserveAt(offerId, chosen);
 
-        vm.prank(admin);
-        escrow.revokeRole(roleBtcSettlement, btcSettlement);
         vm.prank(guardian);
         escrow.pauseSettlement();
 
-        vm.warp(uint256(offerExpiry) + 1 + bound(extraDelay, 0, 400 days));
+        uint64 offerExpiry = escrow.getOffer(offerId).expiry;
+        vm.warp(uint256(chosen) + 1 + bound(extraDelay, 0, 400 days));
 
-        escrow.expireBtcReservation(offerId);
+        vm.prank(btcSettlement);
+        escrow.clearBtcReservation(offerId);
+        if (block.timestamp <= offerExpiry) vm.warp(uint256(offerExpiry) + 1);
         escrow.refundExpired(offerId);
 
         assertEq(_status(offerId), uint8(PuppetTypes.OfferStatus.REFUNDED), "always escapable");

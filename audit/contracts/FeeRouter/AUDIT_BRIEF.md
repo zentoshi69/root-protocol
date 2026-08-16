@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/FeeRouter.sol` · 497 non-blank lines |
-| Flattened | `FeeRouter.flat.sol` · 1356 non-blank lines |
+| Source | `contracts/src/FeeRouter.sol` · 508 non-blank lines |
+| Flattened | `FeeRouter.flat.sol` · 1384 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `c75417ad32a08e3fa7c5e8e42004a332a7643c65e3db3d339952d31c1b54de54` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `a78472a6a478524a839f8c570d1248023bd6d9891c65cf99299277b62f888fa0` |
+| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -39,10 +39,8 @@ Percentages are compile-time constants with no setter and no upgrade path. Only 
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

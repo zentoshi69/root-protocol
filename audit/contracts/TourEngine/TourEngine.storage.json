@@ -25,7 +25,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 62672,
+      "astId": 63157,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_currentSeason",
       "offset": 0,
@@ -33,7 +33,7 @@
       "type": "t_uint64"
     },
     {
-      "astId": 62675,
+      "astId": 63160,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_minimumDuration",
       "offset": 8,
@@ -41,7 +41,7 @@
       "type": "t_uint64"
     },
     {
-      "astId": 62678,
+      "astId": 63163,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_maximumDuration",
       "offset": 16,
@@ -49,7 +49,7 @@
       "type": "t_uint64"
     },
     {
-      "astId": 62681,
+      "astId": 63166,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_minimumCheckInDelay",
       "offset": 24,
@@ -57,15 +57,15 @@
       "type": "t_uint64"
     },
     {
-      "astId": 62687,
+      "astId": 63172,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_tours",
       "offset": 0,
       "slot": "4",
-      "type": "t_mapping(t_uint256,t_struct(Tour)65430_storage)"
+      "type": "t_mapping(t_uint256,t_struct(Tour)65979_storage)"
     },
     {
-      "astId": 62692,
+      "astId": 63177,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_checkInDelayOf",
       "offset": 0,
@@ -73,7 +73,7 @@
       "type": "t_mapping(t_uint256,t_uint64)"
     },
     {
-      "astId": 62697,
+      "astId": 63182,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_miles",
       "offset": 0,
@@ -81,7 +81,7 @@
       "type": "t_mapping(t_uint256,t_uint256)"
     },
     {
-      "astId": 62702,
+      "astId": 63187,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_completedTours",
       "offset": 0,
@@ -89,7 +89,7 @@
       "type": "t_mapping(t_uint256,t_uint256)"
     },
     {
-      "astId": 62711,
+      "astId": 63196,
       "contract": "src/TourEngine.sol:TourEngine",
       "label": "_recipientUsedInSeason",
       "offset": 0,
@@ -134,12 +134,12 @@
       "numberOfBytes": "32",
       "value": "t_mapping(t_uint64,t_mapping(t_address,t_bool))"
     },
-    "t_mapping(t_uint256,t_struct(Tour)65430_storage)": {
+    "t_mapping(t_uint256,t_struct(Tour)65979_storage)": {
       "encoding": "mapping",
       "key": "t_uint256",
       "label": "mapping(uint256 => struct ITourEngine.Tour)",
       "numberOfBytes": "32",
-      "value": "t_struct(Tour)65430_storage"
+      "value": "t_struct(Tour)65979_storage"
     },
     "t_mapping(t_uint256,t_uint256)": {
       "encoding": "mapping",
@@ -185,13 +185,13 @@
         }
       ]
     },
-    "t_struct(Tour)65430_storage": {
+    "t_struct(Tour)65979_storage": {
       "encoding": "inplace",
       "label": "struct ITourEngine.Tour",
       "numberOfBytes": "96",
       "members": [
         {
-          "astId": 65417,
+          "astId": 65966,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "ownerAtStart",
           "offset": 0,
@@ -199,7 +199,7 @@
           "type": "t_address"
         },
         {
-          "astId": 65419,
+          "astId": 65968,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "user",
           "offset": 0,
@@ -207,7 +207,7 @@
           "type": "t_address"
         },
         {
-          "astId": 65421,
+          "astId": 65970,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "startedAt",
           "offset": 20,
@@ -215,7 +215,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 65423,
+          "astId": 65972,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "expires",
           "offset": 0,
@@ -223,7 +223,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 65425,
+          "astId": 65974,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "checkedInAt",
           "offset": 8,
@@ -231,7 +231,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 65427,
+          "astId": 65976,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "season",
           "offset": 16,
@@ -239,7 +239,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 65429,
+          "astId": 65978,
           "contract": "src/TourEngine.sol:TourEngine",
           "label": "status",
           "offset": 24,

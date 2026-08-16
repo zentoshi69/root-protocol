@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 /// @title IBitcoinAttestorRegistry
-/// @notice Membership, quorum threshold, epoch and policy version for the Bitcoin verifier set.
+/// @notice Membership, quorum threshold, epoch and policy version for the fixed five-member Bitcoin verifier set.
 /// @dev Any membership or threshold change bumps `attestorEpoch`, which instantly invalidates
 ///      every in-flight attestation signature. That is intentional: a rotating set must never
 ///      leave a window in which a removed operator still counts toward quorum.
@@ -25,7 +25,7 @@ interface IBitcoinAttestorRegistry {
     /// @notice True if `account` is currently an authorized attestor.
     function isAttestor(address account) external view returns (bool);
 
-    /// @notice Current number of authorized attestors.
+    /// @notice Current number of authorized attestors; always exactly five after construction.
     function attestorCount() external view returns (uint256);
 
     /// @notice Attestor at `index` in the enumerable set. Order is not stable across mutations.

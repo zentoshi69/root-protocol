@@ -120,7 +120,7 @@ contract EscrowInvariantTest is StdInvariant, Test {
         selectors[5] = EscrowHandler.approvePaidBtc.selector;
         selectors[6] = EscrowHandler.markBtcReserved.selector;
         selectors[7] = EscrowHandler.clearBtcReservation.selector;
-        selectors[8] = EscrowHandler.expireBtcReservation.selector;
+        selectors[8] = EscrowHandler.expireReservation.selector;
         selectors[9] = EscrowHandler.finalizeBtcSettlement.selector;
         selectors[10] = EscrowHandler.refundExpired.selector;
         selectors[11] = EscrowHandler.refundUnfillable.selector;
@@ -243,23 +243,55 @@ contract EscrowInvariantTest is StdInvariant, Test {
         }
     }
 
-    /// @notice A reservation never outlives the offer it locks, and a reserved offer always names
-    ///         a solver.
-    /// @dev This is what guarantees the buyer can always escape: an expired offer therefore always
-    ///      has a lapsed reservation, which anybody may release permissionlessly.
+    /// @notice Every reserved offer owns the Root mutex, names a solver, and stays bounded.
     function invariant_ReservationsAreAlwaysBoundedAndAttributed() public view {
         uint256 n = handler.offerCount();
         for (uint256 i = 0; i < n; i++) {
-            PuppetTypes.Offer memory o = escrow.getOffer(handler.offerIds(i));
+            bytes32 offerId = handler.offerIds(i);
+            PuppetTypes.Offer memory o = escrow.getOffer(offerId);
             if (o.status == uint8(PuppetTypes.OfferStatus.BTC_RESERVED)) {
                 assertTrue(o.reservedSolver != address(0), "reserved with no solver");
                 assertTrue(o.reservationExpiry != 0, "reserved with no window");
-                assertLe(o.reservationExpiry, o.expiry, "a reservation outlived its offer");
+                assertLe(o.reservationExpiry, o.expiry + escrow.MAX_RESERVATION_WINDOW(), "reservation unbounded");
+                assertEq(escrow.activeBtcOfferForRoot(o.rootKey), offerId, "Root mutex disagrees");
             } else if (o.status != uint8(PuppetTypes.OfferStatus.SETTLED)) {
                 // SETTLED deliberately preserves the reservation fields as the record of who was
                 // paid; every other status must have them cleared.
                 assertEq(o.reservedSolver, address(0), "a non-reserved offer names a solver");
                 assertEq(o.reservationExpiry, 0, "a non-reserved offer carries a window");
+            }
+        }
+    }
+
+    /// @notice The Root mutex and offer rows are a bijection: each nonzero mutex identifies one
+    ///         reserved offer, and no Root can have two reserved offers at the same time.
+    function invariant_AtMostOneActiveReservationPerRootAndConverseHolds() public view {
+        uint256 n = handler.offerCount();
+        for (uint256 i = 0; i < handler.rootCount(); i++) {
+            bytes32 rootKey = handler.rootKeyAt(i);
+            bytes32 activeOfferId = escrow.activeBtcOfferForRoot(rootKey);
+            uint256 reservedForRoot;
+
+            for (uint256 j = 0; j < n; j++) {
+                PuppetTypes.Offer memory candidate = escrow.getOffer(handler.offerIds(j));
+                if (candidate.rootKey == rootKey && candidate.status == uint8(PuppetTypes.OfferStatus.BTC_RESERVED)) {
+                    reservedForRoot++;
+                    assertEq(activeOfferId, handler.offerIds(j), "reserved row does not own Root mutex");
+                }
+            }
+
+            assertLe(reservedForRoot, 1, "two offers reserve one Root");
+            if (activeOfferId == bytes32(0)) {
+                assertEq(reservedForRoot, 0, "reserved offer exists without Root mutex");
+            } else {
+                PuppetTypes.Offer memory active = escrow.getOffer(activeOfferId);
+                assertEq(active.rootKey, rootKey, "Root mutex points at another Root");
+                assertEq(
+                    active.status,
+                    uint8(PuppetTypes.OfferStatus.BTC_RESERVED),
+                    "Root mutex points at non-reserved offer"
+                );
+                assertEq(reservedForRoot, 1, "Root mutex has no reserved offer");
             }
         }
     }
@@ -358,7 +390,7 @@ contract EscrowInvariantTest is StdInvariant, Test {
         for (uint256 i = 0; i < 6; i++) {
             handler.advanceTime(type(uint256).max);
         }
-        handler.expireBtcReservation(10);
+        handler.expireReservation(10);
         for (uint256 i = 12; i < 24; i++) {
             handler.refundUnfillable(i);
         }

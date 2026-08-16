@@ -35,7 +35,7 @@ Built in parallel; each depends only on the frozen types and interfaces.
 | Contract | Core guarantee |
 |---|---|
 | `PuppetCollectionRegistry` | Immutable Merkle root; no admin can change membership after deployment |
-| `BitcoinAttestorRegistry` | 5–32 attestors, threshold ≥ 3, epoch bumps on every mutation |
+| `BitcoinAttestorRegistry` | Exactly 5 attestors, threshold ≥ 3, atomic rotation, epoch bumps on every mutation |
 | `PayoutVault` | `balance >= totalLiability`; withdrawals never pausable; no admin can reduce a balance |
 | `HoodPups` | One token per Root forever; ERC-4907 user clears on transfer |
 

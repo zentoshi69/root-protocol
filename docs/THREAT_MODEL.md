@@ -115,8 +115,8 @@ or ZK proof of the `ord` index.
 | 8.2 | Change the fee split | — | Compile-time constants, no setter. |
 | 8.3 | Withdraw user balances | — | No such code path exists. `sweepExcess` is bounded to `balance - totalLiability`. |
 | 8.4 | Point a treasury at an attacker address | Medium | Timelocked, publicly visible, and affects only *future* routing — already-credited balances are untouchable. |
-| 8.5 | Pause to freeze user funds | Medium | Pausing can never block refunds or withdrawals. Asserted by an invariant. |
-| 8.6 | Stack the attestor set | High | Timelocked; every change bumps the epoch and is publicly observable before it takes effect. |
+| 8.5 | Pause to freeze user or solver funds | Medium | Refunds, withdrawals, active BTC finalization and terminal bond accounting remain live. Asserted by invariants and full-deployment tests. |
+| 8.6 | Dilute 3-of-5 into 3-of-N | High | The set is fixed at exactly five; governance can only rotate one member atomically, and every rotation bumps the epoch. |
 
 ### A9 — Bitcoin-layer attacker
 

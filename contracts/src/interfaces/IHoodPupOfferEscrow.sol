@@ -18,6 +18,7 @@ interface IHoodPupOfferEscrow {
     error OfferNotExpired(bytes32 offerId, uint64 expiry);
     error InvalidExpiry(uint64 expiry, uint64 minAllowed, uint64 maxAllowed);
     error RootAlreadyMinted(bytes32 rootKey);
+    error RootReservationActive(bytes32 rootKey, bytes32 activeOfferId);
     error RootNotMinted(bytes32 rootKey);
     error SelfCastMustBeZeroValue();
     error SelfCastRecipientMismatch(address caller, address recipient);
@@ -59,6 +60,12 @@ interface IHoodPupOfferEscrow {
 
     /// @notice Full offer view.
     function getOffer(bytes32 offerId) external view returns (PuppetTypes.Offer memory);
+
+    /// @notice Offer holding the Root-wide BTC reservation mutex, or zero when unlocked.
+    function activeBtcOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId);
+
+    /// @notice Sole, permanently bound coordinator for the BTC reservation and bond lifecycle.
+    function btcSettlementCoordinator() external view returns (address);
 
     /// @notice Next offer id `buyer` will produce.
     function nextOfferId(address buyer) external view returns (bytes32);

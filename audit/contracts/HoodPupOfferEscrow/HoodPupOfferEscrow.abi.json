@@ -112,6 +112,25 @@
   },
   {
     "type": "function",
+    "name": "activeBtcOfferForRoot",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "approvePaidBtc",
     "inputs": [
       {
@@ -249,6 +268,19 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "btcSettlementCoordinator",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -495,19 +527,6 @@
         "internalType": "bytes32"
       }
     ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "expireBtcReservation",
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -1741,6 +1760,22 @@
   },
   {
     "type": "error",
+    "name": "BtcSettlementCoordinatorImmutable",
+    "inputs": [
+      {
+        "name": "active",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "requested",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "DirectDepositRejected",
     "inputs": []
   },
@@ -1888,22 +1923,6 @@
   },
   {
     "type": "error",
-    "name": "ReservationNotLapsed",
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "reservationExpiry",
-        "type": "uint64",
-        "internalType": "uint64"
-      }
-    ]
-  },
-  {
-    "type": "error",
     "name": "ReservationWindowInvalid",
     "inputs": [
       {
@@ -1956,6 +1975,22 @@
     "inputs": [
       {
         "name": "rootKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "RootReservationActive",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "activeOfferId",
         "type": "bytes32",
         "internalType": "bytes32"
       }

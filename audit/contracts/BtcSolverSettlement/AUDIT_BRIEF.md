@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/BtcSolverSettlement.sol` · 696 non-blank lines |
-| Flattened | `BtcSolverSettlement.flat.sol` · 1812 non-blank lines |
+| Source | `contracts/src/BtcSolverSettlement.sol` · 694 non-blank lines |
+| Flattened | `BtcSolverSettlement.flat.sol` · 1831 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `118cd02a5056545b6e1d91d71c9184d61777b6e879568fbbd9dbd623097fd104` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `d51167292602284ef39de8915d9d9721d16c1489f2cda2c3a573ad8c3f8ce443` |
+| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -25,6 +25,8 @@ No price oracle anywhere, by design. No admin can choose a solver or forgive an 
 2. buyerCompensation + protocolAmount == bond, exactly, with no dust
 3. Reimbursement requires msg.sender to be the reserved solver AND the attested solver
 4. Terms are snapshotted at reservation, so later config changes cannot alter an in-flight reservation
+5. ACTIVE reservation, escrow BTC_RESERVED state and the Root mutex always agree
+6. Settlement and expiry remain executable through downstream incident pauses
 
 ## Where to look first
 
@@ -41,10 +43,8 @@ No price oracle anywhere, by design. No admin can choose a solver or forgive an 
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

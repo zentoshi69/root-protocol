@@ -525,6 +525,20 @@ contract FeeRouterTest is Test {
         assertEq(address(router).balance, 0);
     }
 
+    function test_RouteMintBtcRemainsLiveWhileOrdinaryVaultCreditsArePaused() public {
+        vm.prank(vaultAdmin);
+        vault.pause();
+
+        vm.prank(escrow);
+        router.routeMintBtc{value: 2 ether}(ROOT_A, solver, 2 ether);
+
+        assertEq(vault.claimable(solver), 1 ether, "irreversible BTC payment reimbursed");
+        assertEq(vault.claimable(puppetTreasury), 0.5 ether, "treasury share credited");
+        assertEq(vault.claimable(protocolTreasury), 0.5 ether, "protocol share credited");
+        assertEq(vault.totalLiability(), 2 ether, "terminal split exactly conserved");
+        assertEq(address(router).balance, 0, "router retains nothing");
+    }
+
     function test_RouteMintBtcEmitsRouteTagOne() public {
         uint256 gross = 2 ether;
         vm.expectEmit(true, true, false, true, address(router));

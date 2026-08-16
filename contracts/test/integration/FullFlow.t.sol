@@ -4,6 +4,8 @@ pragma solidity 0.8.28;
 import {Test} from "forge-std/Test.sol";
 
 import {DeployConfig, DeployLib, DeployParams, Deployment} from "../../script/Deploy.s.sol";
+import {IBtcSolverSettlement} from "../../src/interfaces/IBtcSolverSettlement.sol";
+import {IHoodPupOfferEscrow} from "../../src/interfaces/IHoodPupOfferEscrow.sol";
 import {PuppetHashing} from "../../src/types/PuppetHashing.sol";
 import {PuppetTypes} from "../../src/types/PuppetTypes.sol";
 import {AttestorSet} from "../helpers/AttestorSet.sol";
@@ -48,6 +50,7 @@ contract FullFlowTest is Test {
     uint256 internal constant GROSS = 1 ether;
     uint256 internal constant SELLER_WEI = 0.5 ether;
     uint64 internal constant SELLER_SATS = 250_000;
+    bytes32 internal constant BTC_PAYOUT_SCRIPT = keccak256("integration-bob-btc-script");
 
     function setUp() public {
         attestors = new AttestorSet(5, keccak256("integration"));
@@ -92,6 +95,7 @@ contract FullFlowTest is Test {
         assertFalse(d.oracle.hasRole(d.oracle.PAYMENT_CONSUMER_ROLE(), address(d.escrow)));
         assertFalse(d.hoodPups.hasRole(d.hoodPups.MINTER_ROLE(), address(d.tourEngine)));
         assertFalse(d.payoutVault.hasRole(d.payoutVault.CREDITOR_ROLE(), address(d.tourEngine)));
+        assertEq(d.escrow.btcSettlementCoordinator(), address(d.solver));
     }
 
     function test_AdminHandoverRevokesTheDeployerEverywhere() public {
@@ -216,6 +220,113 @@ contract FullFlowTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
+                  TERMINAL BTC SETTLEMENT AND EXPIRY
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Once a solver has reserved, every incident pause may be raised without turning the
+    ///         controls into a way to strand an irreversible Bitcoin payment or its bond.
+    function test_BtcSettlementCompletesWhileEveryIncidentPauseIsActive() public {
+        bytes32 offerId = _createBtcOffer(rootA);
+        _approveBtc(offerId, rootA);
+
+        uint256 bond = d.solver.minimumBondWei();
+        vm.prank(SOLVER);
+        d.solver.reserve{value: bond}(offerId);
+
+        _pauseEveryBtcDependency();
+
+        PuppetTypes.BitcoinPaymentAttestation memory payment = _paymentAttestation(offerId);
+        bytes[] memory signatures = attestors.sign(d.oracle.hashBitcoinPaymentAttestation(payment), 3);
+        vm.prank(SOLVER);
+        uint256 tokenId = d.solver.settle(offerId, payment, signatures);
+
+        bytes32 rootKey = PuppetHashing.rootKey(rootA);
+        assertEq(d.hoodPups.ownerOf(tokenId), ALICE, "reserved recipient receives the HoodPup");
+        assertEq(d.escrow.activeBtcOfferForRoot(rootKey), bytes32(0), "Root mutex released atomically");
+        assertEq(
+            d.escrow.getOffer(offerId).status,
+            uint8(PuppetTypes.OfferStatus.SETTLED),
+            "escrow reaches its terminal state"
+        );
+        assertEq(
+            d.solver.reservationOf(offerId).status,
+            uint8(IBtcSolverSettlement.ReservationStatus.SETTLED),
+            "bond record reaches its terminal state"
+        );
+        assertEq(d.payoutVault.claimable(SOLVER), bond + SELLER_WEI, "bond plus seller reimbursement");
+        assertEq(d.payoutVault.claimable(BOB_PAYOUT), 0, "Bitcoin seller is not paid twice");
+        assertEq(d.payoutVault.claimable(PUPPET_TREASURY), 0.25 ether, "Puppet treasury share");
+        assertEq(d.payoutVault.claimable(PROTOCOL_TREASURY), 0.25 ether, "protocol treasury share");
+        assertEq(d.payoutVault.totalLiability(), GROSS + bond, "every terminal wei remains exactly backed");
+    }
+
+    function test_OnlyOneBtcOfferForARootCanBeReserved() public {
+        address rival = address(0x217A1);
+        vm.deal(rival, 10 ether);
+
+        bytes32 first = _createBtcOffer(rootA);
+        _approveBtc(first, rootA);
+        bytes32 second = _createBtcOfferFrom(rival, rootA);
+        _approveBtc(second, rootA);
+
+        uint256 bond = d.solver.minimumBondWei();
+        vm.prank(SOLVER);
+        d.solver.reserve{value: bond}(first);
+
+        vm.prank(SOLVER);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IHoodPupOfferEscrow.RootReservationActive.selector, PuppetHashing.rootKey(rootA), first
+            )
+        );
+        d.solver.reserve{value: bond}(second);
+
+        assertEq(d.escrow.activeBtcOfferForRoot(PuppetHashing.rootKey(rootA)), first, "first reservation owns Root");
+        assertEq(
+            d.solver.reservationOf(second).status,
+            uint8(IBtcSolverSettlement.ReservationStatus.NONE),
+            "failed second reservation leaves no bond record"
+        );
+        assertEq(d.solver.totalActiveBondWei(), bond, "only one bond is active");
+    }
+
+    /// @notice The solver contract is the only reservation-expiry coordinator. It clears both
+    ///         state machines, releases the Root mutex, distributes the bond and restores refunds.
+    function test_BtcExpirySynchronizesBothStateMachinesWhilePaused() public {
+        bytes32 offerId = _createBtcOffer(rootA);
+        _approveBtc(offerId, rootA);
+
+        uint256 bond = d.solver.minimumBondWei();
+        vm.prank(SOLVER);
+        d.solver.reserve{value: bond}(offerId);
+        IBtcSolverSettlement.Reservation memory reservation = d.solver.reservationOf(offerId);
+
+        _pauseEveryBtcDependency();
+        vm.warp(uint256(reservation.reservationExpiry) + 1);
+        d.solver.expireReservation(offerId);
+
+        bytes32 rootKey = PuppetHashing.rootKey(rootA);
+        assertEq(
+            d.solver.reservationOf(offerId).status,
+            uint8(IBtcSolverSettlement.ReservationStatus.EXPIRED),
+            "solver state expired"
+        );
+        assertEq(
+            d.escrow.getOffer(offerId).status, uint8(PuppetTypes.OfferStatus.BTC_APPROVED), "escrow state released"
+        );
+        assertEq(d.escrow.activeBtcOfferForRoot(rootKey), bytes32(0), "Root mutex released");
+        assertEq(d.payoutVault.claimable(ALICE), bond / 2, "buyer receives configured slash share");
+        assertEq(d.payoutVault.claimable(PROTOCOL_TREASURY), bond - (bond / 2), "slash conserves bond");
+
+        PuppetTypes.Offer memory offer = d.escrow.getOffer(offerId);
+        vm.warp(uint256(offer.expiry) + 1);
+        d.escrow.refundExpired(offerId);
+        assertEq(d.payoutVault.claimable(ALICE), GROSS + (bond / 2), "buyer can reclaim escrow while paused");
+        assertEq(address(d.solver).balance, 0, "no bond residue");
+        assertEq(address(d.escrow).balance, 0, "no escrow residue");
+    }
+
+    /*//////////////////////////////////////////////////////////////
                        REPLAY AND UNIQUENESS ACROSS CONTRACTS
     //////////////////////////////////////////////////////////////*/
 
@@ -314,6 +425,41 @@ contract FullFlowTest is Test {
         return _createEvmOfferFrom(ALICE, root);
     }
 
+    function _createBtcOffer(PuppetTypes.RootId memory root) internal returns (bytes32) {
+        return _createBtcOfferFrom(ALICE, root);
+    }
+
+    function _createBtcOfferFrom(address buyer, PuppetTypes.RootId memory root) internal returns (bytes32) {
+        bytes32[] memory proof = MerkleFixture.proofForLeaf(leaves, PuppetHashing.collectionLeaf(root));
+        vm.prank(buyer);
+        return
+            d.escrow.createPaidBtcOffer{value: GROSS}(root, buyer, SELLER_SATS, uint64(block.timestamp + 7 days), proof);
+    }
+
+    function _approveBtc(bytes32 offerId, PuppetTypes.RootId memory root) internal {
+        PuppetTypes.OwnershipAttestation memory a = _btcOwnershipAttestation(offerId, root);
+        bytes[] memory signatures = attestors.sign(d.oracle.hashOwnershipAttestation(a), 3);
+        bytes32[] memory proof = MerkleFixture.proofForLeaf(leaves, PuppetHashing.collectionLeaf(root));
+        vm.prank(RELAYER);
+        d.escrow.approvePaidBtc(offerId, a, signatures, proof);
+    }
+
+    function _pauseEveryBtcDependency() internal {
+        d.escrow.grantRole(d.escrow.PAUSER_ROLE(), GUARDIAN);
+        d.payoutVault.grantRole(d.payoutVault.PAUSER_ROLE(), GUARDIAN);
+        d.oracle.grantRole(d.oracle.PAUSER_ROLE(), GUARDIAN);
+        d.hoodPups.grantRole(d.hoodPups.PAUSER_ROLE(), GUARDIAN);
+        d.solver.grantRole(d.solver.PAUSER_ROLE(), GUARDIAN);
+
+        vm.startPrank(GUARDIAN);
+        d.escrow.pauseSettlement();
+        d.payoutVault.pause();
+        d.oracle.pause();
+        d.hoodPups.pauseMinting();
+        d.solver.pause();
+        vm.stopPrank();
+    }
+
     function _createEvmOfferFrom(address buyer, PuppetTypes.RootId memory root) internal returns (bytes32) {
         bytes32[] memory proof = MerkleFixture.proofForLeaf(leaves, PuppetHashing.collectionLeaf(root));
         vm.prank(buyer);
@@ -355,6 +501,40 @@ contract FullFlowTest is Test {
         a.bitcoinBlockHash = keccak256("bitcoin-tip");
         a.bitcoinHeight = 880_000;
         a.authorizationId = keccak256(abi.encode("auth", offerId));
+        a.deadline = uint64(block.timestamp + 1 hours);
+        a.attestorEpoch = d.attestorRegistry.attestorEpoch();
+        a.policyVersion = d.attestorRegistry.policyVersion();
+    }
+
+    function _btcOwnershipAttestation(bytes32 offerId, PuppetTypes.RootId memory root)
+        internal
+        view
+        returns (PuppetTypes.OwnershipAttestation memory a)
+    {
+        a = _ownershipAttestation(offerId, root);
+        a.purpose = uint8(PuppetTypes.AuthorizationPurpose.PAID_BTC_MINT);
+        a.payoutMode = uint8(PuppetTypes.PayoutMode.BTC);
+        a.evmPayout = address(0);
+        a.btcPayoutScriptHash = BTC_PAYOUT_SCRIPT;
+        a.sellerSats = SELLER_SATS;
+    }
+
+    function _paymentAttestation(bytes32 offerId)
+        internal
+        view
+        returns (PuppetTypes.BitcoinPaymentAttestation memory a)
+    {
+        PuppetTypes.Offer memory offer = d.escrow.getOffer(offerId);
+        a.contextId = offerId;
+        a.ownershipDigest = offer.ownershipDigest;
+        a.solver = SOLVER;
+        a.bitcoinTxid = keccak256(abi.encode("integration-payment", offerId));
+        a.outputIndex = 1;
+        a.recipientScriptHash = offer.btcPayoutScriptHash;
+        a.amountSats = offer.sellerSats;
+        a.bitcoinBlockHash = keccak256("integration-payment-block");
+        a.bitcoinHeight = 880_001;
+        a.authorizationId = keccak256(abi.encode("integration-payment-auth", offerId));
         a.deadline = uint64(block.timestamp + 1 hours);
         a.attestorEpoch = d.attestorRegistry.attestorEpoch();
         a.policyVersion = d.attestorRegistry.policyVersion();

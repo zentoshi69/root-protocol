@@ -106,8 +106,8 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
     error RootEpochAlreadyExists(bytes32 rootKey, uint64 epoch);
 
     /// @notice Thrown when a `ROOT_BIND` attestation does not elect the EVM payout mode.
-    /// @dev A `ROOT_BIND` binds an EVM address to a Root. A BTC (or NONE) payout mode carries no
-    ///      EVM address to bind, so accepting one would mean inventing a beneficiary.
+    /// @dev A `ROOT_BIND` binds an EVM address to a Root. Every other payout mode is incompatible
+    ///      with the canonical binding shape and is rejected rather than inventing a beneficiary.
     /// @param payoutMode The `PuppetTypes.PayoutMode` value that was supplied.
     error UnsupportedPayoutMode(uint8 payoutMode);
 
@@ -547,6 +547,9 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
             if (a.bitcoinHeight < s.verifiedBitcoinHeight) {
                 revert StaleBitcoinHeight(a.bitcoinHeight, s.verifiedBitcoinHeight);
             }
+            _requireConsistentChainPoint(
+                a.bitcoinHeight, a.bitcoinBlockHash, s.verifiedBitcoinHeight, s.lastBitcoinBlockHash
+            );
             // While a Root is active, only a MOVE of the inscription justifies a new epoch. Binding
             // the same outpoint again would let anyone holding a second valid attestation for the
             // current owner churn epochs (and re-point the beneficiary) without anything having
@@ -574,6 +577,24 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
         }
         if (a.bitcoinHeight < s.verifiedBitcoinHeight) {
             revert StaleBitcoinHeight(a.bitcoinHeight, s.verifiedBitcoinHeight);
+        }
+        _requireConsistentChainPoint(
+            a.bitcoinHeight, a.bitcoinBlockHash, s.verifiedBitcoinHeight, s.lastBitcoinBlockHash
+        );
+    }
+
+    /// @dev At one Bitcoin height there is exactly one block in the chain view this registry has
+    ///      accepted. A distinct block hash at the same height is a conflicting fork assertion,
+    ///      not monotonic progress. A canonical-chain recovery remains possible by attesting from
+    ///      a later height after the off-chain confirmation policy has resolved the reorg.
+    function _requireConsistentChainPoint(
+        uint64 providedHeight,
+        bytes32 providedBlockHash,
+        uint64 recordedHeight,
+        bytes32 recordedBlockHash
+    ) private pure {
+        if (providedHeight == recordedHeight && providedBlockHash != recordedBlockHash) {
+            revert ConflictingBitcoinBlockAtHeight(providedHeight, recordedBlockHash, providedBlockHash);
         }
     }
 
