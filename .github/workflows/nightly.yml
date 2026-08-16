@@ -1,0 +1,52 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  deep-fuzz:
+    name: Deep stateful invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: 2000-run invariant campaign
+        working-directory: contracts
+        run: FOUNDRY_PROFILE=deep forge test -vv
+
+  regtest-e2e:
+    name: Bitcoin regtest end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start bitcoind + ord
+        run: docker compose -f infra/regtest/docker-compose.yml up -d --wait
+
+      - name: Full flow — inscribe, offer, prove, attest, settle, move, rebind
+        run: pnpm --filter @hoodpups/regtest-harness run e2e
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f infra/regtest/docker-compose.yml logs --tail 200
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f infra/regtest/docker-compose.yml down -v

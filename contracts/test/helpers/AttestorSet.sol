@@ -227,11 +227,7 @@ contract AttestorSet is CommonBase {
     /// @param digest The EIP-712 digest.
     /// @param attestorCount How many genuine attestors join the outsider.
     /// @return signatures 65-byte signatures in strictly ascending signer order.
-    function signWithOutsider(bytes32 digest, uint256 attestorCount)
-        external
-        view
-        returns (bytes[] memory signatures)
-    {
+    function signWithOutsider(bytes32 digest, uint256 attestorCount) external view returns (bytes[] memory signatures) {
         uint256[] memory indices = _firstIndices(attestorCount);
 
         // Build a parallel (address, key) list including the outsider, then sort it as one unit.

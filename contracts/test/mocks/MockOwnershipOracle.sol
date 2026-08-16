@@ -160,11 +160,11 @@ contract MockOwnershipOracle is IBitcoinOwnershipOracle {
 
     /// @inheritdoc IBitcoinOwnershipOracle
     /// @dev Signatures and proof are ignored; see the contract-level honesty note.
-    function verifyOwnership(
-        PuppetTypes.OwnershipAttestation calldata a,
-        bytes[] calldata,
-        bytes32[] calldata
-    ) external view returns (bytes32 digest, bytes32 rootKey) {
+    function verifyOwnership(PuppetTypes.OwnershipAttestation calldata a, bytes[] calldata, bytes32[] calldata)
+        external
+        view
+        returns (bytes32 digest, bytes32 rootKey)
+    {
         _guard();
         digest = _digest(PuppetHashing.hashStruct(a));
         if (_consumedDigest[digest]) revert DigestAlreadyConsumed(digest);
@@ -185,11 +185,11 @@ contract MockOwnershipOracle is IBitcoinOwnershipOracle {
     }
 
     /// @inheritdoc IBitcoinOwnershipOracle
-    function verifyRootSpend(
-        PuppetTypes.RootSpendAttestation calldata a,
-        bytes[] calldata,
-        bytes32[] calldata
-    ) external view returns (bytes32 digest, bytes32 rootKey) {
+    function verifyRootSpend(PuppetTypes.RootSpendAttestation calldata a, bytes[] calldata, bytes32[] calldata)
+        external
+        view
+        returns (bytes32 digest, bytes32 rootKey)
+    {
         _guard();
         digest = _digest(PuppetHashing.hashStruct(a));
         if (_consumedDigest[digest]) revert DigestAlreadyConsumed(digest);

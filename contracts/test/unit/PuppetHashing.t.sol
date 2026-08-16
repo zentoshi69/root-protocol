@@ -4,10 +4,10 @@ pragma solidity 0.8.28;
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {Test} from "forge-std/Test.sol";
 
-import {AttestorSet} from "../helpers/AttestorSet.sol";
-import {MerkleFixture} from "../helpers/MerkleFixture.sol";
 import {PuppetHashing} from "../../src/types/PuppetHashing.sol";
 import {PuppetTypes} from "../../src/types/PuppetTypes.sol";
+import {AttestorSet} from "../helpers/AttestorSet.sol";
+import {MerkleFixture} from "../helpers/MerkleFixture.sol";
 
 /// @title PuppetHashingFixtures
 /// @notice Shared fixture inputs for the golden-vector suite.
@@ -175,8 +175,7 @@ contract PuppetHashingTest is PuppetHashingFixtures {
                           EXPECTED GOLDEN VALUES
     //////////////////////////////////////////////////////////////*/
 
-    bytes32 internal constant EXPECT_COLLECTION_ID =
-        0x3343dd53bae221cbae39fcca5d3c2c62e89e268149b83a35ba197aefd15463e6;
+    bytes32 internal constant EXPECT_COLLECTION_ID = 0x3343dd53bae221cbae39fcca5d3c2c62e89e268149b83a35ba197aefd15463e6;
     bytes32 internal constant EXPECT_OUTPOINT_DOMAIN =
         0xf9d27b03fada0c27860ad28c17e301e7f24a1a1e7e9ccb365fb0e40507b42802;
     bytes32 internal constant EXPECT_PAYMENT_OUTPUT_DOMAIN =
@@ -195,19 +194,15 @@ contract PuppetHashingTest is PuppetHashingFixtures {
     bytes32 internal constant EXPECT_WITHDRAWAL_TYPEHASH =
         0xc8149bc94f0d9ff0c92cc14deac10174f0276f102b672671a56453fd3f998206;
 
-    bytes32 internal constant EXPECT_ROOT_KEY_A =
-        0xf142d51a92dacd70c4f79867a7652330c57ed62c9f9c98f38777b008bc6e5601;
-    bytes32 internal constant EXPECT_ROOT_KEY_B =
-        0xea21950842034b79a2ca50dd0d73ba727c2e7f89273728ee05fca7c383092d14;
-    bytes32 internal constant EXPECT_ROOT_KEY_C =
-        0x4beae8af638a93a555c906e6a78af425f1b321a5b97d7e59bb6809e5d787436e;
+    bytes32 internal constant EXPECT_ROOT_KEY_A = 0xf142d51a92dacd70c4f79867a7652330c57ed62c9f9c98f38777b008bc6e5601;
+    bytes32 internal constant EXPECT_ROOT_KEY_B = 0xea21950842034b79a2ca50dd0d73ba727c2e7f89273728ee05fca7c383092d14;
+    bytes32 internal constant EXPECT_ROOT_KEY_C = 0x4beae8af638a93a555c906e6a78af425f1b321a5b97d7e59bb6809e5d787436e;
 
     bytes32 internal constant EXPECT_LEAF_A = 0x7696d13db16d1964bb761601f789333f08c6c6ce4ef2ec5a1719ea73cbc2c3ec;
     bytes32 internal constant EXPECT_LEAF_B = 0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a;
     bytes32 internal constant EXPECT_LEAF_C = 0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015;
 
-    bytes32 internal constant EXPECT_OUTPOINT_HASH =
-        0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526;
+    bytes32 internal constant EXPECT_OUTPOINT_HASH = 0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526;
     /// @dev `paymentOutputKey` over the SAME (txid, vout) as `EXPECT_OUTPOINT_HASH`. The two must
     ///      differ; see `test_OutpointHashAndPaymentOutputKeyAreDomainSeparated`.
     bytes32 internal constant EXPECT_PAYMENT_KEY_SAME_INPUTS =
@@ -215,8 +210,7 @@ contract PuppetHashingTest is PuppetHashingFixtures {
     bytes32 internal constant EXPECT_PAYMENT_OUTPUT_KEY =
         0x63ce9de79ab386e0e5f8b1ee79460f7a2c059b4d1ef0c8cc6b5e10266ccc08cc;
 
-    bytes32 internal constant EXPECT_SCRIPT_HASH =
-        0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d;
+    bytes32 internal constant EXPECT_SCRIPT_HASH = 0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d;
 
     bytes32 internal constant EXPECT_OFFER_ID = 0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4;
     bytes32 internal constant EXPECT_OFFER_TERMS_HASH =
@@ -601,10 +595,8 @@ contract PuppetHashingTest is PuppetHashingFixtures {
 contract MerkleFixtureTest is PuppetHashingFixtures {
     bytes32 internal constant EXPECT_FIXTURE_MANIFEST_ROOT =
         0x1e282e09423b7326356d49b1f17876a6e35711b1a753877d6d2dac4007848281;
-    bytes32 internal constant EXPECT_LEAF_B_NODE =
-        0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a;
-    bytes32 internal constant EXPECT_LEAF_C_NODE =
-        0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015;
+    bytes32 internal constant EXPECT_LEAF_B_NODE = 0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a;
+    bytes32 internal constant EXPECT_LEAF_C_NODE = 0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015;
 
     /// @notice A one-leaf tree has the leaf as its root and an empty proof.
     function test_SingleLeafTree() public pure {
@@ -701,7 +693,6 @@ contract MerkleFixtureTest is PuppetHashingFixtures {
             assertTrue(MerkleProof.verify(MerkleFixture.proof(leaves, i), root, leaves[i]), "member verifies");
         }
     }
-
 
     /// @notice Golden root and proof for the three-inscription fixture manifest.
     /// @dev Pinned so the TypeScript builder in `packages/protocol-sdk` can be validated against

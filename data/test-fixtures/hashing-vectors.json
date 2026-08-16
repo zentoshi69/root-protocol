@@ -1,0 +1,380 @@
+{
+  "schema": "hoodpups.hashing-vectors.v1",
+  "generatedBy": "contracts/test/unit/PuppetHashing.t.sol",
+  "solidityLibrary": "contracts/src/types/PuppetHashing.sol",
+  "notes": [
+    "This file is the cross-language contract for the HoodPups Rooted Settlement Protocol.",
+    "Every expected value was produced by running the Foundry suite against PuppetHashing.sol and",
+    "reading the observed output. None was hand-derived. The TypeScript SDK and the attestor",
+    "services must reproduce every entry byte for byte; CI fails if any implementation diverges.",
+    "THE TXIDS ARE SYNTHETIC. They are structurally valid 32-byte values chosen for reproducibility.",
+    "None is a real Bitcoin transaction and none identifies a real Bitcoin Puppets inscription.",
+    "uint256 values are strings because they exceed the safe integer range of JSON/JavaScript numbers.",
+    "Byte order: every txid is big-endian / RPC display order, the order a block explorer shows.",
+    "TRUST BOUNDARY: none of these hashes verifies a Bitcoin fact. Bitcoin facts are asserted by a",
+    "3-of-5 quorum of independent attestors. This is an attested settlement system, not a bridge."
+  ],
+  "fixtures": {
+    "inscriptionA": {
+      "inscriptionTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+      "inscriptionIndex": 0
+    },
+    "inscriptionB": {
+      "inscriptionTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+      "inscriptionIndex": 1,
+      "note": "Shares its reveal txid with inscriptionA. Proves rootKey separates sibling inscriptions."
+    },
+    "inscriptionC": {
+      "inscriptionTxid": "0xa3c5e7091b2d4f6880a1c3e5d7f9b0a2c4e6f8091a3b5c7d9e0f1a2b3c4d5e6f",
+      "inscriptionIndex": 7
+    },
+    "outpoint": {
+      "bitcoinTxid": "0x7c1d3f5a9b2e46081a3c5e7092b4d6f80e2a4c6e8103957bd5f7192b3d4f6a8c",
+      "vout": 2
+    },
+    "paymentOutput": {
+      "bitcoinTxid": "0x3e5a7c9e0b2d4f6183a5c7e9012b3d5f7a9c1e3f5b7d90124a6c8e0b2d4f6183",
+      "vout": 1
+    },
+    "spendingTxid": "0xb4d6f8092a4c6e801b3d5f7991a3c5e7092b4d6f81a3c5e79b0d2f4a6c8e0193",
+    "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+    "p2trScriptPubKey": {
+      "hex": "0x5120a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+      "byteLength": 34,
+      "shape": "OP_1 (0x51) PUSH32 (0x20) <32-byte tweaked output key>"
+    },
+    "addresses": {
+      "escrow": "0x1111111111111111111111111111111111111111",
+      "buyer": "0x2222222222222222222222222222222222222222",
+      "recipient": "0x3333333333333333333333333333333333333333",
+      "evmPayout": "0x4444444444444444444444444444444444444444",
+      "solver": "0x5555555555555555555555555555555555555555",
+      "vaultBeneficiary": "0x6666666666666666666666666666666666666666"
+    },
+    "chainId": 31337,
+    "derivedHashes": {
+      "bip322ProofHash": {
+        "preimageUtf8": "HOODPUPS_FIXTURE_BIP322_PROOF",
+        "value": "0x05164637df72d81c3d23f034ced84407afdf70f899d7e5a5243bc2d68e554756"
+      },
+      "btcPayoutScriptHash": {
+        "preimageUtf8": "HOODPUPS_FIXTURE_BTC_PAYOUT_SCRIPT",
+        "value": "0xfe4da2fb7b6e4bd4d89d528e680844b60ffba5f41cbfbd2401e7d52c7a4ea16e"
+      },
+      "fixtureOwnershipDigest": {
+        "preimageUtf8": "HOODPUPS_FIXTURE_OWNERSHIP_DIGEST",
+        "value": "0x840ab6e778db7e0e0bd0dfead427aedd32ee8ca505aef41caf4ed3fa8adc28cf"
+      },
+      "authorizationId1": {
+        "preimageUtf8": "HOODPUPS_FIXTURE_AUTHORIZATION_1",
+        "value": "0xee7620f74b8888194261a6d381ca219b11f9f3973776e0500e0030d3518288f1"
+      },
+      "authorizationId2": {
+        "preimageUtf8": "HOODPUPS_FIXTURE_AUTHORIZATION_2",
+        "value": "0xe542a5fd8cfa920156ec941384fbf34106e12827c0d6a84c204467640b5e3b75"
+      },
+      "authorizationId3": {
+        "preimageUtf8": "HOODPUPS_FIXTURE_AUTHORIZATION_3",
+        "value": "0x96c40ac3410eda9d552afb40f4dfb52e0c01de3fbeeafdfd639630634e50e7c7"
+      }
+    }
+  },
+  "vectors": [
+    {
+      "name": "collectionId",
+      "fn": "COLLECTION_ID",
+      "inputs": {"preimageUtf8": "BITCOIN_PUPPETS_MAINNET_V1"},
+      "expected": "0x3343dd53bae221cbae39fcca5d3c2c62e89e268149b83a35ba197aefd15463e6"
+    },
+    {
+      "name": "outpointDomain",
+      "fn": "OUTPOINT_DOMAIN",
+      "inputs": {"preimageUtf8": "HOODPUPS_BITCOIN_OUTPOINT_V1"},
+      "expected": "0xf9d27b03fada0c27860ad28c17e301e7f24a1a1e7e9ccb365fb0e40507b42802"
+    },
+    {
+      "name": "paymentOutputDomain",
+      "fn": "PAYMENT_OUTPUT_DOMAIN",
+      "inputs": {"preimageUtf8": "HOODPUPS_BITCOIN_PAYMENT_OUTPUT_V1"},
+      "expected": "0x68f3bafcc5a23fe65e4b87bc48bc818d78c7623c3afc0b0ed71b07da2dc638be"
+    },
+    {
+      "name": "offerTermsDomain",
+      "fn": "OFFER_TERMS_DOMAIN",
+      "inputs": {"preimageUtf8": "HOODPUPS_OFFER_TERMS_V1"},
+      "expected": "0xe45cdc297b8d19010e945d1d89426abb1cffc7cdb145f86559774fca480bbbe0"
+    },
+    {
+      "name": "offerIdDomain",
+      "fn": "OFFER_ID_DOMAIN",
+      "inputs": {"preimageUtf8": "HOODPUPS_OFFER_ID_V1"},
+      "expected": "0x7822b9b863d6a3abbd6eb9a017ed366ed7adb6eec91c16347206a404fdf6849d"
+    },
+
+    {
+      "name": "rootKey/inscriptionA",
+      "fn": "rootKey",
+      "inputs": {
+        "inscriptionTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "inscriptionIndex": 0
+      },
+      "expected": "0xf142d51a92dacd70c4f79867a7652330c57ed62c9f9c98f38777b008bc6e5601"
+    },
+    {
+      "name": "rootKey/inscriptionB-sameTxidDifferentIndex",
+      "fn": "rootKey",
+      "inputs": {
+        "inscriptionTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "inscriptionIndex": 1
+      },
+      "expected": "0xea21950842034b79a2ca50dd0d73ba727c2e7f89273728ee05fca7c383092d14",
+      "note": "Must differ from rootKey/inscriptionA. Same reveal txid, different inscription index."
+    },
+    {
+      "name": "rootKey/inscriptionC",
+      "fn": "rootKey",
+      "inputs": {
+        "inscriptionTxid": "0xa3c5e7091b2d4f6880a1c3e5d7f9b0a2c4e6f8091a3b5c7d9e0f1a2b3c4d5e6f",
+        "inscriptionIndex": 7
+      },
+      "expected": "0x4beae8af638a93a555c906e6a78af425f1b321a5b97d7e59bb6809e5d787436e"
+    },
+
+    {
+      "name": "collectionLeaf/inscriptionA",
+      "fn": "collectionLeaf",
+      "inputs": {"rootKey": "0xf142d51a92dacd70c4f79867a7652330c57ed62c9f9c98f38777b008bc6e5601"},
+      "expected": "0x7696d13db16d1964bb761601f789333f08c6c6ce4ef2ec5a1719ea73cbc2c3ec"
+    },
+    {
+      "name": "collectionLeaf/inscriptionB",
+      "fn": "collectionLeaf",
+      "inputs": {"rootKey": "0xea21950842034b79a2ca50dd0d73ba727c2e7f89273728ee05fca7c383092d14"},
+      "expected": "0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a"
+    },
+    {
+      "name": "collectionLeaf/inscriptionC",
+      "fn": "collectionLeaf",
+      "inputs": {"rootKey": "0x4beae8af638a93a555c906e6a78af425f1b321a5b97d7e59bb6809e5d787436e"},
+      "expected": "0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015"
+    },
+
+    {
+      "name": "outpointHash/fixtureOutpoint",
+      "fn": "outpointHash",
+      "inputs": {
+        "bitcoinTxid": "0x7c1d3f5a9b2e46081a3c5e7092b4d6f80e2a4c6e8103957bd5f7192b3d4f6a8c",
+        "vout": 2
+      },
+      "expected": "0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526"
+    },
+    {
+      "name": "paymentOutputKey/sameInputsAsOutpointHash",
+      "fn": "paymentOutputKey",
+      "inputs": {
+        "bitcoinTxid": "0x7c1d3f5a9b2e46081a3c5e7092b4d6f80e2a4c6e8103957bd5f7192b3d4f6a8c",
+        "vout": 2
+      },
+      "expected": "0x04a0bdde41a92402f0c89f98c361a7a7e9c5a308ddfc4e86dcfbde44e4d25c32",
+      "note": "Deliberately the same (txid, vout) as outpointHash/fixtureOutpoint. The two values MUST differ: the domain tags keep an inscription outpoint disjoint from a consumed seller payment output."
+    },
+    {
+      "name": "paymentOutputKey/fixturePayment",
+      "fn": "paymentOutputKey",
+      "inputs": {
+        "bitcoinTxid": "0x3e5a7c9e0b2d4f6183a5c7e9012b3d5f7a9c1e3f5b7d90124a6c8e0b2d4f6183",
+        "vout": 1
+      },
+      "expected": "0x63ce9de79ab386e0e5f8b1ee79460f7a2c059b4d1ef0c8cc6b5e10266ccc08cc"
+    },
+
+    {
+      "name": "scriptHash/p2tr",
+      "fn": "scriptHash",
+      "inputs": {
+        "rawScriptPubKey": "0x5120a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+      },
+      "expected": "0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d",
+      "note": "Raw scriptPubKey bytes, never a bech32 address string. Address strings are network- and encoding-dependent and are unsafe as a security primitive."
+    },
+
+    {
+      "name": "offerId/fixture",
+      "fn": "offerId",
+      "inputs": {
+        "chainId": "31337",
+        "escrow": "0x1111111111111111111111111111111111111111",
+        "buyer": "0x2222222222222222222222222222222222222222",
+        "buyerNonce": "3"
+      },
+      "expected": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4"
+    },
+    {
+      "name": "offerTermsHash/fixture",
+      "fn": "offerTermsHash",
+      "inputs": {
+        "chainId": "31337",
+        "escrow": "0x1111111111111111111111111111111111111111",
+        "id": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4",
+        "kind": 0,
+        "key": "0xf142d51a92dacd70c4f79867a7652330c57ed62c9f9c98f38777b008bc6e5601",
+        "buyer": "0x2222222222222222222222222222222222222222",
+        "recipient": "0x3333333333333333333333333333333333333333",
+        "grossWei": "1000000000000000000",
+        "sellerWei": "500000000000000000",
+        "sellerSats": "250000",
+        "expiry": "1893456000"
+      },
+      "expected": "0x8d980d7bc135673fcf6b5f8de2b3029feac6fe51448352999f3d58cc680bdfb8",
+      "note": "kind 0 is OfferKind.PAID_EVM."
+    },
+
+    {
+      "name": "typehash/OwnershipAttestation",
+      "fn": "OWNERSHIP_ATTESTATION_TYPEHASH",
+      "inputs": {
+        "typeString": "OwnershipAttestation(uint8 purpose,bytes32 rootTxid,uint32 rootIndex,bytes32 contextId,bytes32 offerTermsHash,bytes32 currentOutpointHash,bytes32 ownerScriptHash,bytes32 bip322ProofHash,address buyer,address recipient,uint8 payoutMode,address evmPayout,bytes32 btcPayoutScriptHash,uint64 sellerSats,uint256 grossWei,uint256 sellerWei,bytes32 bitcoinBlockHash,uint64 bitcoinHeight,bytes32 authorizationId,uint64 deadline,uint64 attestorEpoch,uint32 policyVersion)"
+      },
+      "expected": "0x037dba76c7e82198c99e9916727cd68ba1e6db8e050f5ea9bef8f91586905f9e"
+    },
+    {
+      "name": "typehash/BitcoinPaymentAttestation",
+      "fn": "BITCOIN_PAYMENT_ATTESTATION_TYPEHASH",
+      "inputs": {
+        "typeString": "BitcoinPaymentAttestation(bytes32 contextId,bytes32 ownershipDigest,address solver,bytes32 bitcoinTxid,uint32 outputIndex,bytes32 recipientScriptHash,uint64 amountSats,bytes32 bitcoinBlockHash,uint64 bitcoinHeight,bytes32 authorizationId,uint64 deadline,uint64 attestorEpoch,uint32 policyVersion)"
+      },
+      "expected": "0x8c5c41a9463a7a99719b7b4dfd4b32ca57bafc2358fe8e9a21f18812be37e5d3"
+    },
+    {
+      "name": "typehash/RootSpendAttestation",
+      "fn": "ROOT_SPEND_ATTESTATION_TYPEHASH",
+      "inputs": {
+        "typeString": "RootSpendAttestation(bytes32 rootTxid,uint32 rootIndex,bytes32 previousOutpointHash,bytes32 spendingTxid,bytes32 bitcoinBlockHash,uint64 bitcoinHeight,bytes32 authorizationId,uint64 deadline,uint64 attestorEpoch,uint32 policyVersion)"
+      },
+      "expected": "0xc34007d672b0d728da6a12c630547c9fd1d8af74fb088f4f3a09b519adf12ca5"
+    },
+    {
+      "name": "typehash/Withdrawal",
+      "fn": "WITHDRAWAL_TYPEHASH",
+      "inputs": {
+        "typeString": "Withdrawal(address beneficiary,address recipient,uint256 amount,uint256 nonce,uint64 deadline)"
+      },
+      "expected": "0xc8149bc94f0d9ff0c92cc14deac10174f0276f102b672671a56453fd3f998206"
+    },
+
+    {
+      "name": "hashStruct/OwnershipAttestation",
+      "fn": "hashStruct.OwnershipAttestation",
+      "inputs": {
+        "purpose": 0,
+        "rootTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "rootIndex": 0,
+        "contextId": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4",
+        "offerTermsHash": "0x8d980d7bc135673fcf6b5f8de2b3029feac6fe51448352999f3d58cc680bdfb8",
+        "currentOutpointHash": "0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526",
+        "ownerScriptHash": "0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d",
+        "bip322ProofHash": "0x05164637df72d81c3d23f034ced84407afdf70f899d7e5a5243bc2d68e554756",
+        "buyer": "0x2222222222222222222222222222222222222222",
+        "recipient": "0x3333333333333333333333333333333333333333",
+        "payoutMode": 1,
+        "evmPayout": "0x4444444444444444444444444444444444444444",
+        "btcPayoutScriptHash": "0xfe4da2fb7b6e4bd4d89d528e680844b60ffba5f41cbfbd2401e7d52c7a4ea16e",
+        "sellerSats": "250000",
+        "grossWei": "1000000000000000000",
+        "sellerWei": "500000000000000000",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880000",
+        "authorizationId": "0xee7620f74b8888194261a6d381ca219b11f9f3973776e0500e0030d3518288f1",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "expected": "0xb02af5de3a4d7b7536a5fbe847a692c8966ef3560d5c9cd9cb7646c4f219720b",
+      "note": "purpose 0 is AuthorizationPurpose.PAID_EVM_MINT; payoutMode 1 is PayoutMode.EVM. Every field is deliberately non-zero, including btcPayoutScriptHash and sellerSats which a real PAID_EVM attestation would leave zero. This is a hashing vector, not a semantically valid attestation: BitcoinOwnershipOracle's payout-shape check would reject it. Zero fields would hide a field-ordering bug. encodeData is 23 words (typehash + 22 fields)."
+    },
+    {
+      "name": "hashStruct/BitcoinPaymentAttestation",
+      "fn": "hashStruct.BitcoinPaymentAttestation",
+      "inputs": {
+        "contextId": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4",
+        "ownershipDigest": "0x840ab6e778db7e0e0bd0dfead427aedd32ee8ca505aef41caf4ed3fa8adc28cf",
+        "solver": "0x5555555555555555555555555555555555555555",
+        "bitcoinTxid": "0x3e5a7c9e0b2d4f6183a5c7e9012b3d5f7a9c1e3f5b7d90124a6c8e0b2d4f6183",
+        "outputIndex": 1,
+        "recipientScriptHash": "0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d",
+        "amountSats": "250000",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880001",
+        "authorizationId": "0xe542a5fd8cfa920156ec941384fbf34106e12827c0d6a84c204467640b5e3b75",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "expected": "0x8cdccdfbbf7f4dbeb03ae231279a7cceea59a2db60257f029728fd4c28824720",
+      "note": "encodeData is 14 words (typehash + 13 fields)."
+    },
+    {
+      "name": "hashStruct/RootSpendAttestation",
+      "fn": "hashStruct.RootSpendAttestation",
+      "inputs": {
+        "rootTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "rootIndex": 0,
+        "previousOutpointHash": "0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526",
+        "spendingTxid": "0xb4d6f8092a4c6e801b3d5f7991a3c5e7092b4d6f81a3c5e79b0d2f4a6c8e0193",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880002",
+        "authorizationId": "0x96c40ac3410eda9d552afb40f4dfb52e0c01de3fbeeafdfd639630634e50e7c7",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "expected": "0x7d3fff25a330d6aaf3de6ee172afaf703947ab560c25eb617943d8d9b2cfeb28",
+      "note": "encodeData is 11 words (typehash + 10 fields)."
+    },
+
+    {
+      "name": "hashWithdrawal/fixture",
+      "fn": "hashWithdrawal",
+      "inputs": {
+        "beneficiary": "0x6666666666666666666666666666666666666666",
+        "recipient": "0x3333333333333333333333333333333333333333",
+        "amount": "250000000000000000",
+        "nonce": "4",
+        "deadline": "1893456000"
+      },
+      "expected": "0x8754d512f001b23ba38ec58cd4243c0970f77a1969b279b8065d510b515db1b9"
+    },
+
+    {
+      "name": "collectionMerkleRoot/threeInscriptionFixtureManifest",
+      "fn": "merkleRoot",
+      "inputs": {
+        "algorithm": "sorted-pair keccak256 over sorted, deduplicated collectionLeaf values; odd tail node promoted unchanged",
+        "leaves": [
+          "0x7696d13db16d1964bb761601f789333f08c6c6ce4ef2ec5a1719ea73cbc2c3ec",
+          "0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a",
+          "0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015"
+        ]
+      },
+      "expected": "0x1e282e09423b7326356d49b1f17876a6e35711b1a753877d6d2dac4007848281"
+    },
+    {
+      "name": "collectionMerkleProof/inscriptionA",
+      "fn": "merkleProof",
+      "inputs": {
+        "root": "0x1e282e09423b7326356d49b1f17876a6e35711b1a753877d6d2dac4007848281",
+        "leaf": "0x7696d13db16d1964bb761601f789333f08c6c6ce4ef2ec5a1719ea73cbc2c3ec",
+        "leaves": [
+          "0x7696d13db16d1964bb761601f789333f08c6c6ce4ef2ec5a1719ea73cbc2c3ec",
+          "0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a",
+          "0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015"
+        ]
+      },
+      "expected": [
+        "0x8d14a4b109fc5a82fd98d70fdf5717850e4e8e12278cc519f674317504a5312a",
+        "0xa008072512b4342ec11a353fa10b126c469f70162c4d92220a384f00cc19a015"
+      ],
+      "note": "Verifies under OpenZeppelin MerkleProof.verify. Level [A,B,C] folds to [hashPair(A,B), C] with C promoted unchanged, so C is the level-one sibling."
+    }
+  ]
+}

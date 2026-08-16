@@ -163,11 +163,10 @@ contract MockRootOwnershipRegistry is IRootOwnershipRegistry {
     /// @inheritdoc IRootOwnershipRegistry
     /// @dev The mock does NOT verify the quorum or release any pending balance; it simply applies
     ///      the attestation's claims. `releasedPending` is always zero.
-    function bindRootOwner(
-        PuppetTypes.OwnershipAttestation calldata attestation,
-        bytes[] calldata,
-        bytes32[] calldata
-    ) external returns (uint64 epoch, uint256 releasedPending) {
+    function bindRootOwner(PuppetTypes.OwnershipAttestation calldata attestation, bytes[] calldata, bytes32[] calldata)
+        external
+        returns (uint64 epoch, uint256 releasedPending)
+    {
         bytes32 rootKey = PuppetHashing.rootKey(attestation.rootTxid, attestation.rootIndex);
         PuppetTypes.RootState storage s = _state[rootKey];
 
@@ -195,11 +194,9 @@ contract MockRootOwnershipRegistry is IRootOwnershipRegistry {
 
     /// @inheritdoc IRootOwnershipRegistry
     /// @dev The mock does NOT verify the quorum; it deactivates the Root unconditionally.
-    function invalidateRoot(
-        PuppetTypes.RootSpendAttestation calldata attestation,
-        bytes[] calldata,
-        bytes32[] calldata
-    ) external {
+    function invalidateRoot(PuppetTypes.RootSpendAttestation calldata attestation, bytes[] calldata, bytes32[] calldata)
+        external
+    {
         bytes32 rootKey = PuppetHashing.rootKey(attestation.rootTxid, attestation.rootIndex);
         PuppetTypes.RootState storage s = _state[rootKey];
         if (!s.active) revert RootNotActive(rootKey);

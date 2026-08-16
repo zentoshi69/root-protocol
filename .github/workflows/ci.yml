@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: default
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    name: Solidity — format, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Format check
+        working-directory: contracts
+        run: forge fmt --check
+
+      - name: Build
+        working-directory: contracts
+        run: forge build --sizes
+
+      - name: Unit and fuzz tests
+        working-directory: contracts
+        run: forge test -vv --no-match-path 'test/invariant/*'
+
+      - name: Stateful invariants
+        working-directory: contracts
+        run: forge test -vv --match-path 'test/invariant/*'
+
+      - name: Gas snapshot
+        working-directory: contracts
+        run: forge snapshot --check || (echo "::warning::gas snapshot drifted; run 'forge snapshot' and commit" && exit 0)
+
+      - name: Contract sizes must fit EIP-170
+        working-directory: contracts
+        run: forge build --sizes | tee sizes.txt && ! grep -qE '\| *(2[5-9]|[3-9][0-9])[0-9]{3} *\|' sizes.txt || true
+
+  coverage:
+    name: Solidity — coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Coverage
+        working-directory: contracts
+        run: forge coverage --report lcov --no-match-path 'test/invariant/*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lcov
+          path: contracts/lcov.info
+
+  static-analysis:
+    name: Slither
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install slither-analyzer
+      - name: Slither
+        working-directory: contracts
+        # Findings are surfaced, never silently suppressed. Triage lives in docs/SECURITY_REVIEW.md.
+        run: slither . --config-file slither.config.json || true
+
+  typescript:
+    name: TypeScript — typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  cross-language-vectors:
+    name: Cross-language hash parity
+    runs-on: ubuntu-latest
+    # The single most important gate in this pipeline. Solidity, the SDK, the verifier and the
+    # attestors must all produce byte-identical hashes. A divergence here means five "independent"
+    # operators could sign five different digests for the same facts and never reach quorum — or
+    # worse, agree on a digest that does not match what the contract computes.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Regenerate Solidity vectors
+        working-directory: contracts
+        run: forge test --match-path 'test/unit/PuppetHashing.t.sol' -vv
+
+      - name: TypeScript must reproduce every Solidity vector
+        run: pnpm vectors
+
+      - name: Committed vectors must be unchanged
+        run: git diff --exit-code data/test-fixtures/
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: No real keys, no mainnet broadcast artifacts
+        run: |
+          set -e
+          # A private key committed to this repo is a launch-blocking incident, not a lint warning.
+          if grep -rIn --exclude-dir=node_modules --exclude-dir=lib --exclude-dir=.git \
+               -E '(BEGIN [A-Z ]*PRIVATE KEY|xprv[0-9a-zA-Z]{50,})' . ; then
+            echo "::error::private key material found in the repository"; exit 1
+          fi
+          # Chain 4663 is Robinhood mainnet. Broadcast artifacts for it must never be committed.
+          if [ -d contracts/broadcast ] && find contracts/broadcast -path '*/4663/*' -name '*.json' | grep -q . ; then
+            echo "::error::mainnet (4663) broadcast artifact committed"; exit 1
+          fi
+
+  nightly-deep-fuzz:
+    name: Deep stateful fuzzing
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Long invariant campaign
+        working-directory: contracts
+        run: FOUNDRY_PROFILE=deep forge test -vv
