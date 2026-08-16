@@ -18,7 +18,7 @@ Use OpenZeppelin 5.x `AccessControl` and `EnumerableSet` where appropriate. Do n
 - `uint64 attestorEpoch`, starting at 1;
 - `uint8 threshold`;
 - `uint32 policyVersion`, starting at 1;
-- maximum attestor count of 32;
+- exact production attestor count of 5;
 - minimum production threshold of 3;
 - minimum production attestor count of 5.
 
@@ -40,7 +40,7 @@ Validate:
 - nonzero admin;
 - no zero attestor;
 - no duplicate attestor;
-- count between 5 and 32;
+- count exactly 5;
 - threshold at least 3 and at most count;
 - nonzero policy version.
 
@@ -56,7 +56,8 @@ Expose timelock-admin functions:
 
 Every membership or threshold change increments `attestorEpoch` exactly once. A policy-version-only change may either increment epoch or use its own event, but choose one model and document it; prefer incrementing epoch so all stale signatures fail immediately.
 
-Never allow a mutation that leaves threshold greater than count or count below five.
+Never allow a mutation that leaves threshold greater than count or changes the count from five.
+Membership changes use only atomic `replaceAttestor`; additive/removal ABI shims must revert.
 
 Expose views:
 

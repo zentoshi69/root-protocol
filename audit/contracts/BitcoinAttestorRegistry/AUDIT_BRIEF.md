@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/BitcoinAttestorRegistry.sol` · 301 non-blank lines |
-| Flattened | `BitcoinAttestorRegistry.flat.sol` · 1004 non-blank lines |
+| Source | `contracts/src/BitcoinAttestorRegistry.sol` · 299 non-blank lines |
+| Flattened | `BitcoinAttestorRegistry.flat.sol` · 1002 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `0bff02c1f066e03898eb4a89434d81621ec0072d467e33127ce8e28db3399a32` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `e21a219e821ba25a0374a94740ccb632c3c08855995a4de2ef0e9d4e2be11988` |
+| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -21,7 +21,7 @@ Timelock admin. Every mutation bumps attestorEpoch, which instantly invalidates 
 
 ## Invariants it must hold
 
-1. 5 <= attestorCount <= 32 at all times
+1. attestorCount == 5 at all times; membership changes are atomic replacements
 2. 3 <= threshold <= attestorCount at all times
 3. Every membership, threshold or policy change increments attestorEpoch exactly once
 4. replaceAttestor is atomic and never transiently drops below the minimum
@@ -40,10 +40,8 @@ Timelock admin. Every mutation bumps attestorEpoch, which instantly invalidates 
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

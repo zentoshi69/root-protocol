@@ -1,6 +1,6 @@
 {
   "contract": "BitcoinOwnershipOracle",
-  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "commit": "5d853a42604f54d71ffb0ac740302e5aa7e4adef",
   "compiler": {
     "solc": "0.8.28",
     "evmVersion": "shanghai",
@@ -10,13 +10,13 @@
   },
   "source": {
     "path": "contracts/src/BitcoinOwnershipOracle.sol",
-    "sha256": "9f5f0056ccdabb4335271bb7a3e80594b42b81a2b14203c094fc9e9a58ecc2cf",
-    "nonBlankLines": 670
+    "sha256": "92703f1706ccff4be9e9350c3e050a125b52ed107f92892d97d80ad165489137",
+    "nonBlankLines": 684
   },
   "flattened": {
     "path": "audit/contracts/BitcoinOwnershipOracle/BitcoinOwnershipOracle.flat.sol",
-    "sha256": "b834914b4824150f7bd7439f7a0539c2ee633b6a204694ae11ec5ea90265292f",
-    "nonBlankLines": 4292,
+    "sha256": "2d814fbd2f5d32405dbe6e972ef625d7f1d5c31179e35c417de5ae8241fc6339",
+    "nonBlankLines": 4310,
     "standaloneCompile": "verified"
   }
 }

@@ -117,7 +117,8 @@ did not make unless the quorum lies about the payment.
 - Core contracts are non-upgradeable. There is no key that can rewrite settlement logic.
 - Administrative changes are designed for a multisig plus `TimelockController`, and the deployment
   script fails if the deployer retains privilege.
-- A guardian may pause new risk-taking actions. Pausing can **never** block refunds or withdrawals.
+- A guardian may pause new risk-taking actions. Pausing can **never** block refunds, withdrawals,
+  or terminal resolution of a BTC reservation whose solver may already have paid Bitcoin.
 - There is no owner withdrawal function anywhere in the protocol. `sweepExcess` on `PayoutVault`
   can move only `balance - totalLiability`, which by construction is only force-sent ETH.
 

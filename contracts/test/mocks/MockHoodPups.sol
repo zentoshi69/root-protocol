@@ -80,8 +80,20 @@ contract MockHoodPups is IHoodPups {
     /// @inheritdoc IHoodPups
     /// @dev NOT role gated in the mock; the real contract requires `MINTER_ROLE`.
     function mintRooted(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId) {
-        if (recipient == address(0)) revert ZeroAddress();
         if (_mintingPaused) revert MintingPaused();
+        return _mintRooted(recipient, root);
+    }
+
+    /// @inheritdoc IHoodPups
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root)
+        external
+        returns (uint256 tokenId)
+    {
+        return _mintRooted(recipient, root);
+    }
+
+    function _mintRooted(address recipient, PuppetTypes.RootId calldata root) private returns (uint256 tokenId) {
+        if (recipient == address(0)) revert ZeroAddress();
 
         bytes32 key = PuppetHashing.rootKey(root.inscriptionTxid, root.inscriptionIndex);
         uint256 existing = _tokenOfRoot[key];

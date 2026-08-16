@@ -86,9 +86,9 @@ export interface AuthorizationMessageFields {
   /** Robinhood Chain address that receives the HoodPup. */
   recipient: EvmAddress;
 
-  /** How the controller elected to be paid. */
+  /** How the controller elected to be paid; `ROOT_BIND` uses EVM to name its beneficiary. */
   payoutMode: PayoutModeName;
-  /** Seller's Robinhood Chain payout address; zero address unless `payoutMode` is `EVM`. */
+  /** Seller payout address, or the bound beneficiary for `ROOT_BIND`; zero unless mode is `EVM`. */
   evmPayout: EvmAddress;
   /** keccak256 of the seller's Bitcoin payout scriptPubKey; zero unless `payoutMode` is `BTC`. */
   btcPayoutScriptHash: Hex32;

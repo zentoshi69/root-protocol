@@ -403,7 +403,7 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         assertEq(escrow.minimumOfferDuration(), MIN_DURATION, "min");
         assertEq(escrow.maximumOfferDuration(), MAX_DURATION, "max");
         assertEq(escrow.lockedEscrowWei(), 0, "locked starts empty");
-        assertEq(escrow.MAX_RESERVATION_WINDOW(), 24 hours, "reservation ceiling");
+        assertEq(escrow.MAX_RESERVATION_WINDOW(), 30 days, "reservation ceiling");
     }
 
     function test_ConstructorGrantsOnlyGovernanceRoles() public view {
@@ -1278,10 +1278,9 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
     ///      accrues before a beneficiary exists is PARKED in the Root's pending bucket rather than
     ///      lost, which is what makes "bind later" a safe answer rather than a hopeful one.
     ///
-    ///      The second half of the story — the holder actually claiming that bucket through
-    ///      `RootOwnershipRegistry.bindRootOwner` — is currently blocked by a contradiction between
-    ///      two contracts this suite does not own. See
-    ///      `test_KNOWN_DEFECT_RootBindIsUnreachableAgainstTheRealOracle`.
+    ///      The second half of the story — the holder claiming that bucket through
+    ///      `RootOwnershipRegistry.bindRootOwner` — is exercised by
+    ///      `test_RootBindWorksAgainstTheRealOracleAndReleasesPendingValue`.
     function test_SelfCastRecordsNoRootBeneficiaryAndValueIsParkedNotLost() public {
         address holder = makeAddr("bitcoinHolder");
         bytes32 offerId = _createSelfCast(holder, 2);
@@ -1305,24 +1304,17 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         assertEq(vault.claimable(recipient), 0, "in particular it is not the recipient's");
     }
 
-    /// @dev BLOCKING CROSS-CONTRACT DEFECT, PINNED HERE SO THE INTEGRATION PHASE CANNOT MISS IT.
-    ///      Neither contract involved is owned by this suite, so nothing is fixed here — only
-    ///      demonstrated.
-    ///
-    ///      `RootOwnershipRegistry.bindRootOwner` requires a `ROOT_BIND` attestation with
-    ///      `payoutMode == PayoutMode.EVM` and a non-zero `evmPayout`, because `evmPayout` IS the
-    ///      new Root beneficiary — there is no other field it could come from.
-    ///      `BitcoinOwnershipOracle._requireValidPayoutShape` maps every non-paying purpose,
-    ///      `ROOT_BIND` included, to `PayoutMode.NONE` and rejects a non-zero `evmPayout`.
-    ///
-    ///      The two rules are mutually exclusive, so `bindRootOwner` reverts `InvalidPayoutShape`
-    ///      for every possible input and the permissionless rebinding path does not exist. That
-    ///      matters far beyond this escrow: it is also the only way a self-cast or BTC mint ever
-    ///      acquires a Root beneficiary, and the only way a Root's pending bucket is ever released.
-    function test_KNOWN_DEFECT_RootBindIsUnreachableAgainstTheRealOracle() public {
+    /// @dev Cross-contract regression for the ROOT_BIND payout shape. The oracle and ownership
+    ///      registry must accept the same signed EVM beneficiary, and a successful bind must make
+    ///      all value parked before the bind claimable by that beneficiary.
+    function test_RootBindWorksAgainstTheRealOracleAndReleasesPendingValue() public {
         address holder = makeAddr("bitcoinHolder");
         bytes32 offerId = _createSelfCast(holder, 2);
+        PuppetTypes.OwnershipAttestation memory selfCast = _selfCastAttestation(offerId);
+        escrow.settleSelfCast(offerId, selfCast, _sign(selfCast), _proof(2));
+
         bytes32 key = _rootKey(2);
+        _parkRootValue(key, 4 ether);
 
         PuppetTypes.OwnershipAttestation memory bind = _baseAttestation(offerId);
         bind.purpose = uint8(PuppetTypes.AuthorizationPurpose.ROOT_BIND);
@@ -1337,23 +1329,12 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         bytes[] memory sigs = _sign(bind);
         bytes32[] memory p = _proof(2);
 
-        // The shape the registry demands is the shape the oracle refuses.
-        vm.expectRevert(IBitcoinOwnershipOracle.InvalidPayoutShape.selector);
-        rootRegistry.bindRootOwner(bind, sigs, p);
+        (uint64 epoch, uint256 released) = rootRegistry.bindRootOwner(bind, sigs, p);
 
-        // And the shape the oracle demands is the shape the registry refuses, so there is no
-        // third option: the function is unreachable, not merely awkward to call.
-        PuppetTypes.OwnershipAttestation memory noneMode = bind;
-        noneMode.payoutMode = uint8(PuppetTypes.PayoutMode.NONE);
-        noneMode.evmPayout = address(0);
-        bytes[] memory sigs2 = _sign(noneMode);
-        bytes32[] memory p2 = _proof(2);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RootOwnershipRegistry.UnsupportedPayoutMode.selector, uint8(PuppetTypes.PayoutMode.NONE)
-            )
-        );
-        rootRegistry.bindRootOwner(noneMode, sigs2, p2);
+        assertEq(epoch, 1, "first ownership epoch opened");
+        assertEq(released, 4 ether, "all pending Root value released");
+        assertEq(vault.pendingByRoot(key), 0, "Root bucket drained");
+        assertEq(vault.claimable(holder), 4 ether, "signed beneficiary credited");
     }
 
     /// @dev Credit a Root's pending bucket directly, standing in for recurring protocol value.
@@ -1469,6 +1450,7 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         assertEq(o.status, uint8(PuppetTypes.OfferStatus.BTC_RESERVED), "BTC_RESERVED");
         assertEq(o.reservedSolver, solver, "solver recorded");
         assertEq(o.reservationExpiry, window, "window recorded");
+        assertEq(escrow.activeBtcOfferForRoot(o.rootKey), offerId, "Root mutex acquired");
     }
 
     function test_MarkBtcReservedRequiresTheSettlementRole() public {
@@ -1487,9 +1469,8 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
     function test_MarkBtcReservedRejectsUnboundedAndBackwardsWindows() public {
         bytes32 offerId = _createBtc(0, 50_000);
         _approveBtc(offerId, 0);
-        uint64 offerExpiry = escrow.getOffer(offerId).expiry;
         uint64 windowCap = uint64(block.timestamp) + escrow.MAX_RESERVATION_WINDOW();
-        uint64 ceiling = windowCap < offerExpiry ? windowCap : offerExpiry;
+        uint64 ceiling = windowCap;
 
         // A window in the past would be dead on arrival.
         vm.expectRevert(
@@ -1512,14 +1493,12 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         vm.prank(btcSettlement);
         escrow.markBtcReserved(offerId, solver, type(uint64).max);
 
-        // And never past the offer's own expiry, which is what keeps refunds always reachable.
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                HoodPupOfferEscrow.ReservationWindowInvalid.selector, offerExpiry + 1, uint64(block.timestamp), ceiling
-            )
-        );
+        // A reservation made while the offer is live may preserve the solver's full grace window
+        // beyond the offer expiry.
+        uint64 offerExpiry = escrow.getOffer(offerId).expiry;
         vm.prank(btcSettlement);
         escrow.markBtcReserved(offerId, solver, offerExpiry + 1);
+        assertEq(escrow.getOffer(offerId).reservationExpiry, offerExpiry + 1, "grace window accepted");
     }
 
     function test_MarkBtcReservedRejectsZeroSolverAndWrongStatus() public {
@@ -1543,6 +1522,20 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         escrow.markBtcReserved(offerId, address(0), window);
     }
 
+    function test_MarkBtcReservedRejectsARootAlreadyMintedByAnotherOffer() public {
+        bytes32 btcOffer = _createBtc(0, 50_000);
+        _approveBtc(btcOffer, 0);
+        bytes32 winner = _createEvm(otherBuyer, 0, PRICE, recipient);
+        _settleEvm(winner, 0);
+
+        vm.expectRevert(abi.encodeWithSelector(IHoodPupOfferEscrow.RootAlreadyMinted.selector, _rootKey(0)));
+        vm.prank(btcSettlement);
+        escrow.markBtcReserved(btcOffer, solver, uint64(block.timestamp) + 2 hours);
+
+        assertEq(_status(btcOffer), uint8(PuppetTypes.OfferStatus.BTC_APPROVED), "offer remains refundable");
+        assertEq(escrow.activeBtcOfferForRoot(_rootKey(0)), bytes32(0), "no stale Root mutex");
+    }
+
     function test_ClearBtcReservationReturnsToApproved() public {
         bytes32 offerId = _createBtc(0, 50_000);
         _approveBtc(offerId, 0);
@@ -1557,6 +1550,7 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         assertEq(o.status, uint8(PuppetTypes.OfferStatus.BTC_APPROVED), "back to approved");
         assertEq(o.reservedSolver, address(0), "solver cleared");
         assertEq(o.reservationExpiry, 0, "window cleared");
+        assertEq(escrow.activeBtcOfferForRoot(o.rootKey), bytes32(0), "Root mutex released");
     }
 
     function test_ClearBtcReservationRequiresTheSettlementRole() public {
@@ -1572,50 +1566,34 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         escrow.clearBtcReservation(offerId);
     }
 
-    /// @dev The escape hatch that makes "a buyer's escrow can never be trapped" true even if
-    ///      `BtcSolverSettlement` is paused, broken, or has had its role revoked.
-    function test_ExpireBtcReservationIsPermissionlessOnceTheWindowLapses() public {
+    function test_EscrowHasNoIndependentReservationExpiryStateMachine() public {
         bytes32 offerId = _createBtc(0, 50_000);
         _approveBtc(offerId, 0);
         _reserve(offerId, 2 hours);
-        uint64 window = escrow.getOffer(offerId).reservationExpiry;
 
-        vm.expectRevert(abi.encodeWithSelector(HoodPupOfferEscrow.ReservationNotLapsed.selector, offerId, window));
-        escrow.expireBtcReservation(offerId);
-
-        // Even at exactly the reservation expiry the solver still owns the window.
-        vm.warp(window);
-        vm.expectRevert(abi.encodeWithSelector(HoodPupOfferEscrow.ReservationNotLapsed.selector, offerId, window));
-        escrow.expireBtcReservation(offerId);
-
-        vm.warp(uint256(window) + 1);
-        vm.prank(makeAddr("anyKeeper"));
-        escrow.expireBtcReservation(offerId);
-        assertEq(_status(offerId), uint8(PuppetTypes.OfferStatus.BTC_APPROVED), "released by a stranger");
+        (bool ok,) = address(escrow).call(abi.encodeWithSignature("expireBtcReservation(bytes32)", offerId));
+        assertFalse(ok, "independent expiry selector must not exist");
+        assertEq(_status(offerId), uint8(PuppetTypes.OfferStatus.BTC_RESERVED), "state unchanged");
     }
 
-    function test_ABrokenSolverContractCannotTrapTheBuyersEscrow() public {
-        bytes32 offerId = _createBtc(0, 50_000);
-        _approveBtc(offerId, 0);
-        _reserve(offerId, 2 hours);
-
-        // The solver contract goes dark: its role is revoked and it can no longer clear anything.
+    function test_BtcSettlementCoordinatorCannotBeRevokedOrReplaced() public {
+        assertEq(escrow.btcSettlementCoordinator(), btcSettlement, "coordinator bound by first grant");
         vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                HoodPupOfferEscrow.BtcSettlementCoordinatorImmutable.selector, btcSettlement, btcSettlement
+            )
+        );
         escrow.revokeRole(roleBtcSettlement, btcSettlement);
-        // Governance also pauses the escrow, which is the worst realistic combination.
-        vm.prank(guardian);
-        escrow.pauseSettlement();
 
-        uint64 offerExpiry = escrow.getOffer(offerId).expiry;
-        vm.warp(uint256(offerExpiry) + 1);
-
-        // Because a reservation can never outlive the offer, an expired offer always has a lapsed
-        // reservation, so the permissionless release is always available.
-        escrow.expireBtcReservation(offerId);
-        escrow.refundExpired(offerId);
-
-        assertEq(_status(offerId), uint8(PuppetTypes.OfferStatus.REFUNDED), "refunded");
-        assertEq(vault.claimable(buyer), PRICE, "buyer made whole while paused and role-less");
+        address replacement = makeAddr("replacementCoordinator");
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                HoodPupOfferEscrow.BtcSettlementCoordinatorImmutable.selector, btcSettlement, replacement
+            )
+        );
+        escrow.grantRole(roleBtcSettlement, replacement);
     }
 
     function test_FinalizeBtcSettlementReimbursesTheSolverNotTheSeller() public {
@@ -1696,17 +1674,30 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         escrow.finalizeBtcSettlement(offerId, solver, keccak256("paymentDigest"));
     }
 
-    function test_FinalizeRejectsARootAnotherOfferAlreadyMinted() public {
+    function test_ActiveBtcReservationBlocksCompetingMintUntilFinalization() public {
         bytes32 btcOffer = _createBtc(0, 50_000);
         _approveBtc(btcOffer, 0);
         _reserve(btcOffer, 2 hours);
 
         bytes32 evmOffer = _createEvm(otherBuyer, 0, PRICE, recipient);
-        _settleEvm(evmOffer, 0);
+        PuppetTypes.OwnershipAttestation memory a = _evmAttestation(evmOffer, sellerPayout);
+        bytes[] memory sigs = _sign(a);
+        bytes32[] memory p = _proof(0);
 
-        vm.expectRevert(abi.encodeWithSelector(IHoodPupOfferEscrow.RootAlreadyMinted.selector, _rootKey(0)));
+        vm.prank(relayer);
+        vm.expectRevert(
+            abi.encodeWithSelector(IHoodPupOfferEscrow.RootReservationActive.selector, _rootKey(0), btcOffer)
+        );
+        escrow.settlePaidEvm(evmOffer, a, sigs, p);
+
+        assertFalse(nft.rootMinted(_rootKey(0)), "competitor cannot strand the solver");
+        assertEq(escrow.activeBtcOfferForRoot(_rootKey(0)), btcOffer, "mutex remains with reserved offer");
+
         vm.prank(btcSettlement);
         escrow.finalizeBtcSettlement(btcOffer, solver, keccak256("paymentDigest"));
+
+        assertTrue(nft.rootMinted(_rootKey(0)), "reserved offer finalizes");
+        assertEq(escrow.activeBtcOfferForRoot(_rootKey(0)), bytes32(0), "mutex released atomically");
     }
 
     function test_NoBtcOfferMintsBeforeFinalization() public {
@@ -1778,40 +1769,44 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
         escrow.refundExpired(offerId);
     }
 
-    function test_RefundUnfillableFromEveryNonTerminalStatus() public {
-        // Three losing offers, one per non-terminal status, then a competitor takes the Root.
+    function test_RefundUnfillableFromEveryEligibleNonTerminalStatus() public {
+        // Two losing offers, one per eligible status, then a competitor takes the Root.
         bytes32 openOffer = _createEvm(buyer, 0, 1 ether, recipient);
         bytes32 approvedOffer = _createBtc(0, 50_000);
         _approveBtc(approvedOffer, 0);
-        vm.prank(otherBuyer);
-        bytes32 reservedOffer = escrow.createPaidBtcOffer{value: 3 ether}(
-            roots[0], recipient, 60_000, uint64(block.timestamp) + 1 days, _proof(0)
-        );
-        _approveBtc(reservedOffer, 0);
-        _reserve(reservedOffer, 2 hours);
 
         bytes32 winner = _createEvm(otherBuyer, 0, 9 ether, recipient);
         _settleEvm(winner, 0);
 
         escrow.refundUnfillable(openOffer);
         escrow.refundUnfillable(approvedOffer);
-        // A reserved offer IS refundable once the Root is minted: finalization is structurally
-        // impossible from that point, so the reservation protects nobody. The dead reservation is
-        // released first so the terminal record never carries a solver that means nothing.
-        vm.expectEmit(true, true, false, true, address(escrow));
-        emit IHoodPupOfferEscrow.BtcReservationCleared(reservedOffer, solver);
-        escrow.refundUnfillable(reservedOffer);
-        PuppetTypes.Offer memory closed = escrow.getOffer(reservedOffer);
-        assertEq(closed.reservedSolver, address(0), "dead reservation released");
-        assertEq(closed.reservationExpiry, 0, "dead window released");
 
         assertEq(_status(openOffer), uint8(PuppetTypes.OfferStatus.REFUNDED), "open refunded");
         assertEq(_status(approvedOffer), uint8(PuppetTypes.OfferStatus.REFUNDED), "approved refunded");
-        assertEq(_status(reservedOffer), uint8(PuppetTypes.OfferStatus.REFUNDED), "reserved refunded");
         assertEq(vault.claimable(buyer), 1 ether + 1 ether, "buyer's two losing escrows returned");
-        assertEq(vault.claimable(otherBuyer), 3 ether, "other buyer's losing escrow returned");
         assertEq(escrow.lockedEscrowWei(), 0, "nothing left locked");
         assertEq(address(escrow).balance, 0, "escrow drained");
+    }
+
+    function test_RefundUnfillableRejectsReservedOfferAndPreservesMutex() public {
+        bytes32 offerId = _createBtc(0, 50_000);
+        _approveBtc(offerId, 0);
+        _reserve(offerId, 2 hours);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IHoodPupOfferEscrow.InvalidOfferStatus.selector,
+                offerId,
+                uint8(PuppetTypes.OfferStatus.BTC_RESERVED),
+                uint8(PuppetTypes.OfferStatus.OPEN)
+            )
+        );
+        escrow.refundUnfillable(offerId);
+
+        PuppetTypes.Offer memory current = escrow.getOffer(offerId);
+        assertEq(current.reservedSolver, solver, "solver remains protected");
+        assertEq(escrow.activeBtcOfferForRoot(current.rootKey), offerId, "Root mutex remains active");
+        assertEq(address(escrow).balance, PRICE, "buyer escrow remains reserved");
     }
 
     function test_RefundUnfillableRequiresTheRootToBeMinted() public {
@@ -2180,6 +2175,9 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
 
         // The most privileged possible actor does everything the contract lets them do.
         vm.startPrank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(HoodPupOfferEscrow.BtcSettlementCoordinatorImmutable.selector, btcSettlement, admin)
+        );
         escrow.grantRole(roleBtcSettlement, admin);
         escrow.grantRole(rolePauser, admin);
         escrow.pauseSettlement();

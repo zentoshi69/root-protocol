@@ -5,10 +5,10 @@
 | | |
 |---|---|
 | Source | `contracts/src/PuppetCollectionRegistry.sol` · 197 non-blank lines |
-| Flattened | `PuppetCollectionRegistry.flat.sol` · 1210 non-blank lines |
+| Flattened | `PuppetCollectionRegistry.flat.sol` · 1214 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `3998c3453761edda8adfd8563e94bcd2b20a9d84954a70fae7eaf08a6d0b7215` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `05b825b225202f06bef1834bb3272c2066d76a6c98ec4c78133d80ab35504c21` |
+| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -39,10 +39,8 @@ No admin, no owner, no upgrade path. The Merkle root is fixed at construction an
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

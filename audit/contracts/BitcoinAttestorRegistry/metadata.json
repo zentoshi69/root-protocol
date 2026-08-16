@@ -1,6 +1,6 @@
 {
   "contract": "BitcoinAttestorRegistry",
-  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "commit": "5d853a42604f54d71ffb0ac740302e5aa7e4adef",
   "compiler": {
     "solc": "0.8.28",
     "evmVersion": "shanghai",
@@ -10,13 +10,13 @@
   },
   "source": {
     "path": "contracts/src/BitcoinAttestorRegistry.sol",
-    "sha256": "353584e275d96a9b3ea73bcc4aa0f9b3493692451de35eb6d240efc19cdd210a",
-    "nonBlankLines": 301
+    "sha256": "9d65793f8343daaa09b308d3128ea049c63e83df27596712be2b4613b82c539d",
+    "nonBlankLines": 299
   },
   "flattened": {
     "path": "audit/contracts/BitcoinAttestorRegistry/BitcoinAttestorRegistry.flat.sol",
-    "sha256": "0bff02c1f066e03898eb4a89434d81621ec0072d467e33127ce8e28db3399a32",
-    "nonBlankLines": 1004,
+    "sha256": "e21a219e821ba25a0374a94740ccb632c3c08855995a4de2ef0e9d4e2be11988",
+    "nonBlankLines": 1002,
     "standaloneCompile": "verified"
   }
 }

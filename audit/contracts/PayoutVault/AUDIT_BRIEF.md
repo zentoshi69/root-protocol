@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/PayoutVault.sol` · 528 non-blank lines |
-| Flattened | `PayoutVault.flat.sol` · 4200 non-blank lines |
+| Source | `contracts/src/PayoutVault.sol` · 551 non-blank lines |
+| Flattened | `PayoutVault.flat.sol` · 4239 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `7966255100c46fc79af37644f7a14d0f35063fe04929163510e3b7d21bd2ad2e` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `8427a0dc5e54a2efd073bea283c9dd0f664af397104dbd48cf87003738bf3b63` |
+| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -24,7 +24,7 @@ Timelock admin, but no admin path can reduce a user balance — there is no such
 1. address(this).balance >= totalLiability() at all times
 2. totalLiability == sum(claimable) + sum(pendingByRoot)
 3. No withdrawal path is pausable
-4. creditRefund is deliberately NOT pausable — see finding H-1 in docs/SECURITY_REVIEW.md
+4. creditRefund and terminal credits are deliberately NOT pausable
 5. releaseRootCredit moves pendingByRoot to claimable without changing totalLiability or moving ETH
 
 ## Where to look first
@@ -43,10 +43,8 @@ Timelock admin, but no admin path can reduce a user balance — there is no such
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

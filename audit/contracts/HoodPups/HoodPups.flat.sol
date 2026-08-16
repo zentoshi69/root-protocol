@@ -252,6 +252,11 @@ library Panic {
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/
@@ -2098,6 +2103,12 @@ interface IHoodPups is IERC4907 {
 
     /// @notice Mint the single HoodPup for `root`. Requires `MINTER_ROLE`.
     function mintRooted(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
+
+    /// @notice Mint for an already-active BTC solver reservation even while ordinary minting is paused.
+    /// @dev Requires `MINTER_ROLE`. The authorized escrow exposes this only after consuming the
+    ///      matching Bitcoin-payment attestation, so this resolves existing risk rather than
+    ///      accepting a new mint obligation.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
 
     /// @notice True once a Root has produced its HoodPup. Permanent.
     function rootMinted(bytes32 rootKey) external view returns (bool);
@@ -4201,6 +4212,24 @@ contract HoodPups is IHoodPups, ERC721, AccessControl, ReentrancyGuard {
         returns (uint256 tokenId)
     {
         if (_mintingPaused) revert MintingPaused();
+        return _mintRooted(recipient, root);
+    }
+
+    /// @inheritdoc IHoodPups
+    /// @dev The only production holder of `MINTER_ROLE` is the immutable offer escrow, which calls
+    ///      this entry point solely to finish a BTC reservation whose solver may already have paid
+    ///      irreversible Bitcoin. Ordinary settlement continues through `mintRooted` and remains
+    ///      blocked by the incident pause.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root)
+        external
+        onlyRole(MINTER_ROLE)
+        nonReentrant
+        returns (uint256 tokenId)
+    {
+        return _mintRooted(recipient, root);
+    }
+
+    function _mintRooted(address recipient, PuppetTypes.RootId calldata root) private returns (uint256 tokenId) {
         if (recipient == address(0)) revert ZeroAddress();
         if (root.inscriptionTxid == bytes32(0)) revert ZeroRootTxid();
 

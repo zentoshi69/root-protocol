@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/HoodPupOfferEscrow.sol` · 959 non-blank lines |
-| Flattened | `HoodPupOfferEscrow.flat.sol` · 2453 non-blank lines |
+| Source | `contracts/src/HoodPupOfferEscrow.sol` · 989 non-blank lines |
+| Flattened | `HoodPupOfferEscrow.flat.sol` · 2510 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `99ac3216143a89b40cc1cdc427739008f6c570f1c1bc598ea8d98ad0497c36c2` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `c43cae74b4760064840f803f4f4545d596dc9bda5e3f1478e6d6e53718a015bc` |
+| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -25,8 +25,9 @@ Timelock admin, guardian pause. Buyers deliberately cannot cancel an open offer.
 2. No offer settles twice; no settled offer refunds
 3. No BTC offer mints before finalizeBtcSettlement
 4. One Root mints once, across competing offers
-5. Refunds remain available while paused
-6. The seller is paid the address inside the signed attestation and no other
+5. At most one active BTC reservation exists per Root, and every mint path consults that mutex
+6. Refunds remain available while paused
+7. The seller is paid the address inside the signed attestation and no other
 
 ## Where to look first
 
@@ -44,10 +45,8 @@ Timelock admin, guardian pause. Buyers deliberately cannot cancel an open offer.
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

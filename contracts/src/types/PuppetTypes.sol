@@ -14,6 +14,11 @@ pragma solidity 0.8.28;
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/

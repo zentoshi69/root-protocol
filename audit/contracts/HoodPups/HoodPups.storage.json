@@ -65,7 +65,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 59246,
+      "astId": 59575,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_nextTokenId",
       "offset": 0,
@@ -73,7 +73,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 59251,
+      "astId": 59580,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_tokenOfRoot",
       "offset": 0,
@@ -81,23 +81,23 @@
       "type": "t_mapping(t_bytes32,t_uint256)"
     },
     {
-      "astId": 59257,
+      "astId": 59586,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_rootOf",
       "offset": 0,
       "slot": "10",
-      "type": "t_mapping(t_uint256,t_struct(RootId)66148_storage)"
+      "type": "t_mapping(t_uint256,t_struct(RootId)66701_storage)"
     },
     {
-      "astId": 59263,
+      "astId": 59592,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_userInfo",
       "offset": 0,
       "slot": "11",
-      "type": "t_mapping(t_uint256,t_struct(UserInfo)59243_storage)"
+      "type": "t_mapping(t_uint256,t_struct(UserInfo)59572_storage)"
     },
     {
-      "astId": 59266,
+      "astId": 59595,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_baseTokenURI",
       "offset": 0,
@@ -105,7 +105,7 @@
       "type": "t_string_storage"
     },
     {
-      "astId": 59269,
+      "astId": 59598,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_collectionURI",
       "offset": 0,
@@ -113,7 +113,7 @@
       "type": "t_string_storage"
     },
     {
-      "astId": 59272,
+      "astId": 59601,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_metadataFrozen",
       "offset": 0,
@@ -121,7 +121,7 @@
       "type": "t_bool"
     },
     {
-      "astId": 59275,
+      "astId": 59604,
       "contract": "src/HoodPups.sol:HoodPups",
       "label": "_mintingPaused",
       "offset": 1,
@@ -187,19 +187,19 @@
       "numberOfBytes": "32",
       "value": "t_address"
     },
-    "t_mapping(t_uint256,t_struct(RootId)66148_storage)": {
+    "t_mapping(t_uint256,t_struct(RootId)66701_storage)": {
       "encoding": "mapping",
       "key": "t_uint256",
       "label": "mapping(uint256 => struct PuppetTypes.RootId)",
       "numberOfBytes": "32",
-      "value": "t_struct(RootId)66148_storage"
+      "value": "t_struct(RootId)66701_storage"
     },
-    "t_mapping(t_uint256,t_struct(UserInfo)59243_storage)": {
+    "t_mapping(t_uint256,t_struct(UserInfo)59572_storage)": {
       "encoding": "mapping",
       "key": "t_uint256",
       "label": "mapping(uint256 => struct HoodPups.UserInfo)",
       "numberOfBytes": "32",
-      "value": "t_struct(UserInfo)59243_storage"
+      "value": "t_struct(UserInfo)59572_storage"
     },
     "t_string_storage": {
       "encoding": "bytes",
@@ -229,13 +229,13 @@
         }
       ]
     },
-    "t_struct(RootId)66148_storage": {
+    "t_struct(RootId)66701_storage": {
       "encoding": "inplace",
       "label": "struct PuppetTypes.RootId",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 66145,
+          "astId": 66698,
           "contract": "src/HoodPups.sol:HoodPups",
           "label": "inscriptionTxid",
           "offset": 0,
@@ -243,7 +243,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66147,
+          "astId": 66700,
           "contract": "src/HoodPups.sol:HoodPups",
           "label": "inscriptionIndex",
           "offset": 0,
@@ -252,13 +252,13 @@
         }
       ]
     },
-    "t_struct(UserInfo)59243_storage": {
+    "t_struct(UserInfo)59572_storage": {
       "encoding": "inplace",
       "label": "struct HoodPups.UserInfo",
       "numberOfBytes": "32",
       "members": [
         {
-          "astId": 59240,
+          "astId": 59569,
           "contract": "src/HoodPups.sol:HoodPups",
           "label": "user",
           "offset": 0,
@@ -266,7 +266,7 @@
           "type": "t_address"
         },
         {
-          "astId": 59242,
+          "astId": 59571,
           "contract": "src/HoodPups.sol:HoodPups",
           "label": "expires",
           "offset": 20,

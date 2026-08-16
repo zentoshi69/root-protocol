@@ -94,7 +94,7 @@ Validate the payment attestation exactly matches:
 - amount sats equals offer’s exact seller sats;
 - attestation deadline valid;
 - reservation not expired;
-- offer still unexpired or define a clearly documented settlement grace window snapshotted at reservation;
+- the snapshotted Root-wide reservation is still live; it may extend beyond offer expiry up to the shared 30-day cap;
 - exact payment output has not been consumed.
 
 Consume the payment attestation through the oracle. Then atomically:
@@ -134,7 +134,10 @@ The contract must never read a BTC/ETH oracle. `sellerSats` and `sellerWei` were
 
 ## Pause behavior
 
-Pause new reservations. Do not block settlement of already paid BTC offers unless a critical oracle incident requires it; if settlement is paused, expiry/refund paths must remain available. Never block bond withdrawal credits already earned.
+Pause new reservations. Never block settlement of a reserved offer whose solver may already have
+paid BTC, reservation expiry, or terminal bond credits. Ordinary ownership consumption, ordinary
+minting and new vault credits may pause independently; the terminal BTC path must remain live
+through those pauses.
 
 ## Tests and invariants
 

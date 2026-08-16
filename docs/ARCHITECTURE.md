@@ -210,7 +210,9 @@ single design choice deletes oracle manipulation, BTC/ETH price disputes, slippa
 2. Bob signs an authorization naming his Bitcoin payout **script hash** and the fixed `sellerSats`.
 3. A 3-of-5 ownership attestation moves the offer to `BTC_APPROVED`. **Nothing is minted yet.**
 4. A solver posts a bond and reserves the offer, snapshotting the bond and slash terms so later
-   governance changes cannot retroactively alter an active reservation.
+   governance changes cannot retroactively alter an active reservation. The escrow atomically
+   acquires a Root-wide mutex, so no competing EVM, self-cast, or BTC offer can mint while the
+   solver takes irreversible Bitcoin-side risk.
 5. The solver sends exactly `sellerSats` to exactly that script, from its own operational wallet.
 6. Verifiers wait for the confirmation policy, then attest the precise `txid:vout`, script hash,
    sat amount, solver and offer.
@@ -218,7 +220,10 @@ single design choice deletes oracle manipulation, BTC/ETH price disputes, slippa
    settling seventeen HoodPups.
 8. Atomically: mint → reimburse the solver `sellerWei` → pay both treasuries → return the bond.
 9. If the solver times out, anyone may expire the reservation. The snapshotted bond is split
-   between buyer compensation and the protocol, and another solver may reserve.
+   between buyer compensation and the protocol, both state machines are released together, and
+   another solver may reserve. Settlement and expiry remain live through incident pauses because
+   they discharge obligations already accepted; pauses still block new reservations and ordinary
+   ownership/mint/credit entry points.
 
 Native BTC settlement is **feature-flagged off in production** until operational and legal review
 is complete.

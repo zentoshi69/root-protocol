@@ -43,6 +43,12 @@ interface IHoodPups is IERC4907 {
     /// @notice Mint the single HoodPup for `root`. Requires `MINTER_ROLE`.
     function mintRooted(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
 
+    /// @notice Mint for an already-active BTC solver reservation even while ordinary minting is paused.
+    /// @dev Requires `MINTER_ROLE`. The authorized escrow exposes this only after consuming the
+    ///      matching Bitcoin-payment attestation, so this resolves existing risk rather than
+    ///      accepting a new mint obligation.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
+
     /// @notice True once a Root has produced its HoodPup. Permanent.
     function rootMinted(bytes32 rootKey) external view returns (bool);
 

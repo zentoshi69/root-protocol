@@ -27,6 +27,11 @@ interface IPayoutVault {
     /// @notice Emitted alongside `Credited` when the credit is a refund, so indexers can tell a
     ///         buyer being made whole apart from a seller being paid.
     event RefundCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
+    /// @notice Emitted alongside `Credited` when an existing cross-chain obligation is finalized.
+    /// @dev Terminal credits deliberately remain executable while ordinary liability creation is
+    ///      paused. Authorized callers may use them only after the protocol has already incurred
+    ///      an irreversible obligation, such as a solver payment or a bond resolution.
+    event TerminalCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
     event RootCredited(bytes32 indexed rootKey, uint256 amount, address indexed creditor);
     event RootCreditReleased(bytes32 indexed rootKey, address indexed beneficiary, uint256 amount);
     event Withdrawn(address indexed beneficiary, address indexed recipient, uint256 amount);
@@ -58,11 +63,20 @@ interface IPayoutVault {
     ///      new one, so the credit pause must not reach it (protocol invariant I12).
     function creditRefund(address beneficiary) external payable;
 
+    /// @notice Credit an obligation that existed before the current transaction.
+    /// @dev Requires `CREDITOR_ROLE`. Deliberately NOT pausable so incident response cannot strand
+    ///      a solver after an irreversible Bitcoin payment or block terminal bond accounting.
+    function creditTerminal(address beneficiary) external payable;
+
     /// @notice Credit a Root's pending bucket with `msg.value`. Requires `CREDITOR_ROLE`.
     function creditRoot(bytes32 rootKey) external payable;
 
     /// @notice Credit several beneficiaries in one call. `sum(amounts)` must equal `msg.value`.
     function creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
+
+    /// @notice Batch form of `creditTerminal`; `sum(amounts)` must equal `msg.value`.
+    /// @dev Requires `CREDITOR_ROLE` and deliberately remains live while paused.
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
 
     /// @notice Move a Root's pending bucket to a newly verified beneficiary's claimable balance.
     /// @dev Pure bookkeeping: no ETH moves and `totalLiability` is unchanged.

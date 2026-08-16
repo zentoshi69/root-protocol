@@ -33,6 +33,13 @@ SOLC_VERSION="0.8.28"
 EVM_VERSION="shanghai"
 OPTIMIZER_RUNS="800"
 
+sha256_file() {
+  python3 - "$1" <<'PY'
+import hashlib, pathlib, sys
+print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+}
+
 BUNDLE_NAME="HoodPupsProtocol.flat.sol"
 
 # Deployment-dependency order, not alphabetical: a reader meets each contract after the things it
@@ -92,9 +99,9 @@ evm_version = "$EVM_VERSION"
 optimizer = true
 optimizer_runs = $OPTIMIZER_RUNS
 TOML
-if ! (cd "$SCRATCH" && forge build --silent 2>/dev/null); then
+if ! (cd "$SCRATCH" && forge build --offline --silent 2>/dev/null); then
   echo "!!  single-file bundle does NOT compile standalone — refusing to emit it" >&2
-  (cd "$SCRATCH" && forge build 2>&1 | tail -30) >&2
+  (cd "$SCRATCH" && forge build --offline 2>&1 | tail -30) >&2
   rm -rf "$SCRATCH" "$RAW"
   exit 1
 fi
@@ -148,9 +155,9 @@ evm_version = "$EVM_VERSION"
 optimizer = true
 optimizer_runs = $OPTIMIZER_RUNS
 TOML
-if ! (cd "$SCRATCH2" && forge build --silent 2>/dev/null); then
+if ! (cd "$SCRATCH2" && forge build --offline --silent 2>/dev/null); then
   echo "!!  the headed bundle does NOT compile — the header broke it" >&2
-  (cd "$SCRATCH2" && forge build 2>&1 | tail -30) >&2
+  (cd "$SCRATCH2" && forge build --offline 2>&1 | tail -30) >&2
   rm -rf "$SCRATCH2"
   exit 1
 fi
@@ -178,7 +185,7 @@ with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
             print(f"    {f.name:<28} {f.stat().st_size:>9,} bytes")
 PYEOF
 
-ZIP_SHA="$(sha256sum "$ZIP" | cut -d' ' -f1)"
+ZIP_SHA="$(sha256_file "$ZIP")"
 echo
 echo "==> $ZIP"
 echo "    $(du -h "$ZIP" | cut -f1)  sha256 $ZIP_SHA"

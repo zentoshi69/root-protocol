@@ -124,6 +124,7 @@ library DeployLib {
     error RoleMissing(address contractAddress, bytes32 role, address holder);
     error PurposeMissing(address consumer, uint8 purpose);
     error UnexpectedPurposeGranted(address consumer, uint8 purpose);
+    error BtcSettlementCoordinatorMismatch(address expected, address actual);
 
     /// @notice Deploy all ten contracts in dependency order.
     function deployAll(DeployParams memory p, DeployConfig.Config memory cfg) internal returns (Deployment memory d) {
@@ -370,6 +371,10 @@ library DeployLib {
             address(d.solver),
             d.escrow.hasRole(d.escrow.BTC_SETTLEMENT_ROLE(), address(d.solver))
         );
+        address coordinator = d.escrow.btcSettlementCoordinator();
+        if (coordinator != address(d.solver)) {
+            revert BtcSettlementCoordinatorMismatch(address(d.solver), coordinator);
+        }
 
         // Purpose masks, not just roles. A deployment with the roles but empty masks would pass a
         // role-only audit and then fail on the first real settlement — which is precisely the class
