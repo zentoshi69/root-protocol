@@ -4,10 +4,10 @@ Everything the protocol deploys, in one compilation unit.
 
 | | |
 |---|---|
-| Commit | `64fe0d1ba8588d8d5f04f577b846c6d44f96b2e1` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Bundle | `HoodPupsProtocol.flat.sol` |
-| SHA-256 | `34312f5298862bb29d7c999d12cbb8cab874a76d02465543b607120185cfb9b1` |
-| Lines | 12,822 (11,327 non-blank) |
+| SHA-256 | `2e8ea97f274e60677a05a1a98bc2145738280de73378c29754d4411c2a1f83eb` |
+| Lines | 12,980 (11,464 non-blank) |
 | Contracts | 10 protocol, 10 interfaces, 2 type/hash libraries, 32 vendored dependencies |
 | Compiler | solc 0.8.28, evm `shanghai`, optimizer on at 800 runs, no viaIR |
 
@@ -48,10 +48,10 @@ because an auditor who discovers it on page 40 has already wasted the first 39.
 
 | Order | Contract | Line | Why |
 |---|---|---|---|
-| 1 | `BitcoinOwnershipOracle` | 11,495 | Quorum verification, replay protection, one-time digest consumption. Everything else trusts this. |
-| 2 | `HoodPupOfferEscrow` | 9,895 | The money path — offers, settlement, refunds, and the state machine between them. |
-| 3 | `PayoutVault` | 12,249 | Pull-payment accounting. Refunds must survive a pause; a stuck refund is a lost user. |
-| 4 | `RootOwnershipRegistry` | 8,814 | The one-root-one-pup invariant and ownership epochs. |
+| 1 | `BitcoinOwnershipOracle` | 11,616 | Quorum verification, replay protection, one-time digest consumption. Everything else trusts this. |
+| 2 | `HoodPupOfferEscrow` | 9,954 | The money path — offers, settlement, refunds, and the state machine between them. |
+| 3 | `PayoutVault` | 12,381 | Pull-payment accounting. Refunds must survive a pause; a stuck refund is a lost user. |
+| 4 | `RootOwnershipRegistry` | 8,854 | The one-root-one-pup invariant and ownership epochs. |
 
 ## Invariants the protocol claims
 
@@ -61,39 +61,41 @@ expect it to be, that is the finding.
 1. One canonical root inscription binds to at most one HoodPup token, ever.
 2. No Bitcoin fact is accepted below the quorum threshold, and no attestation digest is ever
    consumed twice.
-3. Paid settlement splits exactly 50/25/25 — seller, Puppet treasury, protocol — with no rounding
-   dust stranded or double-counted.
-4. Refunds and withdrawals remain available while the protocol is paused. Pausing stops the protocol
-   taking on **new** obligations; it must never trap funds a user is already owed.
+3. Paid settlement applies 50/25/25 with floor rounding for the seller and Puppet treasury and the
+   protocol receiving the remainder, so the three shares equal gross for every wei input.
+4. Refunds, withdrawals and terminal resolution of active BTC reservations remain available while
+   paused. Pausing stops **new** obligations; it must never trap funds or irreversible BTC risk the
+   protocol already accepted.
 5. The core contracts are non-upgradeable. No proxy, no delegatecall to mutable code, no admin path
    that rewrites settled state.
 
 Invariant 4 is worth dwelling on: it was violated once during development in a way that all
 single-contract tests passed. `PayoutVault.credit` is pausable and `withdraw` is not, which is
 correct in isolation — but refunds routed through `credit`, so pausing the vault silently blocked
-them. The fix was a separate non-pausable `creditRefund` entry point. Seams between contracts are
-where the remaining bugs will be.
+them. The fix was a separate non-pausable `creditRefund` entry point. The same rule now covers
+active BTC payment consumption, finalization, terminal minting and terminal vault crediting. Seams
+between contracts are still where reviewers should look first.
 
 ## Full contract index
 
 The bundle's own header carries a line-numbered table of contents for all declarations, including
 the vendored dependencies. The 10 protocol contracts are:
 
-1. `PuppetCollectionRegistry` — line 6,088
-2. `BitcoinAttestorRegistry` — line 6,315
-3. `BitcoinOwnershipOracle` — line 11,495
-4. `PayoutVault` — line 12,249
-5. `RootOwnershipRegistry` — line 8,814
-6. `FeeRouter` — line 6,828
-7. `HoodPups` — line 10,939
-8. `HoodPupOfferEscrow` — line 9,895
-9. `BtcSolverSettlement` — line 8,011
-10. `TourEngine` — line 7,395
+1. `PuppetCollectionRegistry` — line 6,121
+2. `BitcoinAttestorRegistry` — line 6,348
+3. `BitcoinOwnershipOracle` — line 11,616
+4. `PayoutVault` — line 12,381
+5. `RootOwnershipRegistry` — line 8,854
+6. `FeeRouter` — line 6,859
+7. `HoodPups` — line 11,040
+8. `HoodPupOfferEscrow` — line 9,954
+9. `BtcSolverSettlement` — line 8,053
+10. `TourEngine` — line 7,437
 
 ## What is NOT in this bundle
 
-- **Tests.** 836 Solidity tests (unit, fuzz, and handler-based stateful invariant) and 250
-  TypeScript tests live in the repository, not here.
+- **Tests.** Solidity unit, fuzz, handler-based stateful invariant and full-deployment integration
+  suites, plus TypeScript tests, live in the repository rather than this artifact.
 - **Off-chain services.** The Bitcoin verifier, attestor, relayer, and BTC solver are TypeScript and
   are out of scope for a Solidity review — but note that the quorum's honesty is enforced there, so
   a complete assessment of the trust model has to read them too.

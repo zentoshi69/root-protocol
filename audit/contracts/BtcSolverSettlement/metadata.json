@@ -1,6 +1,6 @@
 {
   "contract": "BtcSolverSettlement",
-  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
   "compiler": {
     "solc": "0.8.28",
     "evmVersion": "shanghai",
@@ -10,13 +10,13 @@
   },
   "source": {
     "path": "contracts/src/BtcSolverSettlement.sol",
-    "sha256": "baa6dde3664cee601e186710b10456da638377dad3c1eb5e27108713982708ed",
-    "nonBlankLines": 696
+    "sha256": "84796306d2dd634dc34dc6e11a00c18502ebba7a22e7abf9414915e15b41be2f",
+    "nonBlankLines": 694
   },
   "flattened": {
     "path": "audit/contracts/BtcSolverSettlement/BtcSolverSettlement.flat.sol",
-    "sha256": "118cd02a5056545b6e1d91d71c9184d61777b6e879568fbbd9dbd623097fd104",
-    "nonBlankLines": 1812,
+    "sha256": "d51167292602284ef39de8915d9d9721d16c1489f2cda2c3a573ad8c3f8ce443",
+    "nonBlankLines": 1831,
     "standaloneCompile": "verified"
   }
 }

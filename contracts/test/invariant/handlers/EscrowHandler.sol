@@ -236,8 +236,7 @@ contract EscrowHandler is CommonBase, StdCheats, StdUtils {
         if (block.timestamp >= o.expiry) return;
 
         uint64 cap = uint64(block.timestamp) + ESCROW.MAX_RESERVATION_WINDOW();
-        uint64 ceiling = cap < o.expiry ? cap : o.expiry;
-        uint64 window = uint64(_bound(windowSeed, block.timestamp + 1, ceiling));
+        uint64 window = uint64(_bound(windowSeed, block.timestamp + 1, cap));
 
         try ESCROW.markBtcReserved(offerId, solvers[_bound(solverSeed, 0, 1)], window) {
             reservationsSeen++;
@@ -251,11 +250,12 @@ contract EscrowHandler is CommonBase, StdCheats, StdUtils {
         try ESCROW.clearBtcReservation(offerId) {} catch {}
     }
 
-    /// @notice Release a lapsed reservation permissionlessly.
-    function expireBtcReservation(uint256 offerSeed) external {
-        (bytes32 offerId,, bool ok) = _pick(offerSeed);
-        if (!ok) return;
-        try ESCROW.expireBtcReservation(offerId) {
+    /// @notice Model the canonical coordinator's permissionless expiry resolution.
+    function expireReservation(uint256 offerSeed) external {
+        (bytes32 offerId, PuppetTypes.Offer memory o, bool ok) = _pick(offerSeed);
+        if (!ok || o.status != uint8(PuppetTypes.OfferStatus.BTC_RESERVED)) return;
+        if (block.timestamp <= o.reservationExpiry) return;
+        try ESCROW.clearBtcReservation(offerId) {
             expiredReservationsSeen++;
         } catch {}
     }

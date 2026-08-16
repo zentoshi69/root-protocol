@@ -90,10 +90,11 @@ Disagreement is a **feature firing**, not a fault. Do not "fix" it by overriding
 4. Never ask an operator to sign a fact its own verification rejected. That is the exact behaviour
    the 3-of-5 design exists to prevent.
 
-### Adding or removing an attestor
+### Rotating an attestor
 
-Timelocked. See [`KEY_ROTATION.md`](./KEY_ROTATION.md). Every mutation bumps `attestorEpoch`, which
-invalidates every in-flight signature — announce a quiet window first.
+Timelocked and atomic through `replaceAttestor`. The set cannot grow or shrink from exactly five.
+Every rotation bumps `attestorEpoch`, which invalidates every in-flight signature — announce a
+quiet window first.
 
 ### Rotating a treasury address
 

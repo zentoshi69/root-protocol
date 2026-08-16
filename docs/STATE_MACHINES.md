@@ -34,8 +34,8 @@ test. Anything not drawn here is an illegal transition.
                                                  │
    OPEN ──────── expiry ──────────► REFUNDED     │
    BTC_APPROVED ─ expiry ─────────► REFUNDED     │
-   any non-settled ─ root minted elsewhere ─► REFUNDED
-   BTC_RESERVED ── must clear reservation first ─┘
+   OPEN / BTC_APPROVED ─ root minted elsewhere ─► REFUNDED
+   BTC_RESERVED ── only canonical settle or expiry may release it ─┘
 ```
 
 ### Transition table
@@ -48,11 +48,11 @@ test. Anything not drawn here is an illegal transition.
 | `OPEN` | `settlePaidEvm` | purpose `PAID_EVM_MINT`, all terms match exactly, payout mode EVM, unexpired, root unminted | `SETTLED` |
 | `OPEN` | `settleSelfCast` | purpose `SELF_CAST`, zero monetary fields, unexpired, root unminted | `SETTLED` |
 | `OPEN` | `approvePaidBtc` | purpose `PAID_BTC_MINT`, terms match, payout mode BTC, sats match, unexpired | `BTC_APPROVED` |
-| `BTC_APPROVED` | `markBtcReserved` | `BTC_SETTLEMENT_ROLE`, bond posted | `BTC_RESERVED` |
+| `BTC_APPROVED` | `markBtcReserved` | sole `BTC_SETTLEMENT_ROLE` coordinator, bond posted, Root unminted and no active Root mutex, shared window ≤ 30 days | `BTC_RESERVED` |
 | `BTC_RESERVED` | `finalizeBtcSettlement` | `BTC_SETTLEMENT_ROLE`, exact active solver, payment quorum consumed | `SETTLED` |
-| `BTC_RESERVED` | `clearBtcReservation` | `BTC_SETTLEMENT_ROLE`, reservation expired | `BTC_APPROVED` |
+| `BTC_RESERVED` | `clearBtcReservation` | sole coordinator, called atomically from permissionless solver expiry | `BTC_APPROVED` |
 | `OPEN` / `BTC_APPROVED` | `refundExpired` | `block.timestamp > expiry` | `REFUNDED` |
-| any non-terminal | `refundUnfillable` | root already minted by another offer | `REFUNDED` |
+| `OPEN` / `BTC_APPROVED` | `refundUnfillable` | root already minted by another offer | `REFUNDED` |
 | `SETTLED` | — | terminal | — |
 | `REFUNDED` | — | terminal | — |
 
@@ -65,8 +65,9 @@ refundability if a competing offer mints the Root first.
 
 ### Pause behaviour
 
-`Pausable` blocks `create*` and `settle*`/`approve*`. It **never** blocks `refundExpired`,
-`refundUnfillable`, or any `PayoutVault` withdrawal.
+`Pausable` blocks `create*`, ordinary EVM/self-cast settlement, BTC approval and new reservations.
+It **never** blocks refunds or canonical BTC finalization/expiry. Terminal BTC minting and vault
+accounting remain live even if their ordinary entry points are paused.
 
 ## 2. Solver reservation (`BtcSolverSettlement`)
 
@@ -86,6 +87,12 @@ refundability if a competing offer mints the Root first.
 | `ACTIVE` | `settle` | `msg.sender` is the reserved solver, attestation matches offer exactly, reservation unexpired, payment output unconsumed | `SETTLED` |
 | `ACTIVE` | `expireReservation` | `block.timestamp > reservationExpiry` | `EXPIRED` |
 | `EXPIRED` | `reserve` (a different solver) | offer still `BTC_APPROVED` and unexpired | `ACTIVE` |
+
+The escrow also owns a Root-wide mutex: an `ACTIVE` reservation corresponds to exactly one
+`BTC_RESERVED` offer with the same solver and expiry, and every competing EVM, self-cast, or BTC
+mint for that Root is blocked until settlement or expiry releases it. A reservation created while
+the offer is live keeps its complete snapshotted window even if that window extends beyond the
+offer expiry, bounded by the shared 30-day maximum.
 
 **Snapshotting.** `bondWei`, `reservationExpiry` and `buyerSlashBps` are copied into the
 `Reservation` at reserve time. Later timelocked config changes therefore cannot retroactively alter
@@ -125,8 +132,8 @@ admin forgiveness for individual reservations — that would be a rug lever.
 | Transition | Caller | Key guards |
 |---|---|---|
 | → epoch 1 | escrow (`MINT_RECORDER_ROLE`) | no existing active epoch; facts bound exactly as the oracle accepted them |
-| → epoch N+1 | anyone | purpose `ROOT_BIND`, EVM payout mode, beneficiary ≠ 0, root matches, new outpoint **or** currently inactive, Bitcoin height not older than current |
-| active → inactive | anyone | attested `previousOutpointHash` == recorded `currentOutpointHash`, root active, spend height ≥ activation height |
+| → epoch N+1 | anyone | purpose `ROOT_BIND`, EVM payout mode, beneficiary ≠ 0, root matches, new outpoint **or** currently inactive, Bitcoin height not older than current; equal height must name the same block hash |
+| active → inactive | anyone | attested `previousOutpointHash` == recorded `currentOutpointHash`, root active, spend height ≥ activation height; equal height must name the same block hash |
 
 Invariants: at most one active beneficiary per root; `epoch` is strictly monotonic; an inactive
 root has no active beneficiary; historical `RootEpochInfo` is never rewritten.
@@ -143,7 +150,8 @@ root has no active beneficiary; historical `RootEpochInfo` is never rewritten.
         │ consume* (role-gated: OWNERSHIP / PAYMENT / ROOT_SPEND consumer)
         ▼
    digest consumed  ── permanent, irreversible
-   (payment path also consumes paymentOutputKey — permanent, global)
+   (payment path also consumes paymentOutputKey — permanent, global, and remains live for
+    terminal BTC resolution while ordinary ownership/spend consumption is paused)
 ```
 
 Every consumption path checks, in order:

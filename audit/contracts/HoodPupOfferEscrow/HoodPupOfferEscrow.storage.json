@@ -25,15 +25,15 @@
       "type": "t_uint256"
     },
     {
-      "astId": 56838,
+      "astId": 56958,
       "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
       "label": "_offers",
       "offset": 0,
       "slot": "3",
-      "type": "t_mapping(t_bytes32,t_struct(Offer)66284_storage)"
+      "type": "t_mapping(t_bytes32,t_struct(Offer)66837_storage)"
     },
     {
-      "astId": 56842,
+      "astId": 56962,
       "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
       "label": "_buyerNonce",
       "offset": 0,
@@ -41,11 +41,27 @@
       "type": "t_mapping(t_address,t_uint256)"
     },
     {
-      "astId": 56845,
+      "astId": 56967,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_activeBtcOfferForRoot",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_mapping(t_bytes32,t_bytes32)"
+    },
+    {
+      "astId": 56970,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_btcSettlementCoordinator",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_address"
+    },
+    {
+      "astId": 56973,
       "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
       "label": "_lockedEscrowWei",
       "offset": 0,
-      "slot": "5",
+      "slot": "7",
       "type": "t_uint256"
     }
   ],
@@ -79,12 +95,19 @@
       "numberOfBytes": "32",
       "value": "t_uint256"
     },
-    "t_mapping(t_bytes32,t_struct(Offer)66284_storage)": {
+    "t_mapping(t_bytes32,t_bytes32)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => bytes32)",
+      "numberOfBytes": "32",
+      "value": "t_bytes32"
+    },
+    "t_mapping(t_bytes32,t_struct(Offer)66837_storage)": {
       "encoding": "mapping",
       "key": "t_bytes32",
       "label": "mapping(bytes32 => struct PuppetTypes.Offer)",
       "numberOfBytes": "32",
-      "value": "t_struct(Offer)66284_storage"
+      "value": "t_struct(Offer)66837_storage"
     },
     "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
       "encoding": "mapping",
@@ -93,13 +116,13 @@
       "numberOfBytes": "32",
       "value": "t_struct(RoleData)39381_storage"
     },
-    "t_struct(Offer)66284_storage": {
+    "t_struct(Offer)66837_storage": {
       "encoding": "inplace",
       "label": "struct PuppetTypes.Offer",
       "numberOfBytes": "448",
       "members": [
         {
-          "astId": 66247,
+          "astId": 66800,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "buyer",
           "offset": 0,
@@ -107,7 +130,7 @@
           "type": "t_address"
         },
         {
-          "astId": 66249,
+          "astId": 66802,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "recipient",
           "offset": 0,
@@ -115,7 +138,7 @@
           "type": "t_address"
         },
         {
-          "astId": 66251,
+          "astId": 66804,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "rootKey",
           "offset": 0,
@@ -123,7 +146,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66253,
+          "astId": 66806,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "rootTxid",
           "offset": 0,
@@ -131,7 +154,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66255,
+          "astId": 66808,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "rootIndex",
           "offset": 0,
@@ -139,7 +162,7 @@
           "type": "t_uint32"
         },
         {
-          "astId": 66257,
+          "astId": 66810,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "grossWei",
           "offset": 0,
@@ -147,7 +170,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 66259,
+          "astId": 66812,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "sellerWei",
           "offset": 0,
@@ -155,7 +178,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 66261,
+          "astId": 66814,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "treasuryWei",
           "offset": 0,
@@ -163,7 +186,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 66263,
+          "astId": 66816,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "protocolWei",
           "offset": 0,
@@ -171,7 +194,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 66265,
+          "astId": 66818,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "sellerSats",
           "offset": 0,
@@ -179,7 +202,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66267,
+          "astId": 66820,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "createdAt",
           "offset": 8,
@@ -187,7 +210,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66269,
+          "astId": 66822,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "expiry",
           "offset": 16,
@@ -195,7 +218,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66271,
+          "astId": 66824,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "kind",
           "offset": 24,
@@ -203,7 +226,7 @@
           "type": "t_uint8"
         },
         {
-          "astId": 66273,
+          "astId": 66826,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "status",
           "offset": 25,
@@ -211,7 +234,7 @@
           "type": "t_uint8"
         },
         {
-          "astId": 66275,
+          "astId": 66828,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "termsHash",
           "offset": 0,
@@ -219,7 +242,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66277,
+          "astId": 66830,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "ownershipDigest",
           "offset": 0,
@@ -227,7 +250,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66279,
+          "astId": 66832,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "btcPayoutScriptHash",
           "offset": 0,
@@ -235,7 +258,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66281,
+          "astId": 66834,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "reservedSolver",
           "offset": 0,
@@ -243,7 +266,7 @@
           "type": "t_address"
         },
         {
-          "astId": 66283,
+          "astId": 66836,
           "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
           "label": "reservationExpiry",
           "offset": 20,

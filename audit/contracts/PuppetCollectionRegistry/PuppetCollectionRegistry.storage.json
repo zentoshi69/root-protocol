@@ -1,7 +1,7 @@
 {
   "storage": [
     {
-      "astId": 61112,
+      "astId": 61547,
       "contract": "src/PuppetCollectionRegistry.sol:PuppetCollectionRegistry",
       "label": "_manifestVersion",
       "offset": 0,

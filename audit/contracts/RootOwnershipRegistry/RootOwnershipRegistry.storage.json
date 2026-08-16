@@ -25,20 +25,20 @@
       "type": "t_uint256"
     },
     {
-      "astId": 61482,
+      "astId": 61917,
       "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
       "label": "_rootState",
       "offset": 0,
       "slot": "3",
-      "type": "t_mapping(t_bytes32,t_struct(RootState)66306_storage)"
+      "type": "t_mapping(t_bytes32,t_struct(RootState)66859_storage)"
     },
     {
-      "astId": 61490,
+      "astId": 61925,
       "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
       "label": "_rootEpochInfo",
       "offset": 0,
       "slot": "4",
-      "type": "t_mapping(t_bytes32,t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage))"
+      "type": "t_mapping(t_bytes32,t_mapping(t_uint64,t_struct(RootEpochInfo)66877_storage))"
     }
   ],
   "types": {
@@ -64,12 +64,12 @@
       "numberOfBytes": "32",
       "value": "t_bool"
     },
-    "t_mapping(t_bytes32,t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage))": {
+    "t_mapping(t_bytes32,t_mapping(t_uint64,t_struct(RootEpochInfo)66877_storage))": {
       "encoding": "mapping",
       "key": "t_bytes32",
       "label": "mapping(bytes32 => mapping(uint64 => struct PuppetTypes.RootEpochInfo))",
       "numberOfBytes": "32",
-      "value": "t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage)"
+      "value": "t_mapping(t_uint64,t_struct(RootEpochInfo)66877_storage)"
     },
     "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
       "encoding": "mapping",
@@ -78,19 +78,19 @@
       "numberOfBytes": "32",
       "value": "t_struct(RoleData)39381_storage"
     },
-    "t_mapping(t_bytes32,t_struct(RootState)66306_storage)": {
+    "t_mapping(t_bytes32,t_struct(RootState)66859_storage)": {
       "encoding": "mapping",
       "key": "t_bytes32",
       "label": "mapping(bytes32 => struct PuppetTypes.RootState)",
       "numberOfBytes": "32",
-      "value": "t_struct(RootState)66306_storage"
+      "value": "t_struct(RootState)66859_storage"
     },
-    "t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage)": {
+    "t_mapping(t_uint64,t_struct(RootEpochInfo)66877_storage)": {
       "encoding": "mapping",
       "key": "t_uint64",
       "label": "mapping(uint64 => struct PuppetTypes.RootEpochInfo)",
       "numberOfBytes": "32",
-      "value": "t_struct(RootEpochInfo)66324_storage"
+      "value": "t_struct(RootEpochInfo)66877_storage"
     },
     "t_struct(RoleData)39381_storage": {
       "encoding": "inplace",
@@ -115,13 +115,13 @@
         }
       ]
     },
-    "t_struct(RootEpochInfo)66324_storage": {
+    "t_struct(RootEpochInfo)66877_storage": {
       "encoding": "inplace",
       "label": "struct PuppetTypes.RootEpochInfo",
       "numberOfBytes": "160",
       "members": [
         {
-          "astId": 66309,
+          "astId": 66862,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "beneficiary",
           "offset": 0,
@@ -129,7 +129,7 @@
           "type": "t_address"
         },
         {
-          "astId": 66311,
+          "astId": 66864,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "outpointHash",
           "offset": 0,
@@ -137,7 +137,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66313,
+          "astId": 66866,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "ownerScriptHash",
           "offset": 0,
@@ -145,7 +145,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66315,
+          "astId": 66868,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "activatedAtBitcoinHeight",
           "offset": 0,
@@ -153,7 +153,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66317,
+          "astId": 66870,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "activatedAtBlockTimestamp",
           "offset": 8,
@@ -161,7 +161,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66319,
+          "astId": 66872,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "deactivatedAtBitcoinHeight",
           "offset": 16,
@@ -169,7 +169,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66321,
+          "astId": 66874,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "deactivatedAtBlockTimestamp",
           "offset": 24,
@@ -177,7 +177,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66323,
+          "astId": 66876,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "ownershipDigest",
           "offset": 0,
@@ -186,13 +186,13 @@
         }
       ]
     },
-    "t_struct(RootState)66306_storage": {
+    "t_struct(RootState)66859_storage": {
       "encoding": "inplace",
       "label": "struct PuppetTypes.RootState",
       "numberOfBytes": "288",
       "members": [
         {
-          "astId": 66287,
+          "astId": 66840,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "epoch",
           "offset": 0,
@@ -200,7 +200,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66289,
+          "astId": 66842,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "active",
           "offset": 8,
@@ -208,7 +208,7 @@
           "type": "t_bool"
         },
         {
-          "astId": 66291,
+          "astId": 66844,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "currentOutpointHash",
           "offset": 0,
@@ -216,7 +216,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66293,
+          "astId": 66846,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "ownerScriptHash",
           "offset": 0,
@@ -224,7 +224,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66295,
+          "astId": 66848,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "beneficiary",
           "offset": 0,
@@ -232,7 +232,7 @@
           "type": "t_address"
         },
         {
-          "astId": 66297,
+          "astId": 66850,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "ownershipDigest",
           "offset": 0,
@@ -240,7 +240,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66299,
+          "astId": 66852,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "bip322ProofHash",
           "offset": 0,
@@ -248,7 +248,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66301,
+          "astId": 66854,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "verifiedBitcoinHeight",
           "offset": 0,
@@ -256,7 +256,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 66303,
+          "astId": 66856,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "lastBitcoinBlockHash",
           "offset": 0,
@@ -264,7 +264,7 @@
           "type": "t_bytes32"
         },
         {
-          "astId": 66305,
+          "astId": 66858,
           "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
           "label": "invalidatingSpendTxid",
           "offset": 0,

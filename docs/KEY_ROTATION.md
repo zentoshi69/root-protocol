@@ -47,8 +47,8 @@ Suspected or confirmed compromise. **Speed beats process.**
    - **One key** — quorum still needs two more. Serious, not yet an emergency for the protocol.
    - **Two keys** — one away from quorum. Treat as SEV-1.
    - **Three keys** — the quorum is compromised. Pause oracle consumption now, rotate after.
-3. Queue `replaceAttestor` (or `removeAttestor` if no replacement is ready — the set must stay at
-   five or more, so removal is only available above the minimum).
+3. Queue `replaceAttestor`. The set is fixed at exactly five, so removal without an atomic
+   replacement is deliberately impossible. If no replacement is ready, keep consumption paused.
 4. If the timelock delay is intolerable given the blast radius, the guardian pauses oracle
    consumption while the timelock runs. Pausing consumption does not block refunds or withdrawals.
 5. Audit every digest consumed since the earliest possible compromise. Cross-reference the

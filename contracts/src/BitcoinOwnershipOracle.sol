@@ -52,7 +52,9 @@ import {PuppetTypes} from "./types/PuppetTypes.sol";
 ///      NON-UPGRADEABLE by construction: no proxy, no initializer, no `delegatecall`, no
 ///      `selfdestruct`, no `tx.origin`. This contract holds no value, has no payable function, and
 ///      has no admin path that can move, seize or reduce anyone's balance — the only thing an admin
-///      can do is decide WHO may consume, and pause consumption.
+///      can do is decide WHO may consume, and pause new ownership/spend consumption. Payment
+///      consumption remains live because it finalizes an obligation incurred when a solver paid
+///      irreversible BTC.
 ///
 ///      NO `ReentrancyGuard`, DELIBERATELY. No value moves here and every external call this
 ///      contract makes is a `view` into one of two immutable, protocol-owned registries fixed at
@@ -86,7 +88,7 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     /// @notice May consume root-spend attestations. Held by `RootOwnershipRegistry`.
     bytes32 public constant ROOT_SPEND_CONSUMER_ROLE = keccak256("ROOT_SPEND_CONSUMER_ROLE");
 
-    /// @notice May pause consumption. Held by the guardian multisig.
+    /// @notice May pause new ownership and spend consumption. Held by the guardian multisig.
     /// @dev Asymmetric by design: the guardian pauses, `DEFAULT_ADMIN_ROLE` (the timelock)
     ///      unpauses. A compromised guardian can therefore only cost liveness, never authority.
     ///      This mirrors `docs/PAUSE_AND_RECOVERY.md`, which states the asymmetry as policy; this
@@ -452,14 +454,14 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     ///      failure this contract could permit — a solver would be reimbursed twice for one
     ///      payment — and `_consumedPaymentOutputs` is global rather than per-offer precisely so
     ///      that the second attempt fails no matter which offer, solver or attestation set
-    ///      presents it.
+    ///      presents it. Deliberately NOT pausable: only `BtcSolverSettlement` holds the consumer
+    ///      role, and it reaches this function after a solver may have paid irreversible BTC.
     /// @param a The Bitcoin payment attestation.
     /// @param signatures Attestor signatures, strictly ascending by recovered signer.
     /// @return digest The digest that was consumed.
     /// @return paymentOutputKey The Bitcoin output key that was consumed.
     function consumeBitcoinPayment(PuppetTypes.BitcoinPaymentAttestation calldata a, bytes[] calldata signatures)
         external
-        whenNotPaused
         onlyRole(PAYMENT_CONSUMER_ROLE)
         returns (bytes32 digest, bytes32 paymentOutputKey)
     {
@@ -521,10 +523,10 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
                                   PAUSE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Halt all three consumption paths.
+    /// @notice Halt new ownership and Root-spend consumption.
     /// @dev Hashing, verification and every consumption-state view remain live. Pausing this
-    ///      contract cannot block a refund or a withdrawal: it holds no value and no user balance
-    ///      is reachable through it. The correct use is a suspected false attestation or an
+    ///      contract cannot block payment consumption for an active solver reservation, a refund
+    ///      or a withdrawal. The correct use is a suspected false ownership attestation or an
     ///      in-progress Bitcoin reorg (`docs/PAUSE_AND_RECOVERY.md`).
     function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
@@ -660,8 +662,9 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     ///      There is no artificial cap on `signatures.length`. A cap would add a failure mode
     ///      without adding safety: every accepted signature must recover to a distinct, strictly
     ///      increasing, currently-authorized attestor, so the number of signatures that can ever be
-    ///      ACCEPTED is already bounded by the registry's `MAX_ATTESTORS`. A caller who submits ten
-    ///      thousand junk signatures only burns their own gas, and `consume*` is role gated anyway.
+    ///      ACCEPTED is already bounded by the registry's exact five-member set. A caller who
+    ///      submits ten thousand junk signatures only burns their own gas, and `consume*` is role
+    ///      gated anyway.
     function _requireQuorum(bytes32 digest, bytes[] calldata signatures, uint8 required) private view {
         if (signatures.length < required) revert InsufficientSignatures(signatures.length, required);
 
@@ -712,9 +715,10 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     /// @dev Structural validity of an ownership attestation's purpose and payout fields.
     ///
     ///      TWO RULES, NOT ONE. First, `purpose` and `payoutMode` must agree: a `PAID_EVM_MINT`
-    ///      carries `PayoutMode.EVM`, a `PAID_BTC_MINT` carries `PayoutMode.BTC`, and every
-    ///      non-paying purpose (`SELF_CAST`, `ROOT_BIND`, `ROOT_INVALIDATE`) carries
-    ///      `PayoutMode.NONE`. Second, the payout fields must match that mode exactly. Checking
+    ///      carries `PayoutMode.EVM`, a `PAID_BTC_MINT` carries `PayoutMode.BTC`, `ROOT_BIND`
+    ///      carries `PayoutMode.EVM` because it names the beneficiary being bound, and the other
+    ///      non-paying purposes carry `PayoutMode.NONE`. Second, the payout fields must match that
+    ///      purpose exactly. Checking
     ///      only the second rule would accept a `PAID_EVM_MINT` that declares a BTC payout — an
     ///      attestation that would read as "mint for EVM settlement" to one consumer and "pay in
     ///      Bitcoin" to another. Two consumers reading one signed fact differently is precisely the
@@ -734,6 +738,17 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
         if (a.purpose > uint8(type(PuppetTypes.AuthorizationPurpose).max)) revert UnsupportedPurpose(a.purpose);
 
         PuppetTypes.AuthorizationPurpose purpose = PuppetTypes.AuthorizationPurpose(a.purpose);
+
+        // ROOT_BIND names an EVM beneficiary but moves no money. It is intentionally handled
+        // before the paying EVM branch so `evmPayout` is required while every monetary field stays
+        // zero. This is the one canonical encoding consumed by RootOwnershipRegistry.
+        if (purpose == PuppetTypes.AuthorizationPurpose.ROOT_BIND) {
+            if (a.payoutMode != uint8(PuppetTypes.PayoutMode.EVM)) revert InvalidPayoutShape();
+            if (a.evmPayout == address(0)) revert InvalidPayoutShape();
+            if (a.btcPayoutScriptHash != bytes32(0)) revert InvalidPayoutShape();
+            if (a.sellerSats != 0 || a.grossWei != 0 || a.sellerWei != 0) revert InvalidPayoutShape();
+            return;
+        }
 
         PuppetTypes.PayoutMode expectedMode;
         if (purpose == PuppetTypes.AuthorizationPurpose.PAID_EVM_MINT) {
@@ -757,7 +772,7 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
             if (a.sellerSats == 0) revert InvalidPayoutShape();
             if (a.sellerWei > a.grossWei) revert InvalidPayoutShape();
         } else {
-            // No money moves for SELF_CAST, ROOT_BIND or ROOT_INVALIDATE, so every payout AND
+            // No money moves for SELF_CAST or ROOT_INVALIDATE, so every payout AND
             // every monetary field must be zero. A non-zero `grossWei` on a free mint would be a
             // signed claim that a buyer escrowed value, which no consumer should ever see here.
             if (a.evmPayout != address(0)) revert InvalidPayoutShape();

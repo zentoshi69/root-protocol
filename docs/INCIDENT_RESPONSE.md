@@ -26,9 +26,9 @@ pause because a mechanism is *slow*.
 
 | Contract | Pausing blocks | Pausing NEVER blocks |
 |---|---|---|
-| `HoodPupOfferEscrow` | new offers, settlements | `refundExpired`, `refundUnfillable` |
-| `PayoutVault` | new credits | every withdrawal path |
-| `BitcoinOwnershipOracle` | attestation consumption | `hash*` and `verify*` views |
+| `HoodPupOfferEscrow` | new offers, ordinary settlements and new reservations | BTC finalization/expiry coordination, `refundExpired`, `refundUnfillable` |
+| `PayoutVault` | ordinary new credits | refunds, terminal credits, every withdrawal path |
+| `BitcoinOwnershipOracle` | ownership and Root-spend consumption | active-reservation payment consumption, `hash*` and `verify*` views |
 | `BtcSolverSettlement` | new reservations | `expireReservation`, earned bond credits |
 | `RootOwnershipRegistry` | new activations/invalidations | existing state, vault withdrawals |
 
@@ -88,6 +88,8 @@ A HoodPup minted for an inscription its claimed controller did not control.
    configuration bug and the solver is owed compensation — fix the config, do not add an admin
    override.
 4. There is deliberately no discretionary admin reimbursement. Adding one would be a rug lever.
+5. Do not pause the solver's terminal path in response: pause new reservations, preserve existing
+   settlement/expiry, and investigate the attestor or configuration failure separately.
 
 ### Bitcoin reorg past confirmation depth — SEV-1
 

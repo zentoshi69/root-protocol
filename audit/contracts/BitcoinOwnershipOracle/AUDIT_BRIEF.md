@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/BitcoinOwnershipOracle.sol` · 670 non-blank lines |
-| Flattened | `BitcoinOwnershipOracle.flat.sol` · 4292 non-blank lines |
+| Source | `contracts/src/BitcoinOwnershipOracle.sol` · 684 non-blank lines |
+| Flattened | `BitcoinOwnershipOracle.flat.sol` · 4310 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `b834914b4824150f7bd7439f7a0539c2ee633b6a204694ae11ec5ea90265292f` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `2d814fbd2f5d32405dbe6e972ef625d7f1d5c31179e35c417de5ae8241fc6339` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -25,7 +25,7 @@ A colluding 3-of-5 quorum can assert a false Bitcoin fact. It can never move a B
 2. A Bitcoin txid:vout can be consumed at most once, globally across all offers
 3. Recovered signer addresses must be strictly ascending
 4. Consumption requires BOTH the consumer role AND the per-consumer purpose bit
-5. Pause blocks consumption only; hashing and view verification stay live
+5. Pause blocks ownership and Root-spend consumption; terminal BTC payment consumption stays live
 
 ## Where to look first
 
@@ -44,10 +44,8 @@ A colluding 3-of-5 quorum can assert a false Bitcoin fact. It can never move a B
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

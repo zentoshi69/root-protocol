@@ -75,18 +75,20 @@ expect it to be, that is the finding.
 1. One canonical root inscription binds to at most one HoodPup token, ever.
 2. No Bitcoin fact is accepted below the quorum threshold, and no attestation digest is ever
    consumed twice.
-3. Paid settlement splits exactly 50/25/25 — seller, Puppet treasury, protocol — with no rounding
-   dust stranded or double-counted.
-4. Refunds and withdrawals remain available while the protocol is paused. Pausing stops the protocol
-   taking on **new** obligations; it must never trap funds a user is already owed.
+3. Paid settlement applies 50/25/25 with floor rounding for the seller and Puppet treasury and the
+   protocol receiving the remainder, so the three shares equal gross for every wei input.
+4. Refunds, withdrawals and terminal resolution of active BTC reservations remain available while
+   paused. Pausing stops **new** obligations; it must never trap funds or irreversible BTC risk the
+   protocol already accepted.
 5. The core contracts are non-upgradeable. No proxy, no delegatecall to mutable code, no admin path
    that rewrites settled state.
 
 Invariant 4 is worth dwelling on: it was violated once during development in a way that all
 single-contract tests passed. `PayoutVault.credit` is pausable and `withdraw` is not, which is
 correct in isolation — but refunds routed through `credit`, so pausing the vault silently blocked
-them. The fix was a separate non-pausable `creditRefund` entry point. Seams between contracts are
-where the remaining bugs will be.
+them. The fix was a separate non-pausable `creditRefund` entry point. The same rule now covers
+active BTC payment consumption, finalization, terminal minting and terminal vault crediting. Seams
+between contracts are still where reviewers should look first.
 
 ## Full contract index
 
@@ -97,8 +99,8 @@ the vendored dependencies. The {n_protocol} protocol contracts are:
 
 ## What is NOT in this bundle
 
-- **Tests.** 836 Solidity tests (unit, fuzz, and handler-based stateful invariant) and 250
-  TypeScript tests live in the repository, not here.
+- **Tests.** Solidity unit, fuzz, handler-based stateful invariant and full-deployment integration
+  suites, plus TypeScript tests, live in the repository rather than this artifact.
 - **Off-chain services.** The Bitcoin verifier, attestor, relayer, and BTC solver are TypeScript and
   are out of scope for a Solidity review — but note that the quorum's honesty is enforced there, so
   a complete assessment of the trust model has to read them too.

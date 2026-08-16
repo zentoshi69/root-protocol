@@ -5,9 +5,10 @@ A flattened .sol file on its own is a dump, not a package. An auditor arriving c
 what the contract is *for*, what authority it holds, which invariants are load-bearing, and where the
 sharp edges are — otherwise the first two days go into reconstructing context the team already had.
 
-Every brief also carries the disclosure that two High-severity defects were already found and fixed
-internally, and that a colluding 3-of-5 quorum lying is the conceded design, not a finding. Stating
-both up front costs nothing and stops an auditor spending a day writing up a known trade-off.
+Every brief also points reviewers to the prior whole-protocol findings mapped in
+docs/AUDIT_REMEDIATION.md, and discloses that a colluding 3-of-5 quorum lying is the conceded design,
+not a finding. Stating both up front costs nothing and stops an auditor spending a day writing up a
+known trade-off.
 """
 
 import json
@@ -35,7 +36,7 @@ BRIEFS = {
         purpose="Membership, threshold, epoch and policy version for the five-operator verifier set.",
         trust="Timelock admin. Every mutation bumps attestorEpoch, which instantly invalidates all in-flight attestation signatures.",
         invariants=[
-            "5 <= attestorCount <= 32 at all times",
+            "attestorCount == 5 at all times; membership changes are atomic replacements",
             "3 <= threshold <= attestorCount at all times",
             "Every membership, threshold or policy change increments attestorEpoch exactly once",
             "replaceAttestor is atomic and never transiently drops below the minimum",
@@ -55,7 +56,7 @@ BRIEFS = {
             "A Bitcoin txid:vout can be consumed at most once, globally across all offers",
             "Recovered signer addresses must be strictly ascending",
             "Consumption requires BOTH the consumer role AND the per-consumer purpose bit",
-            "Pause blocks consumption only; hashing and view verification stay live",
+            "Pause blocks ownership and Root-spend consumption; terminal BTC payment consumption stays live",
         ],
         focus=[
             "REVIEW THIS CONTRACT FIRST AND HARDEST. It is the highest-value target in the package.",
@@ -74,7 +75,7 @@ BRIEFS = {
             "address(this).balance >= totalLiability() at all times",
             "totalLiability == sum(claimable) + sum(pendingByRoot)",
             "No withdrawal path is pausable",
-            "creditRefund is deliberately NOT pausable — see finding H-1 in docs/SECURITY_REVIEW.md",
+            "creditRefund and terminal credits are deliberately NOT pausable",
             "releaseRootCredit moves pendingByRoot to claimable without changing totalLiability or moving ETH",
         ],
         focus=[
@@ -127,7 +128,7 @@ BRIEFS = {
             "rootMinted is permanent and cannot be cleared by anyone, including the deployer",
             "Token ids start at 1, so tokenOfRoot() == 0 unambiguously means not minted",
             "ERC-4907 user state clears on a real owner change",
-            "mintingPaused never affects transfers",
+            "mintingPaused never affects transfers or the role-gated terminal BTC mint",
         ],
         focus=[
             "The OpenZeppelin 5.x _update hook — confirm user clearing fires on a transfer but not spuriously on a mint",
@@ -145,6 +146,7 @@ BRIEFS = {
             "No offer settles twice; no settled offer refunds",
             "No BTC offer mints before finalizeBtcSettlement",
             "One Root mints once, across competing offers",
+            "At most one active BTC reservation exists per Root, and every mint path consults that mutex",
             "Refunds remain available while paused",
             "The seller is paid the address inside the signed attestation and no other",
         ],
@@ -165,6 +167,8 @@ BRIEFS = {
             "buyerCompensation + protocolAmount == bond, exactly, with no dust",
             "Reimbursement requires msg.sender to be the reserved solver AND the attested solver",
             "Terms are snapshotted at reservation, so later config changes cannot alter an in-flight reservation",
+            "ACTIVE reservation, escrow BTC_RESERVED state and the Root mutex always agree",
+            "Settlement and expiry remain executable through downstream incident pauses",
         ],
         focus=[
             "Bond conservation across both the settle and slash paths",
@@ -197,10 +201,8 @@ SHARED_CONTEXT = [
     "  the useful question is whether the blast radius is genuinely bounded as claimed.",
     "- Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no",
     "  upgrade key to compromise, and equally no way to patch a finding in place.",
-    "- Two High-severity defects were already found and fixed internally, both by the integration",
-    "  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more",
-    "  instructive one is H-1, where every contract was individually correct and the violation existed",
-    "  only in the composition.",
+    "- The findings from the prior whole-protocol review and their regression coverage are mapped in",
+    "  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.",
 ]
 
 

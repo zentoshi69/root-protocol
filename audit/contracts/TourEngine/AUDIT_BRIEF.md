@@ -5,10 +5,10 @@
 | | |
 |---|---|
 | Source | `contracts/src/TourEngine.sol` · 526 non-blank lines |
-| Flattened | `TourEngine.flat.sol` · 1517 non-blank lines |
+| Flattened | `TourEngine.flat.sol` · 1526 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `44b9b463574ff6fd5525f17535a55a4982dc449f66f5f3d26518d1e4e65f51f3` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `1de71258d9f48bd43e938c61b8eddca9a9de311978e8acc97ae259ce31878a56` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -39,10 +39,8 @@ Timelock admin for season and duration bounds. Cannot move or transfer any NFT.
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

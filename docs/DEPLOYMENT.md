@@ -68,6 +68,12 @@ Least privilege. Every grant below is necessary; nothing beyond this list should
 
 Note what is absent: no EOA holds anything, and the guardian can pause but never unpause.
 
+`BTC_SETTLEMENT_ROLE` is a one-time binding, not a rotatable operator key. The first grant records
+the deployed `BtcSolverSettlement` as the escrow's sole coordinator; the escrow rejects later
+grants, revocation and renunciation so no active reservation can be stranded between two lifecycle
+owners. Replacing that coordinator requires deploying a new escrow/solver pair after the old pair
+has no active offers. `DeployLib.verifyRoles` checks both the role and the recorded coordinator.
+
 ## Handover — the step that actually matters
 
 ```

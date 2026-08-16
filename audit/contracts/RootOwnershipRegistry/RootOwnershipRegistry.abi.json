@@ -1023,6 +1023,27 @@
   },
   {
     "type": "error",
+    "name": "ConflictingBitcoinBlockAtHeight",
+    "inputs": [
+      {
+        "name": "height",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "recordedBlockHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "providedBlockHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "EnforcedPause",
     "inputs": []
   },

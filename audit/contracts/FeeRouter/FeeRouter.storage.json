@@ -17,7 +17,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 55870,
+      "astId": 55966,
       "contract": "src/FeeRouter.sol:FeeRouter",
       "label": "_puppetTreasury",
       "offset": 0,
@@ -25,7 +25,7 @@
       "type": "t_address"
     },
     {
-      "astId": 55873,
+      "astId": 55969,
       "contract": "src/FeeRouter.sol:FeeRouter",
       "label": "_protocolTreasury",
       "offset": 0,

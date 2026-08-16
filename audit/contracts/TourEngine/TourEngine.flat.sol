@@ -253,6 +253,11 @@ interface ITourEngine {
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/
@@ -775,6 +780,12 @@ interface IHoodPups is IERC4907 {
 
     /// @notice Mint the single HoodPup for `root`. Requires `MINTER_ROLE`.
     function mintRooted(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
+
+    /// @notice Mint for an already-active BTC solver reservation even while ordinary minting is paused.
+    /// @dev Requires `MINTER_ROLE`. The authorized escrow exposes this only after consuming the
+    ///      matching Bitcoin-payment attestation, so this resolves existing risk rather than
+    ///      accepting a new mint obligation.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
 
     /// @notice True once a Root has produced its HoodPup. Permanent.
     function rootMinted(bytes32 rootKey) external view returns (bool);

@@ -58,11 +58,9 @@ import {PuppetTypes} from "./types/PuppetTypes.sol";
 ///      `PayoutVault`. A seller (or buyer) whose address is a contract that reverts on receive can
 ///      therefore never block a settlement, a refund or anybody else's mint.
 ///
-///      PAUSING. `whenNotPaused` guards the paths that take on NEW risk: the three creation
-///      functions, the three attestation-consuming settlement/approval functions, and the two
-///      authorized BTC hooks that start or complete a solver flow. It appears on NO refund path.
-///      `refundExpired`, `refundUnfillable`, `clearBtcReservation` and `expireBtcReservation` stay
-///      live while paused, so a pause can never trap a buyer's escrow inside this contract.
+///      PAUSING. `whenNotPaused` guards paths that take on NEW risk. It appears on no refund path
+///      and not on BTC finalization: once a solver reservation exists, the protocol must preserve
+///      its terminal settlement and expiry routes even during an incident.
 ///
 ///      NON-UPGRADEABLE by construction: no proxy, no initializer, no `delegatecall`, no
 ///      `selfdestruct`, no `tx.origin`, no owner EOA, and no admin path that can seize, redirect or
@@ -98,10 +96,10 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      that a solver who is mid-way through broadcasting a real Bitcoin payment cannot have
     ///      the offer pulled out from under them. That protection has to be bounded, or a buggy or
     ///      hostile `BtcSolverSettlement` could reserve with `reservationExpiry = type(uint64).max`
-    ///      and freeze the escrow permanently. 24 hours is far beyond the ~1 hour six Bitcoin
-    ///      confirmations need, and is the ceiling past which "the solver is still working" stops
-    ///      being a credible claim.
-    uint64 public constant MAX_RESERVATION_WINDOW = 24 hours;
+    ///      and freeze the escrow permanently. The value is shared with `BtcSolverSettlement`;
+    ///      one definition
+    ///      prevents governance from configuring a duration the escrow can never accept.
+    uint64 public constant MAX_RESERVATION_WINDOW = PuppetTypes.MAX_BTC_RESERVATION_DURATION;
 
     /*//////////////////////////////////////////////////////////////
                           ERRORS BEYOND THE INTERFACE
@@ -128,18 +126,13 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     /// @notice Thrown when a reservation window is zero-length, in the past, or too long.
     /// @param requested The expiry the solver contract asked for.
     /// @param earliestAllowed Exclusive lower bound: `block.timestamp`.
-    /// @param latestAllowed Inclusive upper bound: `min(offer.expiry, now + MAX_RESERVATION_WINDOW)`.
+    /// @param latestAllowed Inclusive upper bound: `now + MAX_RESERVATION_WINDOW`.
     error ReservationWindowInvalid(uint64 requested, uint64 earliestAllowed, uint64 latestAllowed);
 
     /// @notice Thrown when finalizing a reservation whose window has already closed.
     /// @param offerId The offer being finalized.
     /// @param reservationExpiry The moment the exclusive window ended.
     error ReservationLapsed(bytes32 offerId, uint64 reservationExpiry);
-
-    /// @notice Thrown when trying to force-expire a reservation that is still live.
-    /// @param offerId The offer being released.
-    /// @param reservationExpiry The moment the exclusive window ends.
-    error ReservationNotLapsed(bytes32 offerId, uint64 reservationExpiry);
 
     /// @notice Thrown when an inscription identity carries a zero reveal txid.
     /// @dev The shape of a default-initialised `RootId` reaching offer creation. Rejected because a
@@ -152,6 +145,11 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      attributed to an offer. Accepting a bare transfer would create ETH that belongs to
     ///      nobody and that no code path can ever pay out.
     error DirectDepositRejected();
+
+    /// @notice Thrown if governance tries to replace or remove the canonical solver coordinator.
+    /// @dev Two reservation authorities are unsafe, while removing the only one would destroy the
+    ///      permissionless terminal path. The coordinator is therefore bound by its first grant.
+    error BtcSettlementCoordinatorImmutable(address active, address requested);
 
     /*//////////////////////////////////////////////////////////////
                          EVENTS BEYOND THE INTERFACE
@@ -212,6 +210,14 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
 
     mapping(bytes32 => PuppetTypes.Offer) private _offers;
     mapping(address => uint256) private _buyerNonce;
+
+    /// @dev Root-wide mutex for the irreversible Bitcoin-payment window. Every mint path checks
+    ///      this mapping, reservation acquires it atomically, and only the canonical solver
+    ///      coordinator clears it while resolving the matching bond.
+    mapping(bytes32 => bytes32) private _activeBtcOfferForRoot;
+
+    /// @dev Bound by the first `BTC_SETTLEMENT_ROLE` grant and immutable thereafter.
+    address private _btcSettlementCoordinator;
 
     /// @dev Sum of `grossWei` over every offer that is currently OPEN, BTC_APPROVED or
     ///      BTC_RESERVED. Incremented once at creation and decremented once when the offer reaches
@@ -340,6 +346,46 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      which is unambiguous, and integrators should not need a try/catch to probe an id.
     function getOffer(bytes32 offerId) external view returns (PuppetTypes.Offer memory) {
         return _offers[offerId];
+    }
+
+    /// @inheritdoc IHoodPupOfferEscrow
+    function activeBtcOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId) {
+        return _activeBtcOfferForRoot[rootKey];
+    }
+
+    /// @inheritdoc IHoodPupOfferEscrow
+    function btcSettlementCoordinator() external view returns (address) {
+        return _btcSettlementCoordinator;
+    }
+
+    /// @dev The first BTC role grant permanently binds the sole coordinator. All other roles retain
+    ///      standard OpenZeppelin AccessControl behavior.
+    function grantRole(bytes32 role, address account) public override {
+        if (role == BTC_SETTLEMENT_ROLE) {
+            address active = _btcSettlementCoordinator;
+            if (account == address(0)) revert ZeroAddress();
+            if (active != address(0) && active != account) {
+                revert BtcSettlementCoordinatorImmutable(active, account);
+            }
+            _btcSettlementCoordinator = account;
+        }
+        super.grantRole(role, account);
+    }
+
+    /// @dev The canonical coordinator cannot be removed after a solver may have accepted risk.
+    function revokeRole(bytes32 role, address account) public override {
+        if (role == BTC_SETTLEMENT_ROLE) {
+            revert BtcSettlementCoordinatorImmutable(_btcSettlementCoordinator, account);
+        }
+        super.revokeRole(role, account);
+    }
+
+    /// @dev The coordinator cannot renounce itself and strand active reservations.
+    function renounceRole(bytes32 role, address callerConfirmation) public override {
+        if (role == BTC_SETTLEMENT_ROLE) {
+            revert BtcSettlementCoordinatorImmutable(_btcSettlementCoordinator, callerConfirmation);
+        }
+        super.renounceRole(role, callerConfirmation);
     }
 
     /// @inheritdoc IHoodPupOfferEscrow
@@ -505,6 +551,7 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         bytes32[] calldata collectionProof
     ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         PuppetTypes.Offer storage o = _settleableOffer(offerId, PuppetTypes.OfferKind.PAID_EVM);
+        _requireRootUnlocked(o.rootKey);
         _requireTermsMatch(offerId, o, attestation, PuppetTypes.AuthorizationPurpose.PAID_EVM_MINT);
 
         // The seller share follows the address the Bitcoin holder signed, so that address must
@@ -557,6 +604,7 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         bytes32[] calldata collectionProof
     ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         PuppetTypes.Offer storage o = _settleableOffer(offerId, PuppetTypes.OfferKind.SELF_CAST);
+        _requireRootUnlocked(o.rootKey);
         _requireTermsMatch(offerId, o, attestation, PuppetTypes.AuthorizationPurpose.SELF_CAST);
 
         if (attestation.payoutMode != uint8(PuppetTypes.PayoutMode.NONE)) {
@@ -631,13 +679,10 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      to broadcast an irreversible Bitcoin payment must not have the offer pulled from under
     ///      them mid-flight.
     ///
-    ///      THAT FREEZE IS BOUNDED THREE WAYS, because an unbounded one would be a way to trap a
-    ///      buyer's ETH forever. The window must end in the future, within `MAX_RESERVATION_WINDOW`
-    ///      of now, and never later than the offer's own expiry. The last bound is what makes the
-    ///      refund story airtight: a live reservation therefore implies an unexpired offer, and an
-    ///      expired offer therefore implies a lapsed reservation that ANYONE may clear with
-    ///      `expireBtcReservation`. There is no ordering of events in which the buyer's escrow is
-    ///      both unrefundable and unsettleable.
+    ///      The freeze is bounded by the shared `MAX_RESERVATION_WINDOW`, but may extend beyond the
+    ///      offer expiry. That grace period is essential: a solver that reserves a still-live
+    ///      offer must retain the complete window it accepted to prove an irreversible payment.
+    ///      The coordinator's permissionless expiry path releases both this mutex and the bond.
     /// @param offerId The approved offer being reserved.
     /// @param solver The bonded solver claiming the reservation.
     /// @param reservationExpiry Unix timestamp at which the exclusive window closes.
@@ -649,14 +694,17 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         PuppetTypes.Offer storage o = _offerWithStatus(offerId, PuppetTypes.OfferStatus.BTC_APPROVED);
         if (solver == address(0)) revert ZeroAddress();
         if (block.timestamp > o.expiry) revert OfferExpired(offerId, o.expiry);
+        if (_HOOD_PUPS.rootMinted(o.rootKey)) revert RootAlreadyMinted(o.rootKey);
 
-        uint64 ceiling = o.expiry;
-        uint64 windowCap = uint64(block.timestamp) + MAX_RESERVATION_WINDOW;
-        if (windowCap < ceiling) ceiling = windowCap;
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != bytes32(0)) revert RootReservationActive(o.rootKey, activeOfferId);
+
+        uint64 ceiling = uint64(block.timestamp) + MAX_RESERVATION_WINDOW;
         if (reservationExpiry <= block.timestamp || reservationExpiry > ceiling) {
             revert ReservationWindowInvalid(reservationExpiry, uint64(block.timestamp), ceiling);
         }
 
+        _activeBtcOfferForRoot[o.rootKey] = offerId;
         o.status = uint8(PuppetTypes.OfferStatus.BTC_RESERVED);
         o.reservedSolver = solver;
         o.reservationExpiry = reservationExpiry;
@@ -670,25 +718,6 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     /// @param offerId The reserved offer to release.
     function clearBtcReservation(bytes32 offerId) external onlyRole(BTC_SETTLEMENT_ROLE) {
         PuppetTypes.Offer storage o = _offerWithStatus(offerId, PuppetTypes.OfferStatus.BTC_RESERVED);
-        _releaseReservation(offerId, o);
-    }
-
-    /// @notice Permissionlessly release a reservation whose exclusive window has closed.
-    /// @dev ADDITIVE, not part of `IHoodPupOfferEscrow`, and the reason a buyer's escrow can never
-    ///      be trapped. `clearBtcReservation` requires `BTC_SETTLEMENT_ROLE`, so if
-    ///      `BtcSolverSettlement` were paused, broken or had its role revoked, a reserved offer
-    ///      would otherwise be frozen forever with the buyer's ETH inside it. This function needs
-    ///      no role and no governance action: once the window the solver themselves asked for has
-    ///      elapsed, anybody may return the offer to `BTC_APPROVED`, after which the ordinary
-    ///      refund paths apply. It is not pausable, for the same reason.
-    ///
-    ///      It cannot harm an honest solver: the window is chosen by `BtcSolverSettlement` at
-    ///      reservation time and `finalizeBtcSettlement` refuses a lapsed reservation anyway, so
-    ///      this function can only release a reservation that was already unusable.
-    /// @param offerId The reserved offer whose window has closed.
-    function expireBtcReservation(bytes32 offerId) external {
-        PuppetTypes.Offer storage o = _offerWithStatus(offerId, PuppetTypes.OfferStatus.BTC_RESERVED);
-        if (block.timestamp <= o.reservationExpiry) revert ReservationNotLapsed(offerId, o.reservationExpiry);
         _releaseReservation(offerId, o);
     }
 
@@ -710,7 +739,6 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     /// @return tokenId The minted HoodPup's token id.
     function finalizeBtcSettlement(bytes32 offerId, address solver, bytes32 paymentDigest)
         external
-        whenNotPaused
         nonReentrant
         onlyRole(BTC_SETTLEMENT_ROLE)
         returns (uint256 tokenId)
@@ -720,16 +748,19 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         if (block.timestamp > o.reservationExpiry) revert ReservationLapsed(offerId, o.reservationExpiry);
         if (paymentDigest == bytes32(0)) revert ZeroValue();
         if (_HOOD_PUPS.rootMinted(o.rootKey)) revert RootAlreadyMinted(o.rootKey);
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != offerId) revert RootReservationActive(o.rootKey, activeOfferId);
 
         // EFFECTS. `reservedSolver` and `reservationExpiry` are deliberately preserved: SETTLED is
         // terminal, so they cannot be reused, and they are the on-chain record of who was paid.
+        delete _activeBtcOfferForRoot[o.rootKey];
         o.status = uint8(PuppetTypes.OfferStatus.SETTLED);
         _lockedEscrowWei -= o.grossWei;
 
         emit BtcSettlementFinalized(offerId, solver, paymentDigest);
 
         _FEE_ROUTER.routeMintBtc{value: o.grossWei}(o.rootKey, solver, o.grossWei);
-        tokenId = _mint(o);
+        tokenId = _mintTerminal(o);
 
         emit OfferSettled(offerId, o.rootKey, tokenId, o.recipient, solver, o.grossWei, o.kind);
     }
@@ -745,10 +776,9 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      can stop, delay or redirect it.
     ///
     ///      `BTC_RESERVED` is rejected here rather than silently allowed: a solver may be
-    ///      mid-broadcast. The offer must first return to `BTC_APPROVED`, either through
-    ///      `BtcSolverSettlement` or, if that contract is unavailable, through the permissionless
-    ///      `expireBtcReservation`. Because a reservation can never outlive the offer, an expired
-    ///      offer always has a lapsed reservation, so that route is always open.
+    ///      mid-broadcast. The offer must first return to `BTC_APPROVED` through the canonical,
+    ///      permissionless `BtcSolverSettlement.expireReservation` path, which atomically resolves
+    ///      the matching bond and releases the Root mutex.
     /// @param offerId The expired offer to refund.
     function refundExpired(bytes32 offerId) external nonReentrant {
         PuppetTypes.Offer storage o = _refundableOffer(offerId);
@@ -762,26 +792,19 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      immediately, rather than at expiry, is what keeps a competitive offer book cheap for
     ///      buyers.
     ///
-    ///      Unlike `refundExpired`, this DOES accept a `BTC_RESERVED` offer. Once the Root is
-    ///      minted, `finalizeBtcSettlement` is structurally impossible — the mint would revert —
-    ///      so the reservation protects nobody and holding the buyer's ETH for the rest of the
-    ///      window would be pure cost. Such a reservation is explicitly RELEASED first, emitting
-    ///      `BtcReservationCleared`, so a refunded offer never carries a solver and a window that
-    ///      no longer mean anything. A stale reservation left on a terminal offer would be a lie in
-    ///      the indexed history, and `BtcSolverSettlement` reads these fields.
+    ///      `BTC_RESERVED` is deliberately rejected. Every legitimate mint path is blocked by the
+    ///      Root mutex while that status is active, so a minted Root alongside an active
+    ///      reservation signals broken role wiring rather than a condition this escrow may repair
+    ///      by orphaning the solver's bond.
     /// @param offerId The unfillable offer to refund.
     function refundUnfillable(bytes32 offerId) external nonReentrant {
         PuppetTypes.Offer storage o = _offers[offerId];
         uint8 status = o.status;
         if (status == uint8(PuppetTypes.OfferStatus.NONE)) revert UnknownOffer(offerId);
-        if (
-            status != uint8(PuppetTypes.OfferStatus.OPEN) && status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)
-                && status != uint8(PuppetTypes.OfferStatus.BTC_RESERVED)
-        ) {
+        if (status != uint8(PuppetTypes.OfferStatus.OPEN) && status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)) {
             revert InvalidOfferStatus(offerId, status, uint8(PuppetTypes.OfferStatus.OPEN));
         }
         if (!_HOOD_PUPS.rootMinted(o.rootKey)) revert RootNotMinted(o.rootKey);
-        if (status == uint8(PuppetTypes.OfferStatus.BTC_RESERVED)) _releaseReservation(offerId, o);
         _refund(offerId, o, true);
     }
 
@@ -946,6 +969,12 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         }
     }
 
+    /// @dev Reject every mint path while a solver owns the Root-wide BTC reservation mutex.
+    function _requireRootUnlocked(bytes32 rootKey) private view {
+        bytes32 activeOfferId = _activeBtcOfferForRoot[rootKey];
+        if (activeOfferId != bytes32(0)) revert RootReservationActive(rootKey, activeOfferId);
+    }
+
     /// @dev Assert that every term the Bitcoin holder signed equals the term this escrow stored.
     ///      Each field gets its own named error so a failed settlement tells the relayer exactly
     ///      which value diverged, rather than a single opaque "mismatch".
@@ -1021,9 +1050,20 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         );
     }
 
+    /// @dev BTC-only terminal mint. Ordinary EVM and self-cast paths never reach this bypass.
+    function _mintTerminal(PuppetTypes.Offer storage o) private returns (uint256 tokenId) {
+        return _HOOD_PUPS.mintRootedTerminal(
+            o.recipient, PuppetTypes.RootId({inscriptionTxid: o.rootTxid, inscriptionIndex: o.rootIndex})
+        );
+    }
+
     /// @dev Return a reserved offer to `BTC_APPROVED` and clear the reservation fields.
     function _releaseReservation(bytes32 offerId, PuppetTypes.Offer storage o) private {
         address solver = o.reservedSolver;
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != offerId) revert RootReservationActive(o.rootKey, activeOfferId);
+
+        delete _activeBtcOfferForRoot[o.rootKey];
         o.status = uint8(PuppetTypes.OfferStatus.BTC_APPROVED);
         o.reservedSolver = address(0);
         o.reservationExpiry = 0;

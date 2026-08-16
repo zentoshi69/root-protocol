@@ -73,8 +73,11 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     ///      constraints never have to be weakened.
     uint256 public constant MIN_ATTESTORS = 5;
 
-    /// @notice Largest attestor set, bounding the cost of the oracle's O(n) signature walk.
-    uint256 public constant MAX_ATTESTORS = 32;
+    /// @notice Largest attestor set.
+    /// @dev Equal to `MIN_ATTESTORS` on purpose: the protocol's claimed trust shape is exactly
+    ///      five independent operators. Governance rotates members atomically with
+    ///      `replaceAttestor`; it cannot dilute a three-signature quorum into 3-of-N.
+    uint256 public constant MAX_ATTESTORS = 5;
 
     /// @notice Smallest quorum threshold the protocol will ever operate with.
     /// @dev Three signatures means a single compromised operator, and any pair of them, is
@@ -144,7 +147,7 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     ///      transaction batch; `test_TimelockHandoverFullyRevokesDeployer` in the unit suite
     ///      proves the revocation path leaves the deployer with zero authority.
     /// @param admin Address granted `DEFAULT_ADMIN_ROLE` and `ATTESTOR_ADMIN_ROLE`.
-    /// @param initialAttestors Genesis attestor addresses; must be 5..32 distinct nonzero addresses.
+    /// @param initialAttestors Exactly five distinct nonzero genesis attestor addresses.
     /// @param initialThreshold Genesis quorum threshold; must be 3..`initialAttestors.length`.
     /// @param initialPolicyVersion Genesis verification policy version; must be nonzero.
     constructor(address admin, address[] memory initialAttestors, uint8 initialThreshold, uint32 initialPolicyVersion) {
@@ -181,30 +184,25 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
                             MEMBERSHIP CHANGES
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Add one attestor to the verifier set and bump the epoch.
-    /// @dev Growing the set never endangers the threshold invariant (`threshold <= count` can only
-    ///      become slacker), so only the upper bound is checked. The epoch still bumps: a new
-    ///      operator must not be able to contribute to a quorum that was already partly gathered
-    ///      under the previous membership.
+    /// @notice Retained for ABI clarity but unreachable under the fixed five-operator trust model.
+    /// @dev `MAX_ATTESTORS == 5`, so this always reverts for a correctly initialized registry.
+    ///      Membership changes must use `replaceAttestor`, which preserves the 3-of-5 shape.
     /// @param attestor Address to authorize. Must be nonzero and not already a member.
     function addAttestor(address attestor) external onlyRole(ATTESTOR_ADMIN_ROLE) {
         if (attestor == address(0)) revert ZeroAddress();
+        if (_attestorSet.contains(attestor)) revert DuplicateAttestor(attestor);
 
         uint256 nextCount = _attestorSet.length() + 1;
         if (nextCount > MAX_ATTESTORS) revert AttestorCountOutOfRange(nextCount);
 
-        if (!_attestorSet.add(attestor)) revert DuplicateAttestor(attestor);
+        _attestorSet.add(attestor);
 
         (uint64 previousEpoch, uint64 newEpoch) = _bumpEpoch();
         emit AttestorAdded(attestor, previousEpoch, newEpoch);
     }
 
-    /// @notice Remove one attestor from the verifier set and bump the epoch.
-    /// @dev Two invariants are enforced on the POST-removal count, not the pre-removal one:
-    ///      the set may not fall below `MIN_ATTESTORS`, and the standing threshold may not exceed
-    ///      the remaining count. The second check is the important one — leaving
-    ///      `threshold > count` would make quorum unreachable and permanently freeze every
-    ///      settlement path in the protocol. Lower the threshold first, then remove.
+    /// @notice Retained for ABI clarity but unreachable under the fixed five-operator trust model.
+    /// @dev `MIN_ATTESTORS == 5`, so this always reverts and rolls back. Use `replaceAttestor`.
     /// @param attestor Address to deauthorize. Must currently be a member.
     function removeAttestor(address attestor) external onlyRole(ATTESTOR_ADMIN_ROLE) {
         // `remove` returns false for an address that was not in the set.
@@ -309,7 +307,7 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     }
 
     /// @inheritdoc IBitcoinAttestorRegistry
-    /// @dev Unbounded-looking but bounded by `MAX_ATTESTORS == 32`, so this is safe to call
+    /// @dev Unbounded-looking but bounded by `MAX_ATTESTORS == 5`, so this is safe to call
     ///      on-chain as well as from `eth_call`.
     function attestors() external view returns (address[] memory) {
         return _attestorSet.values();

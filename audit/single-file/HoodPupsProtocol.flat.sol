@@ -1,7 +1,7 @@
 // HoodPups Rooted Settlement Protocol — complete protocol source, single file.
 //
 // License: MIT
-// Commit:  64fe0d1ba8588d8d5f04f577b846c6d44f96b2e1
+// Commit:  dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b
 // Compile: solc 0.8.28, evm shanghai, optimizer on, 800 runs, no viaIR
 //
 // This is every contract the protocol deploys, plus its dependencies, flattened and
@@ -29,42 +29,42 @@
 //   * One canonical root inscription binds to at most one HoodPup token, ever.
 //   * No Bitcoin fact is accepted below the quorum threshold, and no attestation digest
 //     is ever consumed twice.
-//   * Paid settlement splits exactly 50/25/25 — seller, Puppet treasury, protocol — with
-//     no rounding dust stranded or double-counted.
-//   * Refunds and withdrawals remain available while the protocol is paused. Pausing
-//     stops NEW obligations; it must never trap funds a user is already owed.
+//   * Paid settlement applies 50/25/25 floor shares and assigns the integer remainder to
+//     protocol, so every wei is conserved with no stranded or double-counted dust.
+//   * Refunds, withdrawals and terminal resolution of active BTC reservations remain
+//     available while paused. Pausing stops new obligations; it never traps an existing one.
 //   * The core contracts are non-upgradeable. There is no proxy, no delegatecall to
 //     mutable code, and no admin path that rewrites settled state.
 //
 // TABLE OF CONTENTS
 //
 //   THE TEN PROTOCOL CONTRACTS
-//     line   6088  contract  PuppetCollectionRegistry
-//     line   6315  contract  BitcoinAttestorRegistry
-//     line  11495  contract  BitcoinOwnershipOracle
-//     line  12249  contract  PayoutVault
-//     line   8814  contract  RootOwnershipRegistry
-//     line   6828  contract  FeeRouter
-//     line  10939  contract  HoodPups
-//     line   9895  contract  HoodPupOfferEscrow
-//     line   8011  contract  BtcSolverSettlement
-//     line   7395  contract  TourEngine
+//     line   6121  contract  PuppetCollectionRegistry
+//     line   6348  contract  BitcoinAttestorRegistry
+//     line  11616  contract  BitcoinOwnershipOracle
+//     line  12381  contract  PayoutVault
+//     line   8854  contract  RootOwnershipRegistry
+//     line   6859  contract  FeeRouter
+//     line  11040  contract  HoodPups
+//     line   9954  contract  HoodPupOfferEscrow
+//     line   8053  contract  BtcSolverSettlement
+//     line   7437  contract  TourEngine
 //
 //   PROTOCOL INTERFACES
 //     line    827  interface IBitcoinAttestorRegistry
 //     line    972  interface IFeeRouter
 //     line   1043  interface IPayoutVault
-//     line   1137  interface ITourEngine
-//     line   3109  interface IBitcoinOwnershipOracle
-//     line   3217  interface IBtcSolverSettlement
-//     line   3439  interface IHoodPupOfferEscrow
-//     line   3597  interface IHoodPups
-//     line   3646  interface IPuppetCollectionRegistry
-//     line   3693  interface IRootOwnershipRegistry
+//     line   1151  interface ITourEngine
+//     line   3128  interface IBitcoinOwnershipOracle
+//     line   3236  interface IBtcSolverSettlement
+//     line   3458  interface IHoodPupOfferEscrow
+//     line   3623  interface IHoodPups
+//     line   3678  interface IPuppetCollectionRegistry
+//     line   3725  interface IRootOwnershipRegistry
 //
 //   PROTOCOL TYPES AND HASHING
-//     line   1286  library   PuppetTypes
-//     line   4420  library   PuppetHashing
+//     line   1300  library   PuppetTypes
+//     line   4453  library   PuppetHashing
 //
 //   THIRD-PARTY DEPENDENCIES (OpenZeppelin, unmodified)
 //     line    122  contract  Context
@@ -76,29 +76,29 @@
 //     line    898  interface IERC165
 //     line    914  interface IERC5267
 //     line    947  interface IERC721Receiver
-//     line   1239  library   Panic
-//     line   1546  contract  ReentrancyGuard
-//     line   1627  library   SafeCast
-//     line   2804  library   StorageSlot
-//     line   2923  interface IERC20Errors
-//     line   2969  interface IERC721Errors
-//     line   3027  interface IERC1155Errors
-//     line   3093  contract  ERC165
-//     line   3305  interface IERC721
-//     line   3579  interface IERC4907
-//     line   3799  library   MerkleProof
-//     line   4297  contract  Pausable
-//     line   4707  library   ShortStrings
-//     line   4798  library   SignedMath
-//     line   4868  library   ERC721Utils
-//     line   4912  interface IERC721Metadata
-//     line   4936  library   Math
-//     line   5620  library   SignatureChecker
-//     line   5701  contract  AccessControl
-//     line   5870  library   Strings
-//     line   5987  library   MessageHashUtils
-//     line   6657  contract  EIP712
-//     line   9401  contract  ERC721
+//     line   1253  library   Panic
+//     line   1565  contract  ReentrancyGuard
+//     line   1646  library   SafeCast
+//     line   2823  library   StorageSlot
+//     line   2942  interface IERC20Errors
+//     line   2988  interface IERC721Errors
+//     line   3046  interface IERC1155Errors
+//     line   3112  contract  ERC165
+//     line   3324  interface IERC721
+//     line   3605  interface IERC4907
+//     line   3832  library   MerkleProof
+//     line   4330  contract  Pausable
+//     line   4740  library   ShortStrings
+//     line   4831  library   SignedMath
+//     line   4901  library   ERC721Utils
+//     line   4945  interface IERC721Metadata
+//     line   4969  library   Math
+//     line   5653  library   SignatureChecker
+//     line   5734  contract  AccessControl
+//     line   5903  library   Strings
+//     line   6020  library   MessageHashUtils
+//     line   6688  contract  EIP712
+//     line   9462  contract  ERC721
 //
 // Generated by scripts/export-single-file.sh — do not edit this file by hand.
 
@@ -820,7 +820,7 @@ interface IAccessControl {
 // src/interfaces/IBitcoinAttestorRegistry.sol
 
 /// @title IBitcoinAttestorRegistry
-/// @notice Membership, quorum threshold, epoch and policy version for the Bitcoin verifier set.
+/// @notice Membership, quorum threshold, epoch and policy version for the fixed five-member Bitcoin verifier set.
 /// @dev Any membership or threshold change bumps `attestorEpoch`, which instantly invalidates
 ///      every in-flight attestation signature. That is intentional: a rotating set must never
 ///      leave a window in which a removed operator still counts toward quorum.
@@ -843,7 +843,7 @@ interface IBitcoinAttestorRegistry {
     /// @notice True if `account` is currently an authorized attestor.
     function isAttestor(address account) external view returns (bool);
 
-    /// @notice Current number of authorized attestors.
+    /// @notice Current number of authorized attestors; always exactly five after construction.
     function attestorCount() external view returns (uint256);
 
     /// @notice Attestor at `index` in the enumerable set. Order is not stable across mutations.
@@ -1059,6 +1059,11 @@ interface IPayoutVault {
     /// @notice Emitted alongside `Credited` when the credit is a refund, so indexers can tell a
     ///         buyer being made whole apart from a seller being paid.
     event RefundCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
+    /// @notice Emitted alongside `Credited` when an existing cross-chain obligation is finalized.
+    /// @dev Terminal credits deliberately remain executable while ordinary liability creation is
+    ///      paused. Authorized callers may use them only after the protocol has already incurred
+    ///      an irreversible obligation, such as a solver payment or a bond resolution.
+    event TerminalCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
     event RootCredited(bytes32 indexed rootKey, uint256 amount, address indexed creditor);
     event RootCreditReleased(bytes32 indexed rootKey, address indexed beneficiary, uint256 amount);
     event Withdrawn(address indexed beneficiary, address indexed recipient, uint256 amount);
@@ -1090,11 +1095,20 @@ interface IPayoutVault {
     ///      new one, so the credit pause must not reach it (protocol invariant I12).
     function creditRefund(address beneficiary) external payable;
 
+    /// @notice Credit an obligation that existed before the current transaction.
+    /// @dev Requires `CREDITOR_ROLE`. Deliberately NOT pausable so incident response cannot strand
+    ///      a solver after an irreversible Bitcoin payment or block terminal bond accounting.
+    function creditTerminal(address beneficiary) external payable;
+
     /// @notice Credit a Root's pending bucket with `msg.value`. Requires `CREDITOR_ROLE`.
     function creditRoot(bytes32 rootKey) external payable;
 
     /// @notice Credit several beneficiaries in one call. `sum(amounts)` must equal `msg.value`.
     function creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
+
+    /// @notice Batch form of `creditTerminal`; `sum(amounts)` must equal `msg.value`.
+    /// @dev Requires `CREDITOR_ROLE` and deliberately remains live while paused.
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
 
     /// @notice Move a Root's pending bucket to a newly verified beneficiary's claimable balance.
     /// @dev Pure bookkeeping: no ETH moves and `totalLiability` is unchanged.
@@ -1284,6 +1298,11 @@ library Panic {
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/
@@ -3445,6 +3464,7 @@ interface IHoodPupOfferEscrow {
     error OfferNotExpired(bytes32 offerId, uint64 expiry);
     error InvalidExpiry(uint64 expiry, uint64 minAllowed, uint64 maxAllowed);
     error RootAlreadyMinted(bytes32 rootKey);
+    error RootReservationActive(bytes32 rootKey, bytes32 activeOfferId);
     error RootNotMinted(bytes32 rootKey);
     error SelfCastMustBeZeroValue();
     error SelfCastRecipientMismatch(address caller, address recipient);
@@ -3486,6 +3506,12 @@ interface IHoodPupOfferEscrow {
 
     /// @notice Full offer view.
     function getOffer(bytes32 offerId) external view returns (PuppetTypes.Offer memory);
+
+    /// @notice Offer holding the Root-wide BTC reservation mutex, or zero when unlocked.
+    function activeBtcOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId);
+
+    /// @notice Sole, permanently bound coordinator for the BTC reservation and bond lifecycle.
+    function btcSettlementCoordinator() external view returns (address);
 
     /// @notice Next offer id `buyer` will produce.
     function nextOfferId(address buyer) external view returns (bytes32);
@@ -3615,6 +3641,12 @@ interface IHoodPups is IERC4907 {
     /// @notice Mint the single HoodPup for `root`. Requires `MINTER_ROLE`.
     function mintRooted(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
 
+    /// @notice Mint for an already-active BTC solver reservation even while ordinary minting is paused.
+    /// @dev Requires `MINTER_ROLE`. The authorized escrow exposes this only after consuming the
+    ///      matching Bitcoin-payment attestation, so this resolves existing risk rather than
+    ///      accepting a new mint obligation.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root) external returns (uint256 tokenId);
+
     /// @notice True once a Root has produced its HoodPup. Permanent.
     function rootMinted(bytes32 rootKey) external view returns (bool);
 
@@ -3698,6 +3730,7 @@ interface IRootOwnershipRegistry {
     error RootMismatch(bytes32 expected, bytes32 provided);
     error OutpointMismatch(bytes32 expected, bytes32 provided);
     error StaleBitcoinHeight(uint64 provided, uint64 current);
+    error ConflictingBitcoinBlockAtHeight(uint64 height, bytes32 recordedBlockHash, bytes32 providedBlockHash);
     error UnchangedOutpoint(bytes32 outpointHash);
     error InvalidBeneficiary();
     error UnsupportedPurpose(uint8 purpose);
@@ -6340,8 +6373,11 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     ///      constraints never have to be weakened.
     uint256 public constant MIN_ATTESTORS = 5;
 
-    /// @notice Largest attestor set, bounding the cost of the oracle's O(n) signature walk.
-    uint256 public constant MAX_ATTESTORS = 32;
+    /// @notice Largest attestor set.
+    /// @dev Equal to `MIN_ATTESTORS` on purpose: the protocol's claimed trust shape is exactly
+    ///      five independent operators. Governance rotates members atomically with
+    ///      `replaceAttestor`; it cannot dilute a three-signature quorum into 3-of-N.
+    uint256 public constant MAX_ATTESTORS = 5;
 
     /// @notice Smallest quorum threshold the protocol will ever operate with.
     /// @dev Three signatures means a single compromised operator, and any pair of them, is
@@ -6411,7 +6447,7 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     ///      transaction batch; `test_TimelockHandoverFullyRevokesDeployer` in the unit suite
     ///      proves the revocation path leaves the deployer with zero authority.
     /// @param admin Address granted `DEFAULT_ADMIN_ROLE` and `ATTESTOR_ADMIN_ROLE`.
-    /// @param initialAttestors Genesis attestor addresses; must be 5..32 distinct nonzero addresses.
+    /// @param initialAttestors Exactly five distinct nonzero genesis attestor addresses.
     /// @param initialThreshold Genesis quorum threshold; must be 3..`initialAttestors.length`.
     /// @param initialPolicyVersion Genesis verification policy version; must be nonzero.
     constructor(address admin, address[] memory initialAttestors, uint8 initialThreshold, uint32 initialPolicyVersion) {
@@ -6448,30 +6484,25 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
                             MEMBERSHIP CHANGES
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Add one attestor to the verifier set and bump the epoch.
-    /// @dev Growing the set never endangers the threshold invariant (`threshold <= count` can only
-    ///      become slacker), so only the upper bound is checked. The epoch still bumps: a new
-    ///      operator must not be able to contribute to a quorum that was already partly gathered
-    ///      under the previous membership.
+    /// @notice Retained for ABI clarity but unreachable under the fixed five-operator trust model.
+    /// @dev `MAX_ATTESTORS == 5`, so this always reverts for a correctly initialized registry.
+    ///      Membership changes must use `replaceAttestor`, which preserves the 3-of-5 shape.
     /// @param attestor Address to authorize. Must be nonzero and not already a member.
     function addAttestor(address attestor) external onlyRole(ATTESTOR_ADMIN_ROLE) {
         if (attestor == address(0)) revert ZeroAddress();
+        if (_attestorSet.contains(attestor)) revert DuplicateAttestor(attestor);
 
         uint256 nextCount = _attestorSet.length() + 1;
         if (nextCount > MAX_ATTESTORS) revert AttestorCountOutOfRange(nextCount);
 
-        if (!_attestorSet.add(attestor)) revert DuplicateAttestor(attestor);
+        _attestorSet.add(attestor);
 
         (uint64 previousEpoch, uint64 newEpoch) = _bumpEpoch();
         emit AttestorAdded(attestor, previousEpoch, newEpoch);
     }
 
-    /// @notice Remove one attestor from the verifier set and bump the epoch.
-    /// @dev Two invariants are enforced on the POST-removal count, not the pre-removal one:
-    ///      the set may not fall below `MIN_ATTESTORS`, and the standing threshold may not exceed
-    ///      the remaining count. The second check is the important one — leaving
-    ///      `threshold > count` would make quorum unreachable and permanently freeze every
-    ///      settlement path in the protocol. Lower the threshold first, then remove.
+    /// @notice Retained for ABI clarity but unreachable under the fixed five-operator trust model.
+    /// @dev `MIN_ATTESTORS == 5`, so this always reverts and rolls back. Use `replaceAttestor`.
     /// @param attestor Address to deauthorize. Must currently be a member.
     function removeAttestor(address attestor) external onlyRole(ATTESTOR_ADMIN_ROLE) {
         // `remove` returns false for an address that was not in the set.
@@ -6576,7 +6607,7 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     }
 
     /// @inheritdoc IBitcoinAttestorRegistry
-    /// @dev Unbounded-looking but bounded by `MAX_ATTESTORS == 32`, so this is safe to call
+    /// @dev Unbounded-looking but bounded by `MAX_ATTESTORS == 5`, so this is safe to call
     ///      on-chain as well as from `eth_call`.
     function attestors() external view returns (address[] memory) {
         return _attestorSet.values();
@@ -7080,7 +7111,7 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
         // log can never describe a split that a later revert undid halfway.
         emit MintRouted(rootKey, seller, ROUTE_MINT_EVM, gross, sellerAmount, puppetAmount, protocolAmount);
 
-        _creditSplit(seller, sellerAmount, puppetAmount, protocolAmount);
+        _creditSplit(seller, sellerAmount, puppetAmount, protocolAmount, false);
         _assertNothingRetained(preExistingBalance);
     }
 
@@ -7108,7 +7139,9 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
 
         emit MintRouted(rootKey, solver, ROUTE_MINT_BTC, gross, solverAmount, puppetAmount, protocolAmount);
 
-        _creditSplit(solver, solverAmount, puppetAmount, protocolAmount);
+        // The solver may already have paid irreversible BTC. Route through the vault's terminal
+        // accounting path so an ordinary credit pause cannot strand that cross-chain obligation.
+        _creditSplit(solver, solverAmount, puppetAmount, protocolAmount, true);
         _assertNothingRetained(preExistingBalance);
     }
 
@@ -7151,14 +7184,14 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
         );
 
         if (payBeneficiaryDirectly) {
-            _creditSplit(beneficiary, rootAmount, puppetAmount, protocolAmount);
+            _creditSplit(beneficiary, rootAmount, puppetAmount, protocolAmount, false);
         } else {
             // `rootAmount` is zero only for a sub-2-wei gross; the vault rejects zero-value credits,
             // so the call is skipped rather than allowed to revert the whole settlement over dust.
             if (rootAmount > 0) {
                 PAYOUT_VAULT.creditRoot{value: rootAmount}(rootKey);
             }
-            _creditSplit(address(0), 0, puppetAmount, protocolAmount);
+            _creditSplit(address(0), 0, puppetAmount, protocolAmount, false);
         }
 
         _assertNothingRetained(preExistingBalance);
@@ -7274,9 +7307,13 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
     /// @param primaryAmount The 50% share.
     /// @param puppetAmount The Puppet ecosystem treasury share.
     /// @param protocolAmount The protocol treasury share.
-    function _creditSplit(address primary, uint256 primaryAmount, uint256 puppetAmount, uint256 protocolAmount)
-        private
-    {
+    function _creditSplit(
+        address primary,
+        uint256 primaryAmount,
+        uint256 puppetAmount,
+        uint256 protocolAmount,
+        bool terminal
+    ) private {
         // Defensive: the callers already reject a zero seller/solver/beneficiary, and the recurring
         // pending branch only ever passes a zero primary with a zero amount. Kept because this is a
         // value-moving path and a silent credit to address(0) would be an unrecoverable burn.
@@ -7309,7 +7346,12 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
 
         // The vault independently re-checks that the sum of `amounts` equals the value sent, so the
         // conservation property is enforced on both sides of this call rather than trusted once.
-        PAYOUT_VAULT.creditBatch{value: primaryAmount + puppetAmount + protocolAmount}(beneficiaries, amounts);
+        uint256 total = primaryAmount + puppetAmount + protocolAmount;
+        if (terminal) {
+            PAYOUT_VAULT.creditTerminalBatch{value: total}(beneficiaries, amounts);
+        } else {
+            PAYOUT_VAULT.creditBatch{value: total}(beneficiaries, amounts);
+        }
     }
 
     /// @dev Asserts the router forwarded every wei it was paid.
@@ -8048,7 +8090,7 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
     ///      expiry (see the settlement grace window note on `settle`). It is a hard ceiling in
     ///      bytecode rather than a policy note precisely because the party it protects — the buyer
     ///      — is not the party that sets it.
-    uint64 public constant MAX_RESERVATION_DURATION = 30 days;
+    uint64 public constant MAX_RESERVATION_DURATION = PuppetTypes.MAX_BTC_RESERVATION_DURATION;
 
     /*//////////////////////////////////////////////////////////////
                               IMMUTABLE WIRING
@@ -8256,8 +8298,9 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
         // as "already reserved" would be a lie in the trace; the Root is gone, permanently.
         if (status == uint8(ReservationStatus.SETTLED)) revert RootAlreadyMinted(offer.rootKey);
 
-        // A DIFFERENT offer for the same Root already settled through this contract. See the
-        // honesty note on `settledOfferForRoot` for what this check does NOT cover.
+        // A DIFFERENT offer for the same Root already settled through this contract. This is an
+        // early local rejection; the escrow remains authoritative and rejects any already-minted
+        // Root (including an EVM or self-cast winner) when it atomically acquires the Root mutex.
         if (_settledOfferForRoot[offer.rootKey] != bytes32(0)) revert RootAlreadyMinted(offer.rootKey);
 
         if (offer.status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)) {
@@ -8303,10 +8346,10 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
     /// @dev WHY THIS FUNCTION IS NOT PAUSABLE. By the time it is callable the solver has already
     ///      broadcast an irreversible Bitcoin transaction paying the seller. A pause here would
     ///      leave that payment stranded while the reservation clock kept running toward a slash —
-    ///      i.e. it would be a lever that confiscates a solver's BTC *and* its bond. The incident
-    ///      lever the specification asks for exists, and it lives where the incident would be:
-    ///      `BitcoinOwnershipOracle.pause()` stops `consumeBitcoinPayment` for every consumer at
-    ///      once. Pausing the risk source is right; pausing the victim's exit is not.
+    ///      i.e. it would be a lever that confiscates a solver's BTC *and* its bond. For that same
+    ///      reason every downstream step this terminal path reaches remains live: payment
+    ///      consumption, BTC finalization, terminal minting and terminal vault credits. Their
+    ///      ordinary ownership/mint/credit entry points still pause new risk.
     ///
     ///      THE SETTLEMENT GRACE WINDOW. Settlement is allowed while the RESERVATION is live, even
     ///      if the OFFER's own expiry has passed. That window is `reservationExpiry - offer.expiry`
@@ -8379,7 +8422,7 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
         //    provably delivered. Credited rather than pushed: a solver whose fallback reverts must
         //    not be able to brick its own settlement, and a pull payment keeps the ETH exit out of
         //    this contract's reentrancy surface entirely.
-        PAYOUT_VAULT.credit{value: bond}(solver);
+        PAYOUT_VAULT.creditTerminal{value: bond}(solver);
 
         _emitSettled(offerId, solver, paymentDigest, attestation, bond);
     }
@@ -8511,11 +8554,11 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
             amounts[0] = buyerCompensation;
             beneficiaries[1] = protocolRecipient;
             amounts[1] = protocolAmount;
-            PAYOUT_VAULT.creditBatch{value: buyerCompensation + protocolAmount}(beneficiaries, amounts);
+            PAYOUT_VAULT.creditTerminalBatch{value: buyerCompensation + protocolAmount}(beneficiaries, amounts);
         } else if (buyerCompensation != 0) {
-            PAYOUT_VAULT.credit{value: buyerCompensation}(buyer);
+            PAYOUT_VAULT.creditTerminal{value: buyerCompensation}(buyer);
         } else if (protocolAmount != 0) {
-            PAYOUT_VAULT.credit{value: protocolAmount}(protocolRecipient);
+            PAYOUT_VAULT.creditTerminal{value: protocolAmount}(protocolRecipient);
         }
         // A zero bond is impossible (`minimumBondWei` is non-zero and immutable in effect for the
         // life of a reservation), so at least one branch always runs. The final `else` is left
@@ -8695,13 +8738,10 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
     }
 
     /// @notice The offer that settled a Root through THIS contract, or zero.
-    /// @dev HONESTY NOTE: this records only settlements this contract performed. A Root minted
-    ///      through the ETH path (`HoodPupOfferEscrow.settlePaidEvm`) or by a self-cast is
-    ///      invisible here, because the deployment-pinned constructor gives this contract no
-    ///      `HoodPups` reference to ask. A solver MUST therefore check `HoodPups.rootMinted`
-    ///      off chain before bonding; the guard in `reserve` catches the competing-BTC-offer case
-    ///      only. The authoritative one-Root-one-HoodPup rule is enforced where the mint happens,
-    ///      in `HoodPups.mintRooted`, and a settlement that races it reverts in full.
+    /// @dev This local index records only settlements this contract performed and provides a cheap
+    ///      early rejection. It is not the authoritative Root lock. During `reserve`, the escrow
+    ///      rejects every already-minted Root and atomically acquires its Root-wide reservation
+    ///      mutex; every competing mint path consults that same mutex until terminal resolution.
     /// @param rootKey Canonical Root key.
     /// @return offerId The settling offer id, or zero.
     function settledOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId) {
@@ -8849,8 +8889,8 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
     error RootEpochAlreadyExists(bytes32 rootKey, uint64 epoch);
 
     /// @notice Thrown when a `ROOT_BIND` attestation does not elect the EVM payout mode.
-    /// @dev A `ROOT_BIND` binds an EVM address to a Root. A BTC (or NONE) payout mode carries no
-    ///      EVM address to bind, so accepting one would mean inventing a beneficiary.
+    /// @dev A `ROOT_BIND` binds an EVM address to a Root. Every other payout mode is incompatible
+    ///      with the canonical binding shape and is rejected rather than inventing a beneficiary.
     /// @param payoutMode The `PuppetTypes.PayoutMode` value that was supplied.
     error UnsupportedPayoutMode(uint8 payoutMode);
 
@@ -9290,6 +9330,9 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
             if (a.bitcoinHeight < s.verifiedBitcoinHeight) {
                 revert StaleBitcoinHeight(a.bitcoinHeight, s.verifiedBitcoinHeight);
             }
+            _requireConsistentChainPoint(
+                a.bitcoinHeight, a.bitcoinBlockHash, s.verifiedBitcoinHeight, s.lastBitcoinBlockHash
+            );
             // While a Root is active, only a MOVE of the inscription justifies a new epoch. Binding
             // the same outpoint again would let anyone holding a second valid attestation for the
             // current owner churn epochs (and re-point the beneficiary) without anything having
@@ -9317,6 +9360,24 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
         }
         if (a.bitcoinHeight < s.verifiedBitcoinHeight) {
             revert StaleBitcoinHeight(a.bitcoinHeight, s.verifiedBitcoinHeight);
+        }
+        _requireConsistentChainPoint(
+            a.bitcoinHeight, a.bitcoinBlockHash, s.verifiedBitcoinHeight, s.lastBitcoinBlockHash
+        );
+    }
+
+    /// @dev At one Bitcoin height there is exactly one block in the chain view this registry has
+    ///      accepted. A distinct block hash at the same height is a conflicting fork assertion,
+    ///      not monotonic progress. A canonical-chain recovery remains possible by attesting from
+    ///      a later height after the off-chain confirmation policy has resolved the reorg.
+    function _requireConsistentChainPoint(
+        uint64 providedHeight,
+        bytes32 providedBlockHash,
+        uint64 recordedHeight,
+        bytes32 recordedBlockHash
+    ) private pure {
+        if (providedHeight == recordedHeight && providedBlockHash != recordedBlockHash) {
+            revert ConflictingBitcoinBlockAtHeight(providedHeight, recordedBlockHash, providedBlockHash);
         }
     }
 
@@ -9882,11 +9943,9 @@ abstract contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Er
 ///      `PayoutVault`. A seller (or buyer) whose address is a contract that reverts on receive can
 ///      therefore never block a settlement, a refund or anybody else's mint.
 ///
-///      PAUSING. `whenNotPaused` guards the paths that take on NEW risk: the three creation
-///      functions, the three attestation-consuming settlement/approval functions, and the two
-///      authorized BTC hooks that start or complete a solver flow. It appears on NO refund path.
-///      `refundExpired`, `refundUnfillable`, `clearBtcReservation` and `expireBtcReservation` stay
-///      live while paused, so a pause can never trap a buyer's escrow inside this contract.
+///      PAUSING. `whenNotPaused` guards paths that take on NEW risk. It appears on no refund path
+///      and not on BTC finalization: once a solver reservation exists, the protocol must preserve
+///      its terminal settlement and expiry routes even during an incident.
 ///
 ///      NON-UPGRADEABLE by construction: no proxy, no initializer, no `delegatecall`, no
 ///      `selfdestruct`, no `tx.origin`, no owner EOA, and no admin path that can seize, redirect or
@@ -9922,10 +9981,10 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      that a solver who is mid-way through broadcasting a real Bitcoin payment cannot have
     ///      the offer pulled out from under them. That protection has to be bounded, or a buggy or
     ///      hostile `BtcSolverSettlement` could reserve with `reservationExpiry = type(uint64).max`
-    ///      and freeze the escrow permanently. 24 hours is far beyond the ~1 hour six Bitcoin
-    ///      confirmations need, and is the ceiling past which "the solver is still working" stops
-    ///      being a credible claim.
-    uint64 public constant MAX_RESERVATION_WINDOW = 24 hours;
+    ///      and freeze the escrow permanently. The value is shared with `BtcSolverSettlement`;
+    ///      one definition
+    ///      prevents governance from configuring a duration the escrow can never accept.
+    uint64 public constant MAX_RESERVATION_WINDOW = PuppetTypes.MAX_BTC_RESERVATION_DURATION;
 
     /*//////////////////////////////////////////////////////////////
                           ERRORS BEYOND THE INTERFACE
@@ -9952,18 +10011,13 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     /// @notice Thrown when a reservation window is zero-length, in the past, or too long.
     /// @param requested The expiry the solver contract asked for.
     /// @param earliestAllowed Exclusive lower bound: `block.timestamp`.
-    /// @param latestAllowed Inclusive upper bound: `min(offer.expiry, now + MAX_RESERVATION_WINDOW)`.
+    /// @param latestAllowed Inclusive upper bound: `now + MAX_RESERVATION_WINDOW`.
     error ReservationWindowInvalid(uint64 requested, uint64 earliestAllowed, uint64 latestAllowed);
 
     /// @notice Thrown when finalizing a reservation whose window has already closed.
     /// @param offerId The offer being finalized.
     /// @param reservationExpiry The moment the exclusive window ended.
     error ReservationLapsed(bytes32 offerId, uint64 reservationExpiry);
-
-    /// @notice Thrown when trying to force-expire a reservation that is still live.
-    /// @param offerId The offer being released.
-    /// @param reservationExpiry The moment the exclusive window ends.
-    error ReservationNotLapsed(bytes32 offerId, uint64 reservationExpiry);
 
     /// @notice Thrown when an inscription identity carries a zero reveal txid.
     /// @dev The shape of a default-initialised `RootId` reaching offer creation. Rejected because a
@@ -9976,6 +10030,11 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      attributed to an offer. Accepting a bare transfer would create ETH that belongs to
     ///      nobody and that no code path can ever pay out.
     error DirectDepositRejected();
+
+    /// @notice Thrown if governance tries to replace or remove the canonical solver coordinator.
+    /// @dev Two reservation authorities are unsafe, while removing the only one would destroy the
+    ///      permissionless terminal path. The coordinator is therefore bound by its first grant.
+    error BtcSettlementCoordinatorImmutable(address active, address requested);
 
     /*//////////////////////////////////////////////////////////////
                          EVENTS BEYOND THE INTERFACE
@@ -10036,6 +10095,14 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
 
     mapping(bytes32 => PuppetTypes.Offer) private _offers;
     mapping(address => uint256) private _buyerNonce;
+
+    /// @dev Root-wide mutex for the irreversible Bitcoin-payment window. Every mint path checks
+    ///      this mapping, reservation acquires it atomically, and only the canonical solver
+    ///      coordinator clears it while resolving the matching bond.
+    mapping(bytes32 => bytes32) private _activeBtcOfferForRoot;
+
+    /// @dev Bound by the first `BTC_SETTLEMENT_ROLE` grant and immutable thereafter.
+    address private _btcSettlementCoordinator;
 
     /// @dev Sum of `grossWei` over every offer that is currently OPEN, BTC_APPROVED or
     ///      BTC_RESERVED. Incremented once at creation and decremented once when the offer reaches
@@ -10164,6 +10231,46 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      which is unambiguous, and integrators should not need a try/catch to probe an id.
     function getOffer(bytes32 offerId) external view returns (PuppetTypes.Offer memory) {
         return _offers[offerId];
+    }
+
+    /// @inheritdoc IHoodPupOfferEscrow
+    function activeBtcOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId) {
+        return _activeBtcOfferForRoot[rootKey];
+    }
+
+    /// @inheritdoc IHoodPupOfferEscrow
+    function btcSettlementCoordinator() external view returns (address) {
+        return _btcSettlementCoordinator;
+    }
+
+    /// @dev The first BTC role grant permanently binds the sole coordinator. All other roles retain
+    ///      standard OpenZeppelin AccessControl behavior.
+    function grantRole(bytes32 role, address account) public override {
+        if (role == BTC_SETTLEMENT_ROLE) {
+            address active = _btcSettlementCoordinator;
+            if (account == address(0)) revert ZeroAddress();
+            if (active != address(0) && active != account) {
+                revert BtcSettlementCoordinatorImmutable(active, account);
+            }
+            _btcSettlementCoordinator = account;
+        }
+        super.grantRole(role, account);
+    }
+
+    /// @dev The canonical coordinator cannot be removed after a solver may have accepted risk.
+    function revokeRole(bytes32 role, address account) public override {
+        if (role == BTC_SETTLEMENT_ROLE) {
+            revert BtcSettlementCoordinatorImmutable(_btcSettlementCoordinator, account);
+        }
+        super.revokeRole(role, account);
+    }
+
+    /// @dev The coordinator cannot renounce itself and strand active reservations.
+    function renounceRole(bytes32 role, address callerConfirmation) public override {
+        if (role == BTC_SETTLEMENT_ROLE) {
+            revert BtcSettlementCoordinatorImmutable(_btcSettlementCoordinator, callerConfirmation);
+        }
+        super.renounceRole(role, callerConfirmation);
     }
 
     /// @inheritdoc IHoodPupOfferEscrow
@@ -10329,6 +10436,7 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         bytes32[] calldata collectionProof
     ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         PuppetTypes.Offer storage o = _settleableOffer(offerId, PuppetTypes.OfferKind.PAID_EVM);
+        _requireRootUnlocked(o.rootKey);
         _requireTermsMatch(offerId, o, attestation, PuppetTypes.AuthorizationPurpose.PAID_EVM_MINT);
 
         // The seller share follows the address the Bitcoin holder signed, so that address must
@@ -10381,6 +10489,7 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         bytes32[] calldata collectionProof
     ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         PuppetTypes.Offer storage o = _settleableOffer(offerId, PuppetTypes.OfferKind.SELF_CAST);
+        _requireRootUnlocked(o.rootKey);
         _requireTermsMatch(offerId, o, attestation, PuppetTypes.AuthorizationPurpose.SELF_CAST);
 
         if (attestation.payoutMode != uint8(PuppetTypes.PayoutMode.NONE)) {
@@ -10455,13 +10564,10 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      to broadcast an irreversible Bitcoin payment must not have the offer pulled from under
     ///      them mid-flight.
     ///
-    ///      THAT FREEZE IS BOUNDED THREE WAYS, because an unbounded one would be a way to trap a
-    ///      buyer's ETH forever. The window must end in the future, within `MAX_RESERVATION_WINDOW`
-    ///      of now, and never later than the offer's own expiry. The last bound is what makes the
-    ///      refund story airtight: a live reservation therefore implies an unexpired offer, and an
-    ///      expired offer therefore implies a lapsed reservation that ANYONE may clear with
-    ///      `expireBtcReservation`. There is no ordering of events in which the buyer's escrow is
-    ///      both unrefundable and unsettleable.
+    ///      The freeze is bounded by the shared `MAX_RESERVATION_WINDOW`, but may extend beyond the
+    ///      offer expiry. That grace period is essential: a solver that reserves a still-live
+    ///      offer must retain the complete window it accepted to prove an irreversible payment.
+    ///      The coordinator's permissionless expiry path releases both this mutex and the bond.
     /// @param offerId The approved offer being reserved.
     /// @param solver The bonded solver claiming the reservation.
     /// @param reservationExpiry Unix timestamp at which the exclusive window closes.
@@ -10473,14 +10579,17 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         PuppetTypes.Offer storage o = _offerWithStatus(offerId, PuppetTypes.OfferStatus.BTC_APPROVED);
         if (solver == address(0)) revert ZeroAddress();
         if (block.timestamp > o.expiry) revert OfferExpired(offerId, o.expiry);
+        if (_HOOD_PUPS.rootMinted(o.rootKey)) revert RootAlreadyMinted(o.rootKey);
 
-        uint64 ceiling = o.expiry;
-        uint64 windowCap = uint64(block.timestamp) + MAX_RESERVATION_WINDOW;
-        if (windowCap < ceiling) ceiling = windowCap;
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != bytes32(0)) revert RootReservationActive(o.rootKey, activeOfferId);
+
+        uint64 ceiling = uint64(block.timestamp) + MAX_RESERVATION_WINDOW;
         if (reservationExpiry <= block.timestamp || reservationExpiry > ceiling) {
             revert ReservationWindowInvalid(reservationExpiry, uint64(block.timestamp), ceiling);
         }
 
+        _activeBtcOfferForRoot[o.rootKey] = offerId;
         o.status = uint8(PuppetTypes.OfferStatus.BTC_RESERVED);
         o.reservedSolver = solver;
         o.reservationExpiry = reservationExpiry;
@@ -10494,25 +10603,6 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     /// @param offerId The reserved offer to release.
     function clearBtcReservation(bytes32 offerId) external onlyRole(BTC_SETTLEMENT_ROLE) {
         PuppetTypes.Offer storage o = _offerWithStatus(offerId, PuppetTypes.OfferStatus.BTC_RESERVED);
-        _releaseReservation(offerId, o);
-    }
-
-    /// @notice Permissionlessly release a reservation whose exclusive window has closed.
-    /// @dev ADDITIVE, not part of `IHoodPupOfferEscrow`, and the reason a buyer's escrow can never
-    ///      be trapped. `clearBtcReservation` requires `BTC_SETTLEMENT_ROLE`, so if
-    ///      `BtcSolverSettlement` were paused, broken or had its role revoked, a reserved offer
-    ///      would otherwise be frozen forever with the buyer's ETH inside it. This function needs
-    ///      no role and no governance action: once the window the solver themselves asked for has
-    ///      elapsed, anybody may return the offer to `BTC_APPROVED`, after which the ordinary
-    ///      refund paths apply. It is not pausable, for the same reason.
-    ///
-    ///      It cannot harm an honest solver: the window is chosen by `BtcSolverSettlement` at
-    ///      reservation time and `finalizeBtcSettlement` refuses a lapsed reservation anyway, so
-    ///      this function can only release a reservation that was already unusable.
-    /// @param offerId The reserved offer whose window has closed.
-    function expireBtcReservation(bytes32 offerId) external {
-        PuppetTypes.Offer storage o = _offerWithStatus(offerId, PuppetTypes.OfferStatus.BTC_RESERVED);
-        if (block.timestamp <= o.reservationExpiry) revert ReservationNotLapsed(offerId, o.reservationExpiry);
         _releaseReservation(offerId, o);
     }
 
@@ -10534,7 +10624,6 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     /// @return tokenId The minted HoodPup's token id.
     function finalizeBtcSettlement(bytes32 offerId, address solver, bytes32 paymentDigest)
         external
-        whenNotPaused
         nonReentrant
         onlyRole(BTC_SETTLEMENT_ROLE)
         returns (uint256 tokenId)
@@ -10544,16 +10633,19 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         if (block.timestamp > o.reservationExpiry) revert ReservationLapsed(offerId, o.reservationExpiry);
         if (paymentDigest == bytes32(0)) revert ZeroValue();
         if (_HOOD_PUPS.rootMinted(o.rootKey)) revert RootAlreadyMinted(o.rootKey);
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != offerId) revert RootReservationActive(o.rootKey, activeOfferId);
 
         // EFFECTS. `reservedSolver` and `reservationExpiry` are deliberately preserved: SETTLED is
         // terminal, so they cannot be reused, and they are the on-chain record of who was paid.
+        delete _activeBtcOfferForRoot[o.rootKey];
         o.status = uint8(PuppetTypes.OfferStatus.SETTLED);
         _lockedEscrowWei -= o.grossWei;
 
         emit BtcSettlementFinalized(offerId, solver, paymentDigest);
 
         _FEE_ROUTER.routeMintBtc{value: o.grossWei}(o.rootKey, solver, o.grossWei);
-        tokenId = _mint(o);
+        tokenId = _mintTerminal(o);
 
         emit OfferSettled(offerId, o.rootKey, tokenId, o.recipient, solver, o.grossWei, o.kind);
     }
@@ -10569,10 +10661,9 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      can stop, delay or redirect it.
     ///
     ///      `BTC_RESERVED` is rejected here rather than silently allowed: a solver may be
-    ///      mid-broadcast. The offer must first return to `BTC_APPROVED`, either through
-    ///      `BtcSolverSettlement` or, if that contract is unavailable, through the permissionless
-    ///      `expireBtcReservation`. Because a reservation can never outlive the offer, an expired
-    ///      offer always has a lapsed reservation, so that route is always open.
+    ///      mid-broadcast. The offer must first return to `BTC_APPROVED` through the canonical,
+    ///      permissionless `BtcSolverSettlement.expireReservation` path, which atomically resolves
+    ///      the matching bond and releases the Root mutex.
     /// @param offerId The expired offer to refund.
     function refundExpired(bytes32 offerId) external nonReentrant {
         PuppetTypes.Offer storage o = _refundableOffer(offerId);
@@ -10586,26 +10677,19 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
     ///      immediately, rather than at expiry, is what keeps a competitive offer book cheap for
     ///      buyers.
     ///
-    ///      Unlike `refundExpired`, this DOES accept a `BTC_RESERVED` offer. Once the Root is
-    ///      minted, `finalizeBtcSettlement` is structurally impossible — the mint would revert —
-    ///      so the reservation protects nobody and holding the buyer's ETH for the rest of the
-    ///      window would be pure cost. Such a reservation is explicitly RELEASED first, emitting
-    ///      `BtcReservationCleared`, so a refunded offer never carries a solver and a window that
-    ///      no longer mean anything. A stale reservation left on a terminal offer would be a lie in
-    ///      the indexed history, and `BtcSolverSettlement` reads these fields.
+    ///      `BTC_RESERVED` is deliberately rejected. Every legitimate mint path is blocked by the
+    ///      Root mutex while that status is active, so a minted Root alongside an active
+    ///      reservation signals broken role wiring rather than a condition this escrow may repair
+    ///      by orphaning the solver's bond.
     /// @param offerId The unfillable offer to refund.
     function refundUnfillable(bytes32 offerId) external nonReentrant {
         PuppetTypes.Offer storage o = _offers[offerId];
         uint8 status = o.status;
         if (status == uint8(PuppetTypes.OfferStatus.NONE)) revert UnknownOffer(offerId);
-        if (
-            status != uint8(PuppetTypes.OfferStatus.OPEN) && status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)
-                && status != uint8(PuppetTypes.OfferStatus.BTC_RESERVED)
-        ) {
+        if (status != uint8(PuppetTypes.OfferStatus.OPEN) && status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)) {
             revert InvalidOfferStatus(offerId, status, uint8(PuppetTypes.OfferStatus.OPEN));
         }
         if (!_HOOD_PUPS.rootMinted(o.rootKey)) revert RootNotMinted(o.rootKey);
-        if (status == uint8(PuppetTypes.OfferStatus.BTC_RESERVED)) _releaseReservation(offerId, o);
         _refund(offerId, o, true);
     }
 
@@ -10770,6 +10854,12 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         }
     }
 
+    /// @dev Reject every mint path while a solver owns the Root-wide BTC reservation mutex.
+    function _requireRootUnlocked(bytes32 rootKey) private view {
+        bytes32 activeOfferId = _activeBtcOfferForRoot[rootKey];
+        if (activeOfferId != bytes32(0)) revert RootReservationActive(rootKey, activeOfferId);
+    }
+
     /// @dev Assert that every term the Bitcoin holder signed equals the term this escrow stored.
     ///      Each field gets its own named error so a failed settlement tells the relayer exactly
     ///      which value diverged, rather than a single opaque "mismatch".
@@ -10845,9 +10935,20 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         );
     }
 
+    /// @dev BTC-only terminal mint. Ordinary EVM and self-cast paths never reach this bypass.
+    function _mintTerminal(PuppetTypes.Offer storage o) private returns (uint256 tokenId) {
+        return _HOOD_PUPS.mintRootedTerminal(
+            o.recipient, PuppetTypes.RootId({inscriptionTxid: o.rootTxid, inscriptionIndex: o.rootIndex})
+        );
+    }
+
     /// @dev Return a reserved offer to `BTC_APPROVED` and clear the reservation fields.
     function _releaseReservation(bytes32 offerId, PuppetTypes.Offer storage o) private {
         address solver = o.reservedSolver;
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != offerId) revert RootReservationActive(o.rootKey, activeOfferId);
+
+        delete _activeBtcOfferForRoot[o.rootKey];
         o.status = uint8(PuppetTypes.OfferStatus.BTC_APPROVED);
         o.reservedSolver = address(0);
         o.reservationExpiry = 0;
@@ -11123,6 +11224,24 @@ contract HoodPups is IHoodPups, ERC721, AccessControl, ReentrancyGuard {
         returns (uint256 tokenId)
     {
         if (_mintingPaused) revert MintingPaused();
+        return _mintRooted(recipient, root);
+    }
+
+    /// @inheritdoc IHoodPups
+    /// @dev The only production holder of `MINTER_ROLE` is the immutable offer escrow, which calls
+    ///      this entry point solely to finish a BTC reservation whose solver may already have paid
+    ///      irreversible Bitcoin. Ordinary settlement continues through `mintRooted` and remains
+    ///      blocked by the incident pause.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root)
+        external
+        onlyRole(MINTER_ROLE)
+        nonReentrant
+        returns (uint256 tokenId)
+    {
+        return _mintRooted(recipient, root);
+    }
+
+    function _mintRooted(address recipient, PuppetTypes.RootId calldata root) private returns (uint256 tokenId) {
         if (recipient == address(0)) revert ZeroAddress();
         if (root.inscriptionTxid == bytes32(0)) revert ZeroRootTxid();
 
@@ -11485,7 +11604,9 @@ contract HoodPups is IHoodPups, ERC721, AccessControl, ReentrancyGuard {
 ///      NON-UPGRADEABLE by construction: no proxy, no initializer, no `delegatecall`, no
 ///      `selfdestruct`, no `tx.origin`. This contract holds no value, has no payable function, and
 ///      has no admin path that can move, seize or reduce anyone's balance — the only thing an admin
-///      can do is decide WHO may consume, and pause consumption.
+///      can do is decide WHO may consume, and pause new ownership/spend consumption. Payment
+///      consumption remains live because it finalizes an obligation incurred when a solver paid
+///      irreversible BTC.
 ///
 ///      NO `ReentrancyGuard`, DELIBERATELY. No value moves here and every external call this
 ///      contract makes is a `view` into one of two immutable, protocol-owned registries fixed at
@@ -11519,7 +11640,7 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     /// @notice May consume root-spend attestations. Held by `RootOwnershipRegistry`.
     bytes32 public constant ROOT_SPEND_CONSUMER_ROLE = keccak256("ROOT_SPEND_CONSUMER_ROLE");
 
-    /// @notice May pause consumption. Held by the guardian multisig.
+    /// @notice May pause new ownership and spend consumption. Held by the guardian multisig.
     /// @dev Asymmetric by design: the guardian pauses, `DEFAULT_ADMIN_ROLE` (the timelock)
     ///      unpauses. A compromised guardian can therefore only cost liveness, never authority.
     ///      This mirrors `docs/PAUSE_AND_RECOVERY.md`, which states the asymmetry as policy; this
@@ -11885,14 +12006,14 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     ///      failure this contract could permit — a solver would be reimbursed twice for one
     ///      payment — and `_consumedPaymentOutputs` is global rather than per-offer precisely so
     ///      that the second attempt fails no matter which offer, solver or attestation set
-    ///      presents it.
+    ///      presents it. Deliberately NOT pausable: only `BtcSolverSettlement` holds the consumer
+    ///      role, and it reaches this function after a solver may have paid irreversible BTC.
     /// @param a The Bitcoin payment attestation.
     /// @param signatures Attestor signatures, strictly ascending by recovered signer.
     /// @return digest The digest that was consumed.
     /// @return paymentOutputKey The Bitcoin output key that was consumed.
     function consumeBitcoinPayment(PuppetTypes.BitcoinPaymentAttestation calldata a, bytes[] calldata signatures)
         external
-        whenNotPaused
         onlyRole(PAYMENT_CONSUMER_ROLE)
         returns (bytes32 digest, bytes32 paymentOutputKey)
     {
@@ -11954,10 +12075,10 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
                                   PAUSE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Halt all three consumption paths.
+    /// @notice Halt new ownership and Root-spend consumption.
     /// @dev Hashing, verification and every consumption-state view remain live. Pausing this
-    ///      contract cannot block a refund or a withdrawal: it holds no value and no user balance
-    ///      is reachable through it. The correct use is a suspected false attestation or an
+    ///      contract cannot block payment consumption for an active solver reservation, a refund
+    ///      or a withdrawal. The correct use is a suspected false ownership attestation or an
     ///      in-progress Bitcoin reorg (`docs/PAUSE_AND_RECOVERY.md`).
     function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
@@ -12093,8 +12214,9 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     ///      There is no artificial cap on `signatures.length`. A cap would add a failure mode
     ///      without adding safety: every accepted signature must recover to a distinct, strictly
     ///      increasing, currently-authorized attestor, so the number of signatures that can ever be
-    ///      ACCEPTED is already bounded by the registry's `MAX_ATTESTORS`. A caller who submits ten
-    ///      thousand junk signatures only burns their own gas, and `consume*` is role gated anyway.
+    ///      ACCEPTED is already bounded by the registry's exact five-member set. A caller who
+    ///      submits ten thousand junk signatures only burns their own gas, and `consume*` is role
+    ///      gated anyway.
     function _requireQuorum(bytes32 digest, bytes[] calldata signatures, uint8 required) private view {
         if (signatures.length < required) revert InsufficientSignatures(signatures.length, required);
 
@@ -12145,9 +12267,10 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
     /// @dev Structural validity of an ownership attestation's purpose and payout fields.
     ///
     ///      TWO RULES, NOT ONE. First, `purpose` and `payoutMode` must agree: a `PAID_EVM_MINT`
-    ///      carries `PayoutMode.EVM`, a `PAID_BTC_MINT` carries `PayoutMode.BTC`, and every
-    ///      non-paying purpose (`SELF_CAST`, `ROOT_BIND`, `ROOT_INVALIDATE`) carries
-    ///      `PayoutMode.NONE`. Second, the payout fields must match that mode exactly. Checking
+    ///      carries `PayoutMode.EVM`, a `PAID_BTC_MINT` carries `PayoutMode.BTC`, `ROOT_BIND`
+    ///      carries `PayoutMode.EVM` because it names the beneficiary being bound, and the other
+    ///      non-paying purposes carry `PayoutMode.NONE`. Second, the payout fields must match that
+    ///      purpose exactly. Checking
     ///      only the second rule would accept a `PAID_EVM_MINT` that declares a BTC payout — an
     ///      attestation that would read as "mint for EVM settlement" to one consumer and "pay in
     ///      Bitcoin" to another. Two consumers reading one signed fact differently is precisely the
@@ -12167,6 +12290,17 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
         if (a.purpose > uint8(type(PuppetTypes.AuthorizationPurpose).max)) revert UnsupportedPurpose(a.purpose);
 
         PuppetTypes.AuthorizationPurpose purpose = PuppetTypes.AuthorizationPurpose(a.purpose);
+
+        // ROOT_BIND names an EVM beneficiary but moves no money. It is intentionally handled
+        // before the paying EVM branch so `evmPayout` is required while every monetary field stays
+        // zero. This is the one canonical encoding consumed by RootOwnershipRegistry.
+        if (purpose == PuppetTypes.AuthorizationPurpose.ROOT_BIND) {
+            if (a.payoutMode != uint8(PuppetTypes.PayoutMode.EVM)) revert InvalidPayoutShape();
+            if (a.evmPayout == address(0)) revert InvalidPayoutShape();
+            if (a.btcPayoutScriptHash != bytes32(0)) revert InvalidPayoutShape();
+            if (a.sellerSats != 0 || a.grossWei != 0 || a.sellerWei != 0) revert InvalidPayoutShape();
+            return;
+        }
 
         PuppetTypes.PayoutMode expectedMode;
         if (purpose == PuppetTypes.AuthorizationPurpose.PAID_EVM_MINT) {
@@ -12190,7 +12324,7 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
             if (a.sellerSats == 0) revert InvalidPayoutShape();
             if (a.sellerWei > a.grossWei) revert InvalidPayoutShape();
         } else {
-            // No money moves for SELF_CAST, ROOT_BIND or ROOT_INVALIDATE, so every payout AND
+            // No money moves for SELF_CAST or ROOT_INVALIDATE, so every payout AND
             // every monetary field must be zero. A non-zero `grossWei` on a free mint would be a
             // signed claim that a buyer escrowed value, which no consumer should ever see here.
             if (a.evmPayout != address(0)) revert InvalidPayoutShape();
@@ -12229,12 +12363,10 @@ contract BitcoinOwnershipOracle is IBitcoinOwnershipOracle, AccessControl, Pausa
 ///      is an attested settlement system, not a trustless bridge. The original Bitcoin Puppet never
 ///      leaves Bitcoin and is never escrowed, wrapped or custodied here — this vault holds ETH only.
 ///
-///      PAUSING IS ONE-DIRECTIONAL BY DESIGN. `whenNotPaused` appears on the three credit functions
-///      and nowhere else. A pause can stop the protocol taking on NEW liabilities; it can never
-///      stop a user taking their money out. Any pause that could freeze a withdrawal would be an
-///      admin path to seize user funds with extra steps, so there is deliberately no such modifier
-///      on `withdraw`, `withdrawAll`, `withdrawTo` or `withdrawWithAuthorization`. This is asserted
-///      directly by `test_WithdrawalsWorkWhilePaused`.
+///      PAUSING IS ONE-DIRECTIONAL BY DESIGN. `whenNotPaused` appears on ordinary credit functions
+///      and nowhere else. A pause can stop the protocol taking on NEW liabilities; it cannot block
+///      refunds, terminal credits for obligations already incurred, or withdrawals. Any pause that
+///      could freeze one of those exits would be an admin path to seize user funds with extra steps.
 ///
 ///      NO ADMIN PATH REDUCES A USER'S BALANCE. `_claimable` is decreased in exactly one place —
 ///      `_debit`, reached only through the four withdrawal entry points, each of which either runs
@@ -12464,12 +12596,7 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
     ///      in the same call that created it.
     /// @param beneficiary Address to credit.
     function credit(address beneficiary) external payable onlyRole(CREDITOR_ROLE) whenNotPaused {
-        if (beneficiary == address(0)) revert ZeroAddress();
-        if (msg.value == 0) revert ZeroAmount();
-
-        _claimable[beneficiary] += msg.value;
-        _totalLiability += msg.value;
-
+        _credit(beneficiary, msg.value);
         emit Credited(beneficiary, msg.value, msg.sender);
     }
 
@@ -12491,14 +12618,21 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
     ///      more value than `credit` does.
     /// @param beneficiary The buyer being made whole. Must be non-zero.
     function creditRefund(address beneficiary) external payable onlyRole(CREDITOR_ROLE) {
-        if (beneficiary == address(0)) revert ZeroAddress();
-        if (msg.value == 0) revert ZeroAmount();
-
-        _claimable[beneficiary] += msg.value;
-        _totalLiability += msg.value;
-
+        _credit(beneficiary, msg.value);
         emit Credited(beneficiary, msg.value, msg.sender);
         emit RefundCredited(beneficiary, msg.value, msg.sender);
+    }
+
+    /// @inheritdoc IPayoutVault
+    /// @dev This is the accounting equivalent of `creditRefund`: the ETH backs an obligation that
+    ///      was already created outside this transaction. For BTC settlement, the solver may have
+    ///      irreversibly paid Bitcoin before an EVM pause is raised; for expiry, the bond already
+    ///      belongs to its deterministic recipients. Pausing either terminal write would turn the
+    ///      incident switch into a confiscation lever.
+    function creditTerminal(address beneficiary) external payable onlyRole(CREDITOR_ROLE) {
+        _credit(beneficiary, msg.value);
+        emit Credited(beneficiary, msg.value, msg.sender);
+        emit TerminalCredited(beneficiary, msg.value, msg.sender);
     }
 
     /// @inheritdoc IPayoutVault
@@ -12530,6 +12664,20 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
         onlyRole(CREDITOR_ROLE)
         whenNotPaused
     {
+        _creditBatch(beneficiaries, amounts, false);
+    }
+
+    /// @inheritdoc IPayoutVault
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts)
+        external
+        payable
+        onlyRole(CREDITOR_ROLE)
+    {
+        _creditBatch(beneficiaries, amounts, true);
+    }
+
+    /// @dev Shared exact-conservation implementation for ordinary and terminal batches.
+    function _creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts, bool terminal) private {
         uint256 length = beneficiaries.length;
         if (length != amounts.length) revert ArrayLengthMismatch(length, amounts.length);
 
@@ -12546,6 +12694,7 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
             _claimable[beneficiary] += amount;
 
             emit Credited(beneficiary, amount, msg.sender);
+            if (terminal) emit TerminalCredited(beneficiary, amount, msg.sender);
         }
 
         // Also catches the empty-array call, whose total is 0.
@@ -12553,6 +12702,15 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
         if (total != msg.value) revert AmountMismatch(total, msg.value);
 
         _totalLiability += total;
+    }
+
+    /// @dev Shared single-beneficiary accounting. Events remain purpose-specific at the wrappers.
+    function _credit(address beneficiary, uint256 amount) private {
+        if (beneficiary == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
+
+        _claimable[beneficiary] += amount;
+        _totalLiability += amount;
     }
 
     /*//////////////////////////////////////////////////////////////

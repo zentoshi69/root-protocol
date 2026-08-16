@@ -1,4 +1,4 @@
-# HoodPups — Rooted Settlement Protocol
+# deriv.wtf — HoodPups Rooted Settlement Protocol
 
 **One canonical Bitcoin Puppet inscription can create at most one verified HoodPup on Robinhood
 Chain. The original Puppet never leaves Bitcoin.**
@@ -44,8 +44,9 @@ where he says it is, that the UTXO is unspent and unspent-in-mempool, and that t
 valid for that exact output script. Three sign an attestation. A relayer submits it and pays the
 gas.
 
-Then, in one atomic transaction: the HoodPup mints to Alice, and the escrow splits exactly
-**50% to Bob · 25% to the Bitcoin Puppets ecosystem treasury · 25% to the protocol**.
+Then, in one atomic transaction: the HoodPup mints to Alice, and the escrow applies its immutable
+**50% Bob · 25% Bitcoin Puppets ecosystem treasury · 25% protocol** policy. Integer shares round
+down and the protocol receives the remainder, so every wei is conserved even for tiny amounts.
 
 Bob can take that as ETH on Robinhood Chain, or as **exact native BTC** — a bonded solver pays him
 in sats first and is reimbursed from Alice's escrow only after three verifiers attest the precise
@@ -118,13 +119,14 @@ docs/             architecture, trust assumptions, threat model, runbooks
 | [`BITCOIN_REORG_RESPONSE.md`](./docs/BITCOIN_REORG_RESPONSE.md) | The sharpest edge in the design |
 | [`KEY_ROTATION.md`](./docs/KEY_ROTATION.md) | Attestor, relayer, solver and admin keys |
 | [`PAUSE_AND_RECOVERY.md`](./docs/PAUSE_AND_RECOVERY.md) | Pausing never blocks a refund |
+| [`AUDIT_REMEDIATION.md`](./docs/AUDIT_REMEDIATION.md) | Finding-by-finding remediation map and residual risks |
 
 ## Security posture
 
 - Core contracts immutable; no upgrade key exists to steal.
-- The 50/25/25 split is compiled in with no setter.
-- Pausing may block new risk-taking. It can **never** block a refund or a withdrawal — enforced by
-  an invariant test, not by policy.
+- The 50/25/25 policy and exact-conservation remainder rule are compiled in with no setter.
+- Pausing may block new risk-taking. It can **never** block a refund, withdrawal, or terminal
+  resolution of an active BTC reservation — enforced by invariant and full-deployment tests.
 - No admin path can reduce a user's claimable balance. No such code exists.
 - No `tx.origin`, no `selfdestruct`, no arbitrary `delegatecall`, no owner withdrawal.
 - Admin is a multisig plus `TimelockController`; deployment fails if the deployer retains privilege.

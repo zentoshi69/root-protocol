@@ -553,7 +553,7 @@ contract BitcoinOwnershipOracleTest is Test {
         (bytes32 verified,) = liveOracle.verifyOwnership(a, signatures, proof);
         assertEq(verified, digest, "the quorum must verify against the real registry first");
 
-        real.addAttestor(address(0xA11CE));
+        real.replaceAttestor(attestors.addresses()[0], address(0xA11CE));
 
         vm.expectRevert(
             abi.encodeWithSelector(IBitcoinOwnershipOracle.StaleAttestorEpoch.selector, uint64(1), uint64(2))
@@ -685,6 +685,8 @@ contract BitcoinOwnershipOracleTest is Test {
     function test_ValidRootBindShapeAccepted() public view {
         PuppetTypes.OwnershipAttestation memory a = _ownershipSelfCast();
         a.purpose = uint8(PuppetTypes.AuthorizationPurpose.ROOT_BIND);
+        a.payoutMode = uint8(PuppetTypes.PayoutMode.EVM);
+        a.evmPayout = RECIPIENT;
         bytes32 digest = oracle.hashOwnershipAttestation(a);
         (bytes32 returned,) = oracle.verifyOwnership(a, attestors.sign(digest, THRESHOLD), _proof(0));
         assertEq(returned, digest, "a well-formed ROOT_BIND must be accepted");
@@ -1284,7 +1286,7 @@ contract BitcoinOwnershipOracleTest is Test {
                                   PAUSE
     //////////////////////////////////////////////////////////////*/
 
-    function test_PauseBlocksAllThreeConsumptionPaths() public {
+    function test_PauseBlocksOwnershipAndSpendButLeavesTerminalPaymentLive() public {
         PuppetTypes.OwnershipAttestation memory o = _ownershipEvm();
         bytes[] memory oSignatures = attestors.sign(oracle.hashOwnershipAttestation(o), THRESHOLD);
         PuppetTypes.BitcoinPaymentAttestation memory p = _payment();
@@ -1298,8 +1300,9 @@ contract BitcoinOwnershipOracleTest is Test {
         vm.expectRevert(Pausable.EnforcedPause.selector);
         escrowConsumer.consumeOwnership(o, oSignatures, proof);
 
-        vm.expectRevert(Pausable.EnforcedPause.selector);
         settlementConsumer.consumeBitcoinPayment(p, pSignatures);
+        bytes32 paymentDigest = oracle.hashBitcoinPaymentAttestation(p);
+        assertTrue(oracle.isDigestConsumed(paymentDigest), "terminal payment consumed while paused");
 
         vm.expectRevert(Pausable.EnforcedPause.selector);
         rootConsumer.consumeRootSpend(s, sSignatures, proof);

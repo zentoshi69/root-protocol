@@ -180,6 +180,11 @@ interface IPayoutVault {
     /// @notice Emitted alongside `Credited` when the credit is a refund, so indexers can tell a
     ///         buyer being made whole apart from a seller being paid.
     event RefundCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
+    /// @notice Emitted alongside `Credited` when an existing cross-chain obligation is finalized.
+    /// @dev Terminal credits deliberately remain executable while ordinary liability creation is
+    ///      paused. Authorized callers may use them only after the protocol has already incurred
+    ///      an irreversible obligation, such as a solver payment or a bond resolution.
+    event TerminalCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
     event RootCredited(bytes32 indexed rootKey, uint256 amount, address indexed creditor);
     event RootCreditReleased(bytes32 indexed rootKey, address indexed beneficiary, uint256 amount);
     event Withdrawn(address indexed beneficiary, address indexed recipient, uint256 amount);
@@ -211,11 +216,20 @@ interface IPayoutVault {
     ///      new one, so the credit pause must not reach it (protocol invariant I12).
     function creditRefund(address beneficiary) external payable;
 
+    /// @notice Credit an obligation that existed before the current transaction.
+    /// @dev Requires `CREDITOR_ROLE`. Deliberately NOT pausable so incident response cannot strand
+    ///      a solver after an irreversible Bitcoin payment or block terminal bond accounting.
+    function creditTerminal(address beneficiary) external payable;
+
     /// @notice Credit a Root's pending bucket with `msg.value`. Requires `CREDITOR_ROLE`.
     function creditRoot(bytes32 rootKey) external payable;
 
     /// @notice Credit several beneficiaries in one call. `sum(amounts)` must equal `msg.value`.
     function creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
+
+    /// @notice Batch form of `creditTerminal`; `sum(amounts)` must equal `msg.value`.
+    /// @dev Requires `CREDITOR_ROLE` and deliberately remains live while paused.
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
 
     /// @notice Move a Root's pending bucket to a newly verified beneficiary's claimable balance.
     /// @dev Pure bookkeeping: no ETH moves and `totalLiability` is unchanged.
@@ -262,6 +276,11 @@ interface IPayoutVault {
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/
@@ -733,6 +752,7 @@ interface IRootOwnershipRegistry {
     error RootMismatch(bytes32 expected, bytes32 provided);
     error OutpointMismatch(bytes32 expected, bytes32 provided);
     error StaleBitcoinHeight(uint64 provided, uint64 current);
+    error ConflictingBitcoinBlockAtHeight(uint64 height, bytes32 recordedBlockHash, bytes32 providedBlockHash);
     error UnchangedOutpoint(bytes32 outpointHash);
     error InvalidBeneficiary();
     error UnsupportedPurpose(uint8 purpose);
@@ -1493,8 +1513,8 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
     error RootEpochAlreadyExists(bytes32 rootKey, uint64 epoch);
 
     /// @notice Thrown when a `ROOT_BIND` attestation does not elect the EVM payout mode.
-    /// @dev A `ROOT_BIND` binds an EVM address to a Root. A BTC (or NONE) payout mode carries no
-    ///      EVM address to bind, so accepting one would mean inventing a beneficiary.
+    /// @dev A `ROOT_BIND` binds an EVM address to a Root. Every other payout mode is incompatible
+    ///      with the canonical binding shape and is rejected rather than inventing a beneficiary.
     /// @param payoutMode The `PuppetTypes.PayoutMode` value that was supplied.
     error UnsupportedPayoutMode(uint8 payoutMode);
 
@@ -1934,6 +1954,9 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
             if (a.bitcoinHeight < s.verifiedBitcoinHeight) {
                 revert StaleBitcoinHeight(a.bitcoinHeight, s.verifiedBitcoinHeight);
             }
+            _requireConsistentChainPoint(
+                a.bitcoinHeight, a.bitcoinBlockHash, s.verifiedBitcoinHeight, s.lastBitcoinBlockHash
+            );
             // While a Root is active, only a MOVE of the inscription justifies a new epoch. Binding
             // the same outpoint again would let anyone holding a second valid attestation for the
             // current owner churn epochs (and re-point the beneficiary) without anything having
@@ -1961,6 +1984,24 @@ contract RootOwnershipRegistry is IRootOwnershipRegistry, AccessControl, Pausabl
         }
         if (a.bitcoinHeight < s.verifiedBitcoinHeight) {
             revert StaleBitcoinHeight(a.bitcoinHeight, s.verifiedBitcoinHeight);
+        }
+        _requireConsistentChainPoint(
+            a.bitcoinHeight, a.bitcoinBlockHash, s.verifiedBitcoinHeight, s.lastBitcoinBlockHash
+        );
+    }
+
+    /// @dev At one Bitcoin height there is exactly one block in the chain view this registry has
+    ///      accepted. A distinct block hash at the same height is a conflicting fork assertion,
+    ///      not monotonic progress. A canonical-chain recovery remains possible by attesting from
+    ///      a later height after the off-chain confirmation policy has resolved the reorg.
+    function _requireConsistentChainPoint(
+        uint64 providedHeight,
+        bytes32 providedBlockHash,
+        uint64 recordedHeight,
+        bytes32 recordedBlockHash
+    ) private pure {
+        if (providedHeight == recordedHeight && providedBlockHash != recordedBlockHash) {
+            revert ConflictingBitcoinBlockAtHeight(providedHeight, recordedBlockHash, providedBlockHash);
         }
     }
 

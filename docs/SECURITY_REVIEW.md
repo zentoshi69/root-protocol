@@ -1,10 +1,15 @@
-# Security Review
+# Historical internal security review
+
+> This document is the pre-audit snapshot from commit `8a52832`. It is retained as review history;
+> its test counts and finding set are not the current release record. The later external
+> whole-protocol findings and their source/test mapping are tracked in
+> [`AUDIT_REMEDIATION.md`](./AUDIT_REMEDIATION.md).
 
 **Scope:** the ten Robinhood Chain contracts, the deployment path, the canonical message format, the
 protocol SDK, and the four off-chain services, at commit `8a52832`.
 
-**Status:** internal pre-audit review. This is **not** a substitute for an external audit, which is a
-launch gate in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+**Status at the time:** internal pre-audit review. This was **not** a substitute for an external
+audit, which remains a launch gate in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 **Method:** interface-first construction with the type and hashing layer frozen before any
 implementation; per-contract unit, fuzz and handler-based stateful invariant suites; a
@@ -124,7 +129,7 @@ its Merkle root reproduced by at least two implementations before mainnet.
 | Split conserves exactly | FeeRouter fuzz at 1, 2, 3 wei where three floor divisions would strand dust |
 | Vault balance never below liability | Handler-based stateful invariant with ghost sums |
 | No admin can seize a user balance | No such code path; asserted by enumerating admin functions |
-| Pausing never blocks refunds or withdrawals | **H-1 above** — now enforced and regression-covered |
+| Pausing never blocks refunds or withdrawals | **H-1 above** — enforced at this review snapshot; active BTC terminal paths were hardened later |
 | Quorum rules | `FullFlow::test_QuorumIsEnforcedEndToEnd` — too few, unsorted, and outsider-contaminated sets all rejected |
 | Deployer privilege fully revoked | `DeployLib.assertDeployerRevoked`, asserted in the integration suite |
 | Cross-language hash parity | 32 golden vectors, CI-gated, fails the build on drift |
@@ -134,7 +139,7 @@ its Merkle root reproduced by at least two implementations before mainnet.
 
 - **Non-upgradeable core.** No proxy, no initializer, no `delegatecall`. There is no upgrade key to
   steal — the most valuable target in most protocols simply does not exist here.
-- **Immutable economics.** 50/25/25 compiled in with no setter.
+- **Immutable economics.** 50/25/25 floor shares plus exact-conservation remainder compiled in with no setter.
 - **Pull payments.** A hostile payout address cannot block a mint.
 - **Fail-closed everywhere.** Unknown chain ids, missing manifests, unsupported script types, stale
   epochs, empty purpose masks and unvalidated BIP-322 adapters all reject rather than degrade.

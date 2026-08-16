@@ -830,6 +830,33 @@ contract PayoutVaultTest is Test {
         vm.stopPrank();
     }
 
+    /// @dev Terminal credits discharge obligations that predate the pause. They therefore remain
+    ///      live, while retaining the same role checks and exact backing rules as ordinary credit.
+    function test_TerminalCreditsRemainLiveAndExactlyBackedWhilePaused() public {
+        vm.prank(admin);
+        vault.pause();
+
+        vm.prank(stranger);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole)
+        );
+        vault.creditTerminal{value: 1 ether}(alice);
+
+        vm.prank(creditor);
+        vault.creditTerminal{value: 1 ether}(alice);
+
+        (address[] memory to, uint256[] memory amounts) = _batch3();
+        vm.prank(creditor);
+        vault.creditTerminalBatch{value: 4 ether}(to, amounts);
+
+        assertEq(vault.claimable(alice), 3 ether, "single plus batch credit");
+        assertEq(vault.claimable(bob), 1 ether, "batch credit");
+        assertEq(vault.claimable(stranger), 1 ether, "batch credit");
+        assertEq(vault.totalLiability(), 5 ether, "every terminal wei is a liability");
+        assertEq(address(vault).balance, 5 ether, "every liability is backed");
+        _assertSolvent();
+    }
+
     /// @dev THE test the spec singles out: a pause may stop new risk, never a payout.
     function test_WithdrawalsWorkWhilePaused() public {
         _credit(alice, 6 ether);

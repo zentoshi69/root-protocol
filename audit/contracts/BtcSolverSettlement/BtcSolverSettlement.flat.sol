@@ -180,6 +180,11 @@ interface IPayoutVault {
     /// @notice Emitted alongside `Credited` when the credit is a refund, so indexers can tell a
     ///         buyer being made whole apart from a seller being paid.
     event RefundCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
+    /// @notice Emitted alongside `Credited` when an existing cross-chain obligation is finalized.
+    /// @dev Terminal credits deliberately remain executable while ordinary liability creation is
+    ///      paused. Authorized callers may use them only after the protocol has already incurred
+    ///      an irreversible obligation, such as a solver payment or a bond resolution.
+    event TerminalCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
     event RootCredited(bytes32 indexed rootKey, uint256 amount, address indexed creditor);
     event RootCreditReleased(bytes32 indexed rootKey, address indexed beneficiary, uint256 amount);
     event Withdrawn(address indexed beneficiary, address indexed recipient, uint256 amount);
@@ -211,11 +216,20 @@ interface IPayoutVault {
     ///      new one, so the credit pause must not reach it (protocol invariant I12).
     function creditRefund(address beneficiary) external payable;
 
+    /// @notice Credit an obligation that existed before the current transaction.
+    /// @dev Requires `CREDITOR_ROLE`. Deliberately NOT pausable so incident response cannot strand
+    ///      a solver after an irreversible Bitcoin payment or block terminal bond accounting.
+    function creditTerminal(address beneficiary) external payable;
+
     /// @notice Credit a Root's pending bucket with `msg.value`. Requires `CREDITOR_ROLE`.
     function creditRoot(bytes32 rootKey) external payable;
 
     /// @notice Credit several beneficiaries in one call. `sum(amounts)` must equal `msg.value`.
     function creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
+
+    /// @notice Batch form of `creditTerminal`; `sum(amounts)` must equal `msg.value`.
+    /// @dev Requires `CREDITOR_ROLE` and deliberately remains live while paused.
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
 
     /// @notice Move a Root's pending bucket to a newly verified beneficiary's claimable balance.
     /// @dev Pure bookkeeping: no ETH moves and `totalLiability` is unchanged.
@@ -262,6 +276,11 @@ interface IPayoutVault {
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/
@@ -823,6 +842,7 @@ interface IHoodPupOfferEscrow {
     error OfferNotExpired(bytes32 offerId, uint64 expiry);
     error InvalidExpiry(uint64 expiry, uint64 minAllowed, uint64 maxAllowed);
     error RootAlreadyMinted(bytes32 rootKey);
+    error RootReservationActive(bytes32 rootKey, bytes32 activeOfferId);
     error RootNotMinted(bytes32 rootKey);
     error SelfCastMustBeZeroValue();
     error SelfCastRecipientMismatch(address caller, address recipient);
@@ -864,6 +884,12 @@ interface IHoodPupOfferEscrow {
 
     /// @notice Full offer view.
     function getOffer(bytes32 offerId) external view returns (PuppetTypes.Offer memory);
+
+    /// @notice Offer holding the Root-wide BTC reservation mutex, or zero when unlocked.
+    function activeBtcOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId);
+
+    /// @notice Sole, permanently bound coordinator for the BTC reservation and bond lifecycle.
+    function btcSettlementCoordinator() external view returns (address);
 
     /// @notice Next offer id `buyer` will produce.
     function nextOfferId(address buyer) external view returns (bytes32);
@@ -1366,7 +1392,7 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
     ///      expiry (see the settlement grace window note on `settle`). It is a hard ceiling in
     ///      bytecode rather than a policy note precisely because the party it protects — the buyer
     ///      — is not the party that sets it.
-    uint64 public constant MAX_RESERVATION_DURATION = 30 days;
+    uint64 public constant MAX_RESERVATION_DURATION = PuppetTypes.MAX_BTC_RESERVATION_DURATION;
 
     /*//////////////////////////////////////////////////////////////
                               IMMUTABLE WIRING
@@ -1574,8 +1600,9 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
         // as "already reserved" would be a lie in the trace; the Root is gone, permanently.
         if (status == uint8(ReservationStatus.SETTLED)) revert RootAlreadyMinted(offer.rootKey);
 
-        // A DIFFERENT offer for the same Root already settled through this contract. See the
-        // honesty note on `settledOfferForRoot` for what this check does NOT cover.
+        // A DIFFERENT offer for the same Root already settled through this contract. This is an
+        // early local rejection; the escrow remains authoritative and rejects any already-minted
+        // Root (including an EVM or self-cast winner) when it atomically acquires the Root mutex.
         if (_settledOfferForRoot[offer.rootKey] != bytes32(0)) revert RootAlreadyMinted(offer.rootKey);
 
         if (offer.status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)) {
@@ -1621,10 +1648,10 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
     /// @dev WHY THIS FUNCTION IS NOT PAUSABLE. By the time it is callable the solver has already
     ///      broadcast an irreversible Bitcoin transaction paying the seller. A pause here would
     ///      leave that payment stranded while the reservation clock kept running toward a slash —
-    ///      i.e. it would be a lever that confiscates a solver's BTC *and* its bond. The incident
-    ///      lever the specification asks for exists, and it lives where the incident would be:
-    ///      `BitcoinOwnershipOracle.pause()` stops `consumeBitcoinPayment` for every consumer at
-    ///      once. Pausing the risk source is right; pausing the victim's exit is not.
+    ///      i.e. it would be a lever that confiscates a solver's BTC *and* its bond. For that same
+    ///      reason every downstream step this terminal path reaches remains live: payment
+    ///      consumption, BTC finalization, terminal minting and terminal vault credits. Their
+    ///      ordinary ownership/mint/credit entry points still pause new risk.
     ///
     ///      THE SETTLEMENT GRACE WINDOW. Settlement is allowed while the RESERVATION is live, even
     ///      if the OFFER's own expiry has passed. That window is `reservationExpiry - offer.expiry`
@@ -1697,7 +1724,7 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
         //    provably delivered. Credited rather than pushed: a solver whose fallback reverts must
         //    not be able to brick its own settlement, and a pull payment keeps the ETH exit out of
         //    this contract's reentrancy surface entirely.
-        PAYOUT_VAULT.credit{value: bond}(solver);
+        PAYOUT_VAULT.creditTerminal{value: bond}(solver);
 
         _emitSettled(offerId, solver, paymentDigest, attestation, bond);
     }
@@ -1829,11 +1856,11 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
             amounts[0] = buyerCompensation;
             beneficiaries[1] = protocolRecipient;
             amounts[1] = protocolAmount;
-            PAYOUT_VAULT.creditBatch{value: buyerCompensation + protocolAmount}(beneficiaries, amounts);
+            PAYOUT_VAULT.creditTerminalBatch{value: buyerCompensation + protocolAmount}(beneficiaries, amounts);
         } else if (buyerCompensation != 0) {
-            PAYOUT_VAULT.credit{value: buyerCompensation}(buyer);
+            PAYOUT_VAULT.creditTerminal{value: buyerCompensation}(buyer);
         } else if (protocolAmount != 0) {
-            PAYOUT_VAULT.credit{value: protocolAmount}(protocolRecipient);
+            PAYOUT_VAULT.creditTerminal{value: protocolAmount}(protocolRecipient);
         }
         // A zero bond is impossible (`minimumBondWei` is non-zero and immutable in effect for the
         // life of a reservation), so at least one branch always runs. The final `else` is left
@@ -2013,13 +2040,10 @@ contract BtcSolverSettlement is IBtcSolverSettlement, AccessControl, Pausable, R
     }
 
     /// @notice The offer that settled a Root through THIS contract, or zero.
-    /// @dev HONESTY NOTE: this records only settlements this contract performed. A Root minted
-    ///      through the ETH path (`HoodPupOfferEscrow.settlePaidEvm`) or by a self-cast is
-    ///      invisible here, because the deployment-pinned constructor gives this contract no
-    ///      `HoodPups` reference to ask. A solver MUST therefore check `HoodPups.rootMinted`
-    ///      off chain before bonding; the guard in `reserve` catches the competing-BTC-offer case
-    ///      only. The authoritative one-Root-one-HoodPup rule is enforced where the mint happens,
-    ///      in `HoodPups.mintRooted`, and a settlement that races it reverts in full.
+    /// @dev This local index records only settlements this contract performed and provides a cheap
+    ///      early rejection. It is not the authoritative Root lock. During `reserve`, the escrow
+    ///      rejects every already-minted Root and atomically acquires its Root-wide reservation
+    ///      mutex; every competing mint path consults that same mutex until terminal resolution.
     /// @param rootKey Canonical Root key.
     /// @return offerId The settling offer id, or zero.
     function settledOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId) {

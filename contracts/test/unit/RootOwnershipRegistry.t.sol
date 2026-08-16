@@ -607,17 +607,39 @@ contract RootOwnershipRegistryTest is Test {
         registry.bindRootOwner(a, sigs, proofA);
     }
 
-    /// @notice "Not older than" is inclusive: an attestation at exactly the recorded height binds.
-    function test_BindRootOwnerAcceptsEqualBitcoinHeight() public {
+    /// @notice Equal-height updates are accepted only when they identify the same Bitcoin block.
+    function test_BindRootOwnerAcceptsEqualBitcoinHeightInTheSameBlock() public {
         _recordBobsMint();
 
         PuppetTypes.OwnershipAttestation memory a = _bindAttestation(
             TXID_A, INDEX_A, charlie, outpointTwo, scriptCharlie, HEIGHT_ONE, keccak256("FIXTURE-auth-eq")
         );
+        a.bitcoinBlockHash = keccak256("FIXTURE-block-880000");
         bytes[] memory sigs = _sigsFor(a);
 
         (uint64 epoch,) = registry.bindRootOwner(a, sigs, proofA);
-        assertEq(epoch, 2, "equal height is accepted");
+        assertEq(epoch, 2, "same height and same block is accepted");
+    }
+
+    /// @notice Two different blocks cannot both be canonical at the same Bitcoin height.
+    function test_BindRootOwnerRejectsConflictingBlockAtEqualBitcoinHeight() public {
+        _recordBobsMint();
+
+        PuppetTypes.OwnershipAttestation memory a = _bindAttestation(
+            TXID_A, INDEX_A, charlie, outpointTwo, scriptCharlie, HEIGHT_ONE, keccak256("FIXTURE-auth-fork")
+        );
+        bytes32 recordedBlockHash = keccak256("FIXTURE-block-880000");
+        bytes[] memory sigs = _sigsFor(a);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRootOwnershipRegistry.ConflictingBitcoinBlockAtHeight.selector,
+                HEIGHT_ONE,
+                recordedBlockHash,
+                a.bitcoinBlockHash
+            )
+        );
+        registry.bindRootOwner(a, sigs, proofA);
     }
 
     /// @notice An invalidation advances the recorded height, so a pre-spend proof cannot reinstate
@@ -1053,6 +1075,26 @@ contract RootOwnershipRegistryTest is Test {
             abi.encodeWithSelector(IRootOwnershipRegistry.StaleBitcoinHeight.selector, HEIGHT_ONE - 10, HEIGHT_ONE)
         );
         registry.invalidateRoot(spend, sigs, proofA);
+    }
+
+    function test_InvalidateRootRejectsConflictingBlockAtEqualBitcoinHeight() public {
+        _recordBobsMint();
+
+        PuppetTypes.RootSpendAttestation memory spend =
+            _spendAttestation(TXID_A, INDEX_A, outpointOne, HEIGHT_ONE, keccak256("FIXTURE-auth-same-height-fork"));
+        bytes[] memory sigs = _sigsFor(spend);
+        bytes32 recordedBlockHash = keccak256("FIXTURE-block-880000");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRootOwnershipRegistry.ConflictingBitcoinBlockAtHeight.selector,
+                HEIGHT_ONE,
+                recordedBlockHash,
+                spend.bitcoinBlockHash
+            )
+        );
+        registry.invalidateRoot(spend, sigs, proofA);
+        assertTrue(registry.isActive(rootKeyA), "conflicting fork cannot close the epoch");
     }
 
     /// @notice Structurally empty spend attestations are refused before the oracle is called.
