@@ -78,7 +78,7 @@ contract PayoutVaultTest is Test {
         vault.grantRole(sweeperRole, sweeper);
         vm.stopPrank();
 
-        vm.deal(creditor, 1_000 ether);
+        vm.deal(creditor, 1000 ether);
         vm.deal(relayer, 10 ether);
         vm.deal(stranger, 10 ether);
     }
@@ -170,9 +170,7 @@ contract PayoutVaultTest is Test {
     function test_CreditRejectsUnauthorizedCaller() public {
         vm.prank(stranger);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole)
         );
         vault.credit{value: 1 ether}(alice);
     }
@@ -205,9 +203,7 @@ contract PayoutVaultTest is Test {
     function test_CreditRootRejectsUnauthorizedCaller() public {
         vm.prank(stranger);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole)
         );
         vault.creditRoot{value: 1 ether}(ROOT_A);
     }
@@ -313,9 +309,7 @@ contract PayoutVaultTest is Test {
 
         vm.prank(stranger);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, creditorRole)
         );
         vault.creditBatch{value: 4 ether}(to, amounts);
     }
@@ -398,9 +392,7 @@ contract PayoutVaultTest is Test {
         // Note the creditor cannot release: crediting and assigning are separate authorities.
         vm.prank(creditor);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, creditor, releaserRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, creditor, releaserRole)
         );
         vault.releaseRootCredit(ROOT_A, alice);
     }
@@ -897,9 +889,7 @@ contract PayoutVaultTest is Test {
         // Asymmetric by design: stopping is fast, restarting is a timelocked governance action.
         vm.prank(hotKey);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, hotKey, adminRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, hotKey, adminRole)
         );
         vault.unpause();
     }
@@ -907,9 +897,7 @@ contract PayoutVaultTest is Test {
     function test_PauseRejectsUnauthorizedCaller() public {
         vm.prank(stranger);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, pauserRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, pauserRole)
         );
         vault.pause();
     }
@@ -1094,26 +1082,20 @@ contract PayoutVaultTest is Test {
 
         vm.prank(stranger);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, sweeperRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, sweeperRole)
         );
         vault.scheduleExcessSweep(payable(stranger));
 
         vm.prank(stranger);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, sweeperRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, sweeperRole)
         );
         vault.sweepExcess(payable(stranger));
 
         // The creditor holds a role, but not this one. Roles do not stack.
         vm.prank(creditor);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, creditor, sweeperRole
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, creditor, sweeperRole)
         );
         vault.sweepExcess(payable(creditor));
     }

@@ -87,8 +87,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -110,23 +108,23 @@ jobs:
         with:
           version: stable
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      - name: Regenerate Solidity vectors
+      # Solidity asserts against the committed vectors (the suite is read-only; fs_permissions
+      # grants no write access, deliberately — a test that can rewrite its own expectations is not
+      # a test). So this proves Solidity still agrees with what is committed.
+      - name: Solidity agrees with the committed vectors
         working-directory: contracts
         run: forge test --match-path 'test/unit/PuppetHashing.t.sol' -vv
 
-      - name: TypeScript must reproduce every Solidity vector
+      # And this proves TypeScript agrees with the same file. Both sides pinned to one artifact is
+      # what makes the parity guarantee real rather than aspirational.
+      - name: TypeScript reproduces every Solidity vector
         run: pnpm vectors
-
-      - name: Committed vectors must be unchanged
-        run: git diff --exit-code data/test-fixtures/
 
   secrets:
     name: Secret scan
@@ -139,6 +137,9 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Default ruleset plus a documented allowlist for vendored code and deliberately-public
+          # test fixtures. See .gitleaks.toml — every exclusion carries a written reason.
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
       - name: No real keys, no mainnet broadcast artifacts
         run: |

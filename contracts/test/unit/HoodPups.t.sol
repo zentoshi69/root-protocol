@@ -111,8 +111,7 @@ contract HoodPupsTest is Test {
     /// @dev Deterministic, distinct inscription identity per `salt`.
     function _root(uint256 salt) internal pure returns (PuppetTypes.RootId memory) {
         return PuppetTypes.RootId({
-            inscriptionTxid: keccak256(abi.encode("inscription-reveal-txid", salt)),
-            inscriptionIndex: uint32(salt)
+            inscriptionTxid: keccak256(abi.encode("inscription-reveal-txid", salt)), inscriptionIndex: uint32(salt)
         });
     }
 
@@ -460,9 +459,7 @@ contract HoodPupsTest is Test {
         nft.pauseMinting();
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, guardian, DEFAULT_ADMIN
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, guardian, DEFAULT_ADMIN)
         );
         vm.prank(guardian);
         nft.unpauseMinting();
@@ -497,9 +494,7 @@ contract HoodPupsTest is Test {
     /// @notice Pausing is role gated.
     function test_PauseRequiresPauserRole() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, PAUSER
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, PAUSER)
         );
         vm.prank(stranger);
         nft.pauseMinting();
@@ -587,16 +582,12 @@ contract HoodPupsTest is Test {
         assertEq(nft.userOf(tokenId), bob, "tour engine set the user");
 
         // The narrow role confers nothing else.
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, tourEngine, tokenId)
-        );
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, tourEngine, tokenId));
         vm.prank(tourEngine);
         nft.transferFrom(alice, tourEngine, tokenId);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, tourEngine, MINTER
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, tourEngine, MINTER)
         );
         vm.prank(tourEngine);
         nft.mintRooted(bob, _root(2));
@@ -904,16 +895,12 @@ contract HoodPupsTest is Test {
         assertFalse(fresh.hasRole(PAUSER, deployer), "deployer can still pause");
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, deployer, METADATA_ADMIN
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, deployer, METADATA_ADMIN)
         );
         fresh.setBaseURI("ipfs://deployer-still-in-control/");
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, deployer, DEFAULT_ADMIN
-            )
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, deployer, DEFAULT_ADMIN)
         );
         fresh.grantRole(MINTER, deployer);
 

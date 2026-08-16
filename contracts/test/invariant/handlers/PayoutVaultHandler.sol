@@ -183,8 +183,12 @@ contract PayoutVaultHandler is CommonBase, StdUtils {
     /// @param amountA Wei for the first beneficiary.
     /// @param amountB Wei for the second beneficiary.
     function creditBatch(uint256 actorSeed, uint256 amountA, uint256 amountB) external {
-        address first = _actor(actorSeed);
-        address second = _actor(actorSeed + 1);
+        // The index is reduced BEFORE the increment: `_actor(actorSeed + 1)` panics on a
+        // `type(uint256).max` seed, which the fuzzer supplies often enough to show up as handler
+        // reverts in the campaign summary.
+        uint256 index = _index(actorSeed, _actors.length);
+        address first = _actors[index];
+        address second = _actors[(index + 1) % _actors.length];
         if (first == second) return;
 
         amountA = bound(amountA, 1, 50 ether);
@@ -408,7 +412,7 @@ contract PayoutVaultHandler is CommonBase, StdUtils {
     /// @dev Keeps the handler solvent enough to credit; never touches the vault's balance.
     /// @param amount Wei the next credit needs.
     function _fund(uint256 amount) private {
-        if (address(this).balance < amount) vm.deal(address(this), amount + 1_000 ether);
+        if (address(this).balance < amount) vm.deal(address(this), amount + 1000 ether);
     }
 
     function _index(uint256 seed, uint256 length) private pure returns (uint256) {

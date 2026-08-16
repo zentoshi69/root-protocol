@@ -42,9 +42,7 @@ interface IBitcoinOwnershipOracle {
         uint64 amountSats,
         address consumer
     );
-    event RootSpendConsumed(
-        bytes32 indexed digest, bytes32 indexed rootKey, bytes32 spendingTxid, address consumer
-    );
+    event RootSpendConsumed(bytes32 indexed digest, bytes32 indexed rootKey, bytes32 spendingTxid, address consumer);
 
     /// @notice EIP-712 digest of an ownership attestation.
     function hashOwnershipAttestation(PuppetTypes.OwnershipAttestation calldata a) external view returns (bytes32);

@@ -252,13 +252,11 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
     /// @param nonce Expected value of `withdrawalNonce(beneficiary)` at execution time.
     /// @param deadline Last timestamp at which the authorization is valid.
     /// @return The EIP-712 digest to sign.
-    function withdrawalDigest(
-        address beneficiary,
-        address recipient,
-        uint256 amount,
-        uint256 nonce,
-        uint64 deadline
-    ) public view returns (bytes32) {
+    function withdrawalDigest(address beneficiary, address recipient, uint256 amount, uint256 nonce, uint64 deadline)
+        public
+        view
+        returns (bytes32)
+    {
         return _hashTypedDataV4(PuppetHashing.hashWithdrawal(beneficiary, recipient, amount, nonce, deadline));
     }
 

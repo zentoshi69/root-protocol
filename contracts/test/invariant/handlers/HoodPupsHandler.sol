@@ -45,12 +45,8 @@ contract HoodPupsHandler is CommonBase, StdUtils {
     /// @dev Token holders and rental users. Plain addresses with no code, so `_safeMint` never
     ///      reaches a receiver hook — receiver behaviour is covered exhaustively in the unit suite,
     ///      and a hostile receiver here would only add noise to the state-machine campaign.
-    address[4] public actors = [
-        address(uint160(0xA11CE)),
-        address(uint160(0xB0B)),
-        address(uint160(0xCA401)),
-        address(uint160(0xDA5E))
-    ];
+    address[4] public actors =
+        [address(uint160(0xA11CE)), address(uint160(0xB0B)), address(uint160(0xCA401)), address(uint160(0xDA5E))];
 
     /*//////////////////////////////////////////////////////////////
                                GHOST STATE
@@ -188,8 +184,9 @@ contract HoodPupsHandler is CommonBase, StdUtils {
 
         vm.prank(owner);
         try NFT.transferFrom(owner, to, tokenId) {
-            // Expected: an owner-initiated transfer always succeeds.
-        } catch {
+        // Expected: an owner-initiated transfer always succeeds.
+        }
+        catch {
             // An owner moving their own token to a code-free address has no legitimate reason to
             // fail. If it failed while paused, the pause reached a holder's property.
             if (pausedNow) pauseBlockedATransfer = true;
@@ -221,11 +218,14 @@ contract HoodPupsHandler is CommonBase, StdUtils {
     /// @notice Toggle the mint pause through the real role holders.
     /// @dev Pausing runs as this handler (`PAUSER_ROLE`); unpausing runs as `ADMIN`
     ///      (`DEFAULT_ADMIN_ROLE`), preserving the production asymmetry inside the campaign.
+    ///      The draw is deliberately skewed towards unpausing (1 in 4 pauses). An even split leaves
+    ///      the collection paused for roughly half the campaign, which starves the mint path — the
+    ///      one that carries the property this whole file exists to test.
     /// @param seed Chooses pause or unpause.
     function togglePause(uint256 seed) external tracksNextTokenId {
         callsPauseToggle++;
 
-        if (seed % 2 == 0) {
+        if (seed % 4 == 0) {
             vm.prank(address(this));
             try NFT.pauseMinting() {} catch {}
         } else {
@@ -267,11 +267,11 @@ contract HoodPupsHandler is CommonBase, StdUtils {
     function _rootAt(uint256 slot) internal pure returns (PuppetTypes.RootId memory) {
         if (slot < 4) {
             return PuppetTypes.RootId({
-                inscriptionTxid: keccak256("shared-reveal-transaction"),
-                inscriptionIndex: uint32(slot)
+                inscriptionTxid: keccak256("shared-reveal-transaction"), inscriptionIndex: uint32(slot)
             });
         }
-        return PuppetTypes.RootId({inscriptionTxid: keccak256(abi.encode("root", slot)), inscriptionIndex: uint32(slot)});
+        return
+            PuppetTypes.RootId({inscriptionTxid: keccak256(abi.encode("root", slot)), inscriptionIndex: uint32(slot)});
     }
 
     /// @param seed Raw fuzz word.

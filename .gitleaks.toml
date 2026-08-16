@@ -1,0 +1,56 @@
+# gitleaks configuration
+#
+# The default ruleset is kept in full. This file only adds allowlist entries, and every entry has a
+# written reason — a secret scanner whose exclusions are undocumented stops being a control and
+# becomes decoration.
+#
+# The rule that matters is unchanged: **no production key material may ever enter this repository.**
+# CI additionally runs an independent hard-fail grep for `BEGIN ... PRIVATE KEY` and `xprv...` over
+# the whole tree, and that check has no allowlist at all. See `.github/workflows/ci.yml`.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Vendored dependencies and deliberately-public test fixtures"
+
+paths = [
+  # Vendored third-party Solidity. OpenZeppelin ships mocks and test fixtures containing
+  # well-known test keys and mnemonics. It is pinned, unmodified, upstream code — not ours to
+  # rewrite, and scanning it tells us nothing about our own hygiene.
+  '''contracts/lib/.*''',
+
+  # Foundry build output. Gitignored, but a local run would otherwise scan megabytes of ABI JSON
+  # containing parameter names like "privateKey" from the cheatcode interface.
+  '''contracts/(out|cache)(-[a-z0-9]+)?/.*''',
+
+  # Lockfiles: integrity hashes look like high-entropy strings and are not secrets.
+  '''pnpm-lock\.yaml''',
+
+  # Cross-language golden vectors. Every value is a synthetic hash or a fixture address, published
+  # deliberately so five independent implementations can be proven to agree. They are the opposite
+  # of secret — the whole point is that everyone can reproduce them.
+  '''data/test-fixtures/.*\.json''',
+]
+
+regexes = [
+  # The Anvil / Hardhat development mnemonic. It is a globally published constant that funds
+  # throwaway local accounts. Treating it as a finding trains people to ignore this scanner.
+  '''test test test test test test test test test test test junk''',
+
+  # Regtest RPC credentials from infra/regtest/docker-compose.yml. They secure a throwaway chain
+  # whose coins are worth nothing, and they are committed on purpose: dressing them up as secrets
+  # would encourage someone to reuse a real-looking credential where it actually matters.
+  '''regtest-only-not-a-secret''',
+
+  # Repeated-nibble test keys such as 0x1111...1111 and 0x2222...2222, used to derive deterministic
+  # attestor identities in unit tests. A key with 32 identical bytes controls nothing and is
+  # recognisably synthetic on sight — which is exactly why the tests use that shape.
+  '''0x(00|11|22|33|44|55|66|77|88|99|aa|bb|cc|dd|ee|ff){32}''',
+]
+
+# Deliberately NOT allowlisted, so a real leak still fails the build:
+#   - any PEM-encoded private key
+#   - any BIP-32 extended private key (xprv/tprv)
+#   - any .env file (they are gitignored, and a committed one should fail loudly)
+#   - any high-entropy key that is not one of the recognisable synthetic shapes above
