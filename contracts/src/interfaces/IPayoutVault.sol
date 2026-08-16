@@ -24,6 +24,9 @@ interface IPayoutVault {
     error DirectDepositRejected();
 
     event Credited(address indexed beneficiary, uint256 amount, address indexed creditor);
+    /// @notice Emitted alongside `Credited` when the credit is a refund, so indexers can tell a
+    ///         buyer being made whole apart from a seller being paid.
+    event RefundCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
     event RootCredited(bytes32 indexed rootKey, uint256 amount, address indexed creditor);
     event RootCreditReleased(bytes32 indexed rootKey, address indexed beneficiary, uint256 amount);
     event Withdrawn(address indexed beneficiary, address indexed recipient, uint256 amount);
@@ -47,8 +50,13 @@ interface IPayoutVault {
     /// @notice `address(this).balance - totalLiability()`; only force-sent ETH ends up here.
     function excessBalance() external view returns (uint256);
 
-    /// @notice Credit `beneficiary` with `msg.value`. Requires `CREDITOR_ROLE`.
+    /// @notice Credit `beneficiary` with `msg.value`. Requires `CREDITOR_ROLE`. Pausable.
     function credit(address beneficiary) external payable;
+
+    /// @notice Credit a refund. Requires `CREDITOR_ROLE`. Deliberately NOT pausable.
+    /// @dev A refund releases an obligation the beneficiary already holds rather than creating a
+    ///      new one, so the credit pause must not reach it (protocol invariant I12).
+    function creditRefund(address beneficiary) external payable;
 
     /// @notice Credit a Root's pending bucket with `msg.value`. Requires `CREDITOR_ROLE`.
     function creditRoot(bytes32 rootKey) external payable;

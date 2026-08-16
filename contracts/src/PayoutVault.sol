@@ -279,6 +279,34 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
         emit Credited(beneficiary, msg.value, msg.sender);
     }
 
+    /// @notice Credit a refund. Deliberately NOT pausable.
+    /// @dev Protocol invariant I12: pausing must never block a refund or a withdrawal.
+    ///
+    ///      The credit pause exists to stop the protocol taking on NEW obligations during an
+    ///      incident. A refund is not a new obligation — it is the release of one the buyer already
+    ///      holds, against ETH the escrow is already carrying on their behalf. Blocking it would not
+    ///      protect anyone; it would strand the buyer's own money inside the escrow for exactly as
+    ///      long as the incident lasted, which is when they most want it back.
+    ///
+    ///      This was found by the integration suite, not by this contract's own tests: `credit` is
+    ///      correctly pausable, `withdraw` is correctly not, and the escrow's refund path correctly
+    ///      survives an escrow pause. The violation only appeared once both contracts were wired
+    ///      together and the VAULT was paused instead — see `test/integration/FullFlow.t.sol`.
+    ///
+    ///      Still `CREDITOR_ROLE`-gated, so only protocol contracts can reach it, and it moves no
+    ///      more value than `credit` does.
+    /// @param beneficiary The buyer being made whole. Must be non-zero.
+    function creditRefund(address beneficiary) external payable onlyRole(CREDITOR_ROLE) {
+        if (beneficiary == address(0)) revert ZeroAddress();
+        if (msg.value == 0) revert ZeroAmount();
+
+        _claimable[beneficiary] += msg.value;
+        _totalLiability += msg.value;
+
+        emit Credited(beneficiary, msg.value, msg.sender);
+        emit RefundCredited(beneficiary, msg.value, msg.sender);
+    }
+
     /// @inheritdoc IPayoutVault
     /// @dev Used when the protocol owes value to whoever controls a Bitcoin Puppet but does not yet
     ///      have an attested EVM address for them. The ETH is a liability from this moment, which

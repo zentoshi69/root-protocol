@@ -1052,7 +1052,7 @@ contract HoodPupOfferEscrow is IHoodPupOfferEscrow, AccessControl, Pausable, Ree
         if (amount != 0) {
             // Pull payment, never a push: a buyer whose address reverts on receive must not be able
             // to make their own refund — and therefore this offer — permanently unclosable.
-            _PAYOUT_VAULT.credit{value: amount}(buyer);
+            _PAYOUT_VAULT.creditRefund{value: amount}(buyer);
         }
     }
 

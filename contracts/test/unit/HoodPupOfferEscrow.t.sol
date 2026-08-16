@@ -2106,22 +2106,50 @@ contract HoodPupOfferEscrowTest is EscrowFixture {
     ///      No money is lost: the offer stays refundable forever and the same call succeeds once
     ///      the vault resumes. Integration should decide whether `credit` ought to be pausable at
     ///      all; this test records today's behaviour either way.
-    function test_APausedVaultDefersARefundButCanNeverLoseIt() public {
+    /// @notice A paused vault must NOT defer a refund — invariant I12 requires it to go through.
+    /// @dev This previously asserted the opposite: that a paused vault made `refundExpired` revert,
+    ///      leaving the offer refundable later ("deferred, never lost"). That is a defensible
+    ///      design, and it is not the one the protocol promises. The build specification requires
+    ///      that "refunds and withdrawals must remain available during an emergency pause",
+    ///      invariant I12 says the same, and `docs/INCIDENT_RESPONSE.md` tells users in as many
+    ///      words that they can still get their money out while the protocol is paused.
+    ///
+    ///      The conflict was invisible to this suite and to PayoutVault's: `credit` is correctly
+    ///      pausable, `withdraw` is correctly not, and refunds correctly survive an ESCROW pause.
+    ///      Only wiring both contracts together and pausing the VAULT exposed it — see
+    ///      `test/integration/FullFlow.t.sol`. The fix is `PayoutVault.creditRefund`, which is
+    ///      `CREDITOR_ROLE`-gated but deliberately not pausable, because a refund releases an
+    ///      obligation the buyer already holds rather than creating a new one.
+    function test_APausedVaultStillLetsARefundThrough() public {
         bytes32 offerId = _createEvm(0);
         vm.warp(uint256(escrow.getOffer(offerId).expiry) + 1);
 
         vm.prank(admin);
         vault.pause();
 
-        vm.expectRevert(Pausable.EnforcedPause.selector);
         escrow.refundExpired(offerId);
-        assertEq(_status(offerId), uint8(PuppetTypes.OfferStatus.OPEN), "still refundable, nothing consumed");
-        assertEq(address(escrow).balance, PRICE, "the buyer's ETH is untouched");
+        assertEq(_status(offerId), uint8(PuppetTypes.OfferStatus.REFUNDED), "refund completes while paused");
+        assertEq(vault.claimable(buyer), PRICE, "buyer is made whole immediately");
+        assertEq(address(escrow).balance, 0, "escrow released the deposit");
 
+        // And the buyer can actually take it out, because withdrawals are not pausable either.
+        uint256 before = buyer.balance;
+        vm.prank(buyer);
+        vault.withdrawAll();
+        assertEq(buyer.balance - before, PRICE, "withdrawable during the same pause");
+    }
+
+    /// @notice The pause still does what it is for: no NEW obligations while it is on.
+    /// @dev Making refunds non-pausable must not accidentally make everything non-pausable.
+    function test_APausedVaultStillBlocksNonRefundCredits() public {
         vm.prank(admin);
-        vault.unpause();
-        escrow.refundExpired(offerId);
-        assertEq(vault.claimable(buyer), PRICE, "deferred, never lost");
+        vault.pause();
+
+        // The pranked sender is the one that pays, so fund the escrow rather than this contract.
+        vm.deal(address(escrow), 1 ether);
+        vm.prank(address(escrow));
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vault.credit{value: 1 ether}(buyer);
     }
 
     function test_NoAdminPathCanSeizeOrRedirectEscrow() public view {
