@@ -1,0 +1,11 @@
+{
+  "name": "@hoodpups/deriv-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Production static export for deriv.wtf.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/verify.mjs"
+  }
+}

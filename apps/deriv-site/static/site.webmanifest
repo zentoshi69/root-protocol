@@ -1,0 +1,17 @@
+{
+  "name": "DERIV.WTF",
+  "short_name": "DERIV.WTF",
+  "description": "Cross-chain community consent for NFT derivatives.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#131412",
+  "theme_color": "#131412",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

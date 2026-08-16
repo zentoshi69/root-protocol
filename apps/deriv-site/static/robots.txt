@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /mobile/
+
+Sitemap: https://deriv.wtf/sitemap.xml

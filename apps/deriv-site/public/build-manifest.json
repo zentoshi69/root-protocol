@@ -1,0 +1,35 @@
+{
+  "buildId": "20260816T175500Z",
+  "pages": {
+    "/": {
+      "file": "index.html",
+      "bytes": 595257,
+      "sha256": "f86633edc63bc76da3a82db537450aaa4414f366685e521c6cb7df527ccd9d58"
+    },
+    "/root-space/": {
+      "file": "root-space/index.html",
+      "bytes": 414716,
+      "sha256": "2cfbd6d169600dc67c0c695ebc1ef5bec914125f9278592cd3b89ffd5d4cd942"
+    },
+    "/mint/": {
+      "file": "mint/index.html",
+      "bytes": 275897,
+      "sha256": "51fd4db904bf407d10f53731d1bf54563858946db652e818c0ecea62f65fd1a0"
+    },
+    "/holders/": {
+      "file": "holders/index.html",
+      "bytes": 280035,
+      "sha256": "3b11a6d2c1fe89c83962f409c01bc8831918cc101f627bbd2598aebc92d77d30"
+    },
+    "/protocol/": {
+      "file": "protocol/index.html",
+      "bytes": 264504,
+      "sha256": "0a1764f9345cc90ed486b142b00930eb6983ceb16f7b45f104f6c9cdc57dc685"
+    },
+    "/mobile/": {
+      "file": "mobile/index.html",
+      "bytes": 1159539,
+      "sha256": "3dbd028e71d5c3ae6f81be8e49cf7d430e795d11325df0cc257709d7013cef3f"
+    }
+  }
+}

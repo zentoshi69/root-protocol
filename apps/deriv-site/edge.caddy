@@ -1,0 +1,35 @@
+www.deriv.wtf {
+	redir https://deriv.wtf{uri} permanent
+}
+
+deriv.wtf {
+	encode zstd gzip
+
+	@notRead not method GET HEAD
+	respond @notRead 405
+
+	@sensitive path /.env* /.git/* /Dockerfile /*.map /*.log /*.sql /*.bak
+	respond @sensitive 404
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Content-Security-Policy "default-src 'none'; base-uri 'none'; connect-src 'self' blob:; font-src 'self' data: blob:; form-action 'none'; frame-ancestors 'none'; frame-src 'self' blob:; img-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' data: blob:"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		Origin-Agent-Cluster "?1"
+		Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), publickey-credentials-get=(), usb=()"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-DNS-Prefetch-Control "off"
+		X-Frame-Options "DENY"
+		Cache-Control "public, max-age=0, must-revalidate"
+	}
+
+	handle /healthz {
+		reverse_proxy deriv-wtf-site:8080
+	}
+
+	handle {
+		reverse_proxy deriv-wtf-site:8080
+	}
+}
