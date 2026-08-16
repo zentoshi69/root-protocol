@@ -8,7 +8,7 @@
 | Flattened | `BitcoinOwnershipOracle.flat.sol` · 4310 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `2d814fbd2f5d32405dbe6e972ef625d7f1d5c31179e35c417de5ae8241fc6339` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `82277b00b808d9fd324a129ccc80284e22609d4b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

@@ -8,7 +8,7 @@
 | Flattened | `PuppetCollectionRegistry.flat.sol` · 1214 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `05b825b225202f06bef1834bb3272c2066d76a6c98ec4c78133d80ab35504c21` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `82277b00b808d9fd324a129ccc80284e22609d4b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

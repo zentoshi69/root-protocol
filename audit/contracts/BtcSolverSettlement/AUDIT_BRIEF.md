@@ -8,7 +8,7 @@
 | Flattened | `BtcSolverSettlement.flat.sol` · 1831 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `d51167292602284ef39de8915d9d9721d16c1489f2cda2c3a573ad8c3f8ce443` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `82277b00b808d9fd324a129ccc80284e22609d4b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

@@ -8,7 +8,7 @@
 | Flattened | `FeeRouter.flat.sol` · 1384 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `a78472a6a478524a839f8c570d1248023bd6d9891c65cf99299277b62f888fa0` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `82277b00b808d9fd324a129ccc80284e22609d4b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

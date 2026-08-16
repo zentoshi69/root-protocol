@@ -4,10 +4,10 @@ Everything the protocol deploys, in one compilation unit.
 
 | | |
 |---|---|
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `82277b00b808d9fd324a129ccc80284e22609d4b` |
 | Bundle | `HoodPupsProtocol.flat.sol` |
-| SHA-256 | `c4f9c3d2e9cbda272706183a15d2ef83276758438520aceb195815ec297a6d4b` |
-| Lines | 12,981 (11,465 non-blank) |
+| SHA-256 | `1e32f2452ac0baded96745043d9199761f623d8a2a06ccd0dbdb2393ab0180c2` |
+| Lines | 12,980 (11,464 non-blank) |
 | Contracts | 10 protocol, 10 interfaces, 2 type/hash libraries, 32 vendored dependencies |
 | Compiler | solc 0.8.28, evm `shanghai`, optimizer on at 800 runs, no viaIR |
 
@@ -48,10 +48,10 @@ because an auditor who discovers it on page 40 has already wasted the first 39.
 
 | Order | Contract | Line | Why |
 |---|---|---|---|
-| 1 | `BitcoinOwnershipOracle` | 11,617 | Quorum verification, replay protection, one-time digest consumption. Everything else trusts this. |
-| 2 | `HoodPupOfferEscrow` | 9,955 | The money path — offers, settlement, refunds, and the state machine between them. |
-| 3 | `PayoutVault` | 12,382 | Pull-payment accounting. Refunds must survive a pause; a stuck refund is a lost user. |
-| 4 | `RootOwnershipRegistry` | 8,855 | The one-root-one-pup invariant and ownership epochs. |
+| 1 | `BitcoinOwnershipOracle` | 11,616 | Quorum verification, replay protection, one-time digest consumption. Everything else trusts this. |
+| 2 | `HoodPupOfferEscrow` | 9,954 | The money path — offers, settlement, refunds, and the state machine between them. |
+| 3 | `PayoutVault` | 12,381 | Pull-payment accounting. Refunds must survive a pause; a stuck refund is a lost user. |
+| 4 | `RootOwnershipRegistry` | 8,854 | The one-root-one-pup invariant and ownership epochs. |
 
 ## Invariants the protocol claims
 
@@ -81,16 +81,16 @@ between contracts are still where reviewers should look first.
 The bundle's own header carries a line-numbered table of contents for all declarations, including
 the vendored dependencies. The 10 protocol contracts are:
 
-1. `PuppetCollectionRegistry` — line 6,122
-2. `BitcoinAttestorRegistry` — line 6,349
-3. `BitcoinOwnershipOracle` — line 11,617
-4. `PayoutVault` — line 12,382
-5. `RootOwnershipRegistry` — line 8,855
-6. `FeeRouter` — line 6,860
-7. `HoodPups` — line 11,041
-8. `HoodPupOfferEscrow` — line 9,955
-9. `BtcSolverSettlement` — line 8,054
-10. `TourEngine` — line 7,438
+1. `PuppetCollectionRegistry` — line 6,121
+2. `BitcoinAttestorRegistry` — line 6,348
+3. `BitcoinOwnershipOracle` — line 11,616
+4. `PayoutVault` — line 12,381
+5. `RootOwnershipRegistry` — line 8,854
+6. `FeeRouter` — line 6,859
+7. `HoodPups` — line 11,040
+8. `HoodPupOfferEscrow` — line 9,954
+9. `BtcSolverSettlement` — line 8,053
+10. `TourEngine` — line 7,437
 
 ## What is NOT in this bundle
 

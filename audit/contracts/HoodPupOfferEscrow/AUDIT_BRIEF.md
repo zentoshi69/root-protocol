@@ -8,7 +8,7 @@
 | Flattened | `HoodPupOfferEscrow.flat.sol` · 2510 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `c43cae74b4760064840f803f4f4545d596dc9bda5e3f1478e6d6e53718a015bc` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `82277b00b808d9fd324a129ccc80284e22609d4b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
