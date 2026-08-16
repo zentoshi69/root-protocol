@@ -1,0 +1,51 @@
+# Solidity / Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/.gas-snapshot.tmp
+contracts/lcov.info
+contracts/coverage/
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+.turbo/
+coverage/
+.vite/
+playwright-report/
+test-results/
+
+# Environment & secrets — never commit these
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+keystore/
+secrets/
+wallets/
+
+# Bitcoin regtest scratch state
+infra/regtest/.bitcoin/
+infra/regtest/.ord/
+infra/regtest/data/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Local logs
+*.log
+logs/
+
+# Per-agent isolated Foundry build dirs
+contracts/out-*/
+contracts/cache-*/

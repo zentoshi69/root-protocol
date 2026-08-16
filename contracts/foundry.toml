@@ -1,0 +1,68 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc = "0.8.28"
+evm_version = "shanghai"
+optimizer = true
+optimizer_runs = 800
+via_ir = false
+bytecode_hash = "none"
+cbor_metadata = false
+fs_permissions = [{ access = "read", path = "./" }]
+gas_reports = ["*"]
+ffi = false
+
+# Deterministic, reproducible test runs.
+[profile.default.fuzz]
+runs = 512
+max_test_rejects = 200_000
+seed = "0x484f4f4450555053"
+
+[profile.default.invariant]
+runs = 128
+depth = 64
+fail_on_revert = false
+call_override = false
+shrink_run_limit = 5000
+
+# Fast local loop.
+[profile.lite]
+optimizer = false
+[profile.lite.fuzz]
+runs = 32
+[profile.lite.invariant]
+runs = 8
+depth = 16
+
+# Nightly / pre-release: long stateful campaigns.
+[profile.deep.fuzz]
+runs = 20_000
+[profile.deep.invariant]
+runs = 2_000
+depth = 256
+
+[lint]
+# `asm-keccak256` suggests hand-written assembly for every keccak256(abi.encode(...)).
+# Declined protocol-wide: these hashes are the security primitives five independent
+# operators must reproduce in three languages. Readable, auditable Solidity beats a
+# few hundred gas. Documented rather than silently suppressed.
+exclude_lints = ["asm-keccak256"]
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+multiline_func_header = "attributes_first"
+quote_style = "double"
+number_underscore = "thousands"
+sort_imports = true
+
+[rpc_endpoints]
+robinhood_testnet = "${RH_TESTNET_RPC_URL}"
+robinhood_mainnet = "${RH_MAINNET_RPC_URL}"
+
+[etherscan]
