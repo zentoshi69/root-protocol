@@ -44,16 +44,42 @@ const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 const HEX_RE = /^(0x)?[0-9a-fA-F]+$/;
 
 /**
+ * How a proof string is encoded.
+ *
+ * `auto` sniffs and REFUSES anything ambiguous. That guard essentially never fires on a real
+ * signature — a ~100-byte base64 blob whose every character also happens to be a hex digit has
+ * probability around 4^-100 — but a caller that knows its transport should still declare it rather
+ * than depend on that.
+ */
+export type ProofEncoding = 'auto' | 'base64' | 'hex';
+
+/**
  * Decode a wallet-supplied proof into raw bytes.
  *
  * Accepts raw bytes, `0x`-prefixed hex, bare hex, or base64 — the four things wallets actually
  * return. Ambiguous input is an error, not a guess: a string that is valid in two encodings would
  * otherwise hash differently depending on which branch happened to run first.
  */
-export function normalizeProofBytes(proof: Uint8Array | string): Uint8Array {
+export function normalizeProofBytes(proof: Uint8Array | string, encoding: ProofEncoding = 'auto'): Uint8Array {
   if (proof instanceof Uint8Array) return proof;
   if (proof.length === 0) {
     throw new CanonicalMessageError('BAD_HEX32', 'proof bytes must not be empty');
+  }
+
+  // An explicit encoding always wins. BIP-322 signatures come back from wallets as base64 by
+  // convention, so a caller that knows its source should say so rather than rely on sniffing.
+  if (encoding === 'base64') {
+    if (!BASE64_RE.test(proof) || proof.length % 4 !== 0) {
+      throw new CanonicalMessageError('BAD_HEX32', 'proof was declared base64 but is not valid base64');
+    }
+    return base64ToBytes(proof);
+  }
+  if (encoding === 'hex') {
+    const body = proof.startsWith('0x') || proof.startsWith('0X') ? proof.slice(2) : proof;
+    if (body.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(body)) {
+      throw new CanonicalMessageError('BAD_HEX32', 'proof was declared hex but is not valid hex');
+    }
+    return hexToBytes(body);
   }
 
   // A 0x prefix is unambiguous, so honour it first.
@@ -98,11 +124,13 @@ function base64ToBytes(b64: string): Uint8Array {
  * @param variant Which BIP-322 construction produced the proof.
  * @param proof   The proof bytes as the wallet returned them.
  * @param canonicalMessage The exact message string that was signed, trailing LF included.
+ * @param encoding Declare the transport encoding when you know it. BIP-322 wallets return base64.
  */
 export function computeBip322ProofHash(
   variant: Bip322Variant,
   proof: Uint8Array | string,
   canonicalMessage: string,
+  encoding: ProofEncoding = 'auto',
 ): Hex {
   if (!VALID_VARIANTS.includes(variant)) {
     throw new CanonicalMessageError('BAD_ENUM', `unknown BIP-322 variant ${JSON.stringify(variant)}`);
@@ -114,7 +142,7 @@ export function computeBip322ProofHash(
     );
   }
 
-  const proofBytes = normalizeProofBytes(proof);
+  const proofBytes = normalizeProofBytes(proof, encoding);
 
   return keccak256(
     encodeAbiParameters(

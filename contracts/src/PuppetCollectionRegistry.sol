@@ -98,7 +98,12 @@ contract PuppetCollectionRegistry is IPuppetCollectionRegistry {
     /// @param manifestHash_ Content commitment of the manifest file that produced `merkleRoot_`.
     /// @param manifestVersion_ Human-readable version, e.g. "bitcoin-puppets-mainnet-2026-01".
     /// @param manifestLeafCount_ Number of leaves committed by `merkleRoot_`.
-    constructor(bytes32 merkleRoot_, bytes32 manifestHash_, string memory manifestVersion_, uint256 manifestLeafCount_) {
+    constructor(
+        bytes32 merkleRoot_,
+        bytes32 manifestHash_,
+        string memory manifestVersion_,
+        uint256 manifestLeafCount_
+    ) {
         if (merkleRoot_ == bytes32(0)) revert ZeroValue();
         if (manifestHash_ == bytes32(0)) revert ZeroValue();
         if (manifestLeafCount_ == 0) revert ZeroValue();

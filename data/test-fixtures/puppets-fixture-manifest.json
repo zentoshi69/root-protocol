@@ -26,6 +26,12 @@
     "command": "cd contracts && forge test --out out-collection --cache-path cache-collection --match-path 'test/unit/PuppetCollectionRegistry.t.sol' -vv",
     "note": "test_DeterministicRootReproduction and test_ManifestHashReproduction rebuild merkleRoot and manifestHash from the entries below and assert equality with the pinned values."
   },
+  "crossLanguageVerification": {
+    "status": "verified",
+    "against": "packages/protocol-sdk/src/merkle.ts (buildRoot / buildProof) and packages/protocol-sdk/src/hashing.ts (rootKey / collectionLeaf)",
+    "result": "The independently written TypeScript builder reproduces merkleRoot, all 11 rootKey values, all 11 leaf values and all 11 proof arrays in this file byte for byte, plus the degenerate singleLeafFixture. Solidity, the Foundry test helper and TypeScript therefore agree on the whole algorithm, not just on the root.",
+    "note": "This is a point-in-time check recorded by the agent that produced this fixture. CI should re-run it, because a fixture that only one implementation can reproduce is worse than no fixture at all."
+  },
   "sortedLeaves": [
     "0x43a71c33183e4d0c6f41817c693318dab458d67692f74e5833dbd845f81b81f3",
     "0x58259c751decde1860b97d4de5903c7ae90a8ec978d85c6be1a765788c335f80",

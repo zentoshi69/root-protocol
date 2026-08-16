@@ -147,12 +147,7 @@ contract BitcoinAttestorRegistry is IBitcoinAttestorRegistry, AccessControl {
     /// @param initialAttestors Genesis attestor addresses; must be 5..32 distinct nonzero addresses.
     /// @param initialThreshold Genesis quorum threshold; must be 3..`initialAttestors.length`.
     /// @param initialPolicyVersion Genesis verification policy version; must be nonzero.
-    constructor(
-        address admin,
-        address[] memory initialAttestors,
-        uint8 initialThreshold,
-        uint32 initialPolicyVersion
-    ) {
+    constructor(address admin, address[] memory initialAttestors, uint8 initialThreshold, uint32 initialPolicyVersion) {
         if (admin == address(0)) revert ZeroAddress();
         if (initialPolicyVersion == 0) revert ZeroPolicyVersion();
 
