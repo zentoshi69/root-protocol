@@ -1,0 +1,267 @@
+{
+  "storage": [
+    {
+      "astId": 39386,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_roles",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)"
+    },
+    {
+      "astId": 42653,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_paused",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_bool"
+    },
+    {
+      "astId": 42772,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_status",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 62672,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_currentSeason",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_uint64"
+    },
+    {
+      "astId": 62675,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_minimumDuration",
+      "offset": 8,
+      "slot": "3",
+      "type": "t_uint64"
+    },
+    {
+      "astId": 62678,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_maximumDuration",
+      "offset": 16,
+      "slot": "3",
+      "type": "t_uint64"
+    },
+    {
+      "astId": 62681,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_minimumCheckInDelay",
+      "offset": 24,
+      "slot": "3",
+      "type": "t_uint64"
+    },
+    {
+      "astId": 62687,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_tours",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_uint256,t_struct(Tour)65430_storage)"
+    },
+    {
+      "astId": 62692,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_checkInDelayOf",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_mapping(t_uint256,t_uint64)"
+    },
+    {
+      "astId": 62697,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_miles",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_mapping(t_uint256,t_uint256)"
+    },
+    {
+      "astId": 62702,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_completedTours",
+      "offset": 0,
+      "slot": "7",
+      "type": "t_mapping(t_uint256,t_uint256)"
+    },
+    {
+      "astId": 62711,
+      "contract": "src/TourEngine.sol:TourEngine",
+      "label": "_recipientUsedInSeason",
+      "offset": 0,
+      "slot": "8",
+      "type": "t_mapping(t_uint256,t_mapping(t_uint64,t_mapping(t_address,t_bool)))"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RoleData)39381_storage"
+    },
+    "t_mapping(t_uint256,t_mapping(t_uint64,t_mapping(t_address,t_bool)))": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => mapping(uint64 => mapping(address => bool)))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_uint64,t_mapping(t_address,t_bool))"
+    },
+    "t_mapping(t_uint256,t_struct(Tour)65430_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct ITourEngine.Tour)",
+      "numberOfBytes": "32",
+      "value": "t_struct(Tour)65430_storage"
+    },
+    "t_mapping(t_uint256,t_uint256)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => uint256)",
+      "numberOfBytes": "32",
+      "value": "t_uint256"
+    },
+    "t_mapping(t_uint256,t_uint64)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => uint64)",
+      "numberOfBytes": "32",
+      "value": "t_uint64"
+    },
+    "t_mapping(t_uint64,t_mapping(t_address,t_bool))": {
+      "encoding": "mapping",
+      "key": "t_uint64",
+      "label": "mapping(uint64 => mapping(address => bool))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_address,t_bool)"
+    },
+    "t_struct(RoleData)39381_storage": {
+      "encoding": "inplace",
+      "label": "struct AccessControl.RoleData",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 39378,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "hasRole",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_mapping(t_address,t_bool)"
+        },
+        {
+          "astId": 39380,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "adminRole",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_struct(Tour)65430_storage": {
+      "encoding": "inplace",
+      "label": "struct ITourEngine.Tour",
+      "numberOfBytes": "96",
+      "members": [
+        {
+          "astId": 65417,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "ownerAtStart",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 65419,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "user",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_address"
+        },
+        {
+          "astId": 65421,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "startedAt",
+          "offset": 20,
+          "slot": "1",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 65423,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "expires",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 65425,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "checkedInAt",
+          "offset": 8,
+          "slot": "2",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 65427,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "season",
+          "offset": 16,
+          "slot": "2",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 65429,
+          "contract": "src/TourEngine.sol:TourEngine",
+          "label": "status",
+          "offset": 24,
+          "slot": "2",
+          "type": "t_uint8"
+        }
+      ]
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint64": {
+      "encoding": "inplace",
+      "label": "uint64",
+      "numberOfBytes": "8"
+    },
+    "t_uint8": {
+      "encoding": "inplace",
+      "label": "uint8",
+      "numberOfBytes": "1"
+    }
+  }
+}

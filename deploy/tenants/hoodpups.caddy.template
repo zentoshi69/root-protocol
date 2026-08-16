@@ -1,0 +1,42 @@
+# HoodPups tenant block.
+#
+# Copy to /opt/finetrader/release/deploy/tenants/hoodpups.caddy with __DOMAIN__ replaced.
+# `deploy.sh` does this for you and then reads the file back to confirm what actually landed.
+#
+# WHY A SEPARATE FILE: the main container Caddyfile belongs to the FINE TRADER repo and is destroyed
+# by their next `git pull` deploy. The `tenants/` directory is the bind-mounted, git-ignored escape
+# hatch their author built for exactly this. It is the only sanctioned write surface on this box.
+#
+# Deploying this app edits ZERO existing files.
+#
+# One hostname may appear in exactly one block across the whole config. A duplicate does not
+# shadow — it invalidates the ENTIRE configuration, which takes every site on the box down.
+# `deploy.sh` greps for that before writing.
+
+__DOMAIN__ {
+    encode zstd gzip
+
+    # Reached by container name over the shared edge network. No host port is involved, so this
+    # cannot be affected by, or affect, any other stack's port bindings.
+    reverse_proxy hoodpups-web:8080 {
+        header_up X-Real-IP {remote_host}
+    }
+
+    header {
+        # The protocol is not a bridge and holds no keys, but the frontend does ask people to sign
+        # Bitcoin messages — so the usual clickjacking and sniffing defences matter more than usual.
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options    "nosniff"
+        X-Frame-Options           "DENY"
+        Referrer-Policy           "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/hoodpups.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+        format json
+    }
+}

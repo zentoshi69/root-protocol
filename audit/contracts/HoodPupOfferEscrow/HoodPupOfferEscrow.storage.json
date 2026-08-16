@@ -1,0 +1,299 @@
+{
+  "storage": [
+    {
+      "astId": 39386,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_roles",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)"
+    },
+    {
+      "astId": 42653,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_paused",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_bool"
+    },
+    {
+      "astId": 42772,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_status",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 56838,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_offers",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_bytes32,t_struct(Offer)66284_storage)"
+    },
+    {
+      "astId": 56842,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_buyerNonce",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_address,t_uint256)"
+    },
+    {
+      "astId": 56845,
+      "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+      "label": "_lockedEscrowWei",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_uint256"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32",
+      "value": "t_uint256"
+    },
+    "t_mapping(t_bytes32,t_struct(Offer)66284_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct PuppetTypes.Offer)",
+      "numberOfBytes": "32",
+      "value": "t_struct(Offer)66284_storage"
+    },
+    "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RoleData)39381_storage"
+    },
+    "t_struct(Offer)66284_storage": {
+      "encoding": "inplace",
+      "label": "struct PuppetTypes.Offer",
+      "numberOfBytes": "448",
+      "members": [
+        {
+          "astId": 66247,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "buyer",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 66249,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "recipient",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_address"
+        },
+        {
+          "astId": 66251,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "rootKey",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66253,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "rootTxid",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66255,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "rootIndex",
+          "offset": 0,
+          "slot": "4",
+          "type": "t_uint32"
+        },
+        {
+          "astId": 66257,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "grossWei",
+          "offset": 0,
+          "slot": "5",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 66259,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "sellerWei",
+          "offset": 0,
+          "slot": "6",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 66261,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "treasuryWei",
+          "offset": 0,
+          "slot": "7",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 66263,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "protocolWei",
+          "offset": 0,
+          "slot": "8",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 66265,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "sellerSats",
+          "offset": 0,
+          "slot": "9",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66267,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "createdAt",
+          "offset": 8,
+          "slot": "9",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66269,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "expiry",
+          "offset": 16,
+          "slot": "9",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66271,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "kind",
+          "offset": 24,
+          "slot": "9",
+          "type": "t_uint8"
+        },
+        {
+          "astId": 66273,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "status",
+          "offset": 25,
+          "slot": "9",
+          "type": "t_uint8"
+        },
+        {
+          "astId": 66275,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "termsHash",
+          "offset": 0,
+          "slot": "10",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66277,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "ownershipDigest",
+          "offset": 0,
+          "slot": "11",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66279,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "btcPayoutScriptHash",
+          "offset": 0,
+          "slot": "12",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66281,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "reservedSolver",
+          "offset": 0,
+          "slot": "13",
+          "type": "t_address"
+        },
+        {
+          "astId": 66283,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "reservationExpiry",
+          "offset": 20,
+          "slot": "13",
+          "type": "t_uint64"
+        }
+      ]
+    },
+    "t_struct(RoleData)39381_storage": {
+      "encoding": "inplace",
+      "label": "struct AccessControl.RoleData",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 39378,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "hasRole",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_mapping(t_address,t_bool)"
+        },
+        {
+          "astId": 39380,
+          "contract": "src/HoodPupOfferEscrow.sol:HoodPupOfferEscrow",
+          "label": "adminRole",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint32": {
+      "encoding": "inplace",
+      "label": "uint32",
+      "numberOfBytes": "4"
+    },
+    "t_uint64": {
+      "encoding": "inplace",
+      "label": "uint64",
+      "numberOfBytes": "8"
+    },
+    "t_uint8": {
+      "encoding": "inplace",
+      "label": "uint8",
+      "numberOfBytes": "1"
+    }
+  }
+}

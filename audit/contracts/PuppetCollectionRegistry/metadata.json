@@ -1,0 +1,22 @@
+{
+  "contract": "PuppetCollectionRegistry",
+  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "compiler": {
+    "solc": "0.8.28",
+    "evmVersion": "shanghai",
+    "optimizer": true,
+    "optimizerRuns": 800,
+    "viaIR": false
+  },
+  "source": {
+    "path": "contracts/src/PuppetCollectionRegistry.sol",
+    "sha256": "9464c67b15b1d6b70c144b900653e913e87f478dc35fd1b651b1b57c5dc85b24",
+    "nonBlankLines": 197
+  },
+  "flattened": {
+    "path": "audit/contracts/PuppetCollectionRegistry/PuppetCollectionRegistry.flat.sol",
+    "sha256": "3998c3453761edda8adfd8563e94bcd2b20a9d84954a70fae7eaf08a6d0b7215",
+    "nonBlankLines": 1210,
+    "standaloneCompile": "verified"
+  }
+}

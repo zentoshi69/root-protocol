@@ -1,0 +1,22 @@
+{
+  "contract": "PayoutVault",
+  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "compiler": {
+    "solc": "0.8.28",
+    "evmVersion": "shanghai",
+    "optimizer": true,
+    "optimizerRuns": 800,
+    "viaIR": false
+  },
+  "source": {
+    "path": "contracts/src/PayoutVault.sol",
+    "sha256": "56fd71ae53fe6104680211aa9e3922f57e85f2c1473c269f689f5541e7ff02ab",
+    "nonBlankLines": 528
+  },
+  "flattened": {
+    "path": "audit/contracts/PayoutVault/PayoutVault.flat.sol",
+    "sha256": "7966255100c46fc79af37644f7a14d0f35063fe04929163510e3b7d21bd2ad2e",
+    "nonBlankLines": 4200,
+    "standaloneCompile": "verified"
+  }
+}

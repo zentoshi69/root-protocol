@@ -1,0 +1,563 @@
+<title>Rooted Settlement Protocol</title>
+
+<style>
+  /* ---- Light palette: complete, on bare :root ---- */
+  :root {
+    --paper:      #FCFCFA;
+    --surface:    #FFFFFF;
+    --ink:        #191A17;
+    --muted:      #6A6C66;
+    --rule:       #DEDFD8;
+    --rule-soft:  #ECEDE7;
+    --btc:        #A8551F;
+    --btc-tint:   rgba(168, 85, 31, 0.055);
+    --btc-edge:   rgba(168, 85, 31, 0.28);
+    --rh:         #1F5E63;
+    --rh-tint:    rgba(31, 94, 99, 0.05);
+    --rh-edge:    rgba(31, 94, 99, 0.26);
+    --warn:       #96322E;
+    --warn-tint:  rgba(150, 50, 46, 0.06);
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, "Times New Roman", serif;
+  }
+
+  /* System-dark, un-stamped document. Guarded so an explicit light choice still wins. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #131412;
+      --surface:   #1B1C19;
+      --ink:       #E9E9E3;
+      --muted:     #989A90;
+      --rule:      #2E302B;
+      --rule-soft: #232520;
+      --btc:       #DE8C4F;
+      --btc-tint:  rgba(222, 140, 79, 0.085);
+      --btc-edge:  rgba(222, 140, 79, 0.34);
+      --rh:        #63BCC1;
+      --rh-tint:   rgba(99, 188, 193, 0.075);
+      --rh-edge:   rgba(99, 188, 193, 0.32);
+      --warn:      #E4908A;
+      --warn-tint: rgba(228, 144, 138, 0.09);
+    }
+  }
+
+  /* Explicit dark choice wins over a light OS. */
+  :root[data-theme="dark"] {
+    --paper:     #131412;
+    --surface:   #1B1C19;
+    --ink:       #E9E9E3;
+    --muted:     #989A90;
+    --rule:      #2E302B;
+    --rule-soft: #232520;
+    --btc:       #DE8C4F;
+    --btc-tint:  rgba(222, 140, 79, 0.085);
+    --btc-edge:  rgba(222, 140, 79, 0.34);
+    --rh:        #63BCC1;
+    --rh-tint:   rgba(99, 188, 193, 0.075);
+    --rh-edge:   rgba(99, 188, 193, 0.32);
+    --warn:      #E4908A;
+    --warn-tint: rgba(228, 144, 138, 0.09);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 72px 28px 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .measure { max-width: 66ch; }
+
+  /* ---- masthead ---- */
+  header { display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  h1 {
+    font-size: clamp(34px, 5.2vw, 54px);
+    line-height: 1.06;
+    letter-spacing: -0.021em;
+    margin: 0;
+    text-wrap: balance;
+    font-weight: 600;
+  }
+
+  .standfirst {
+    font-size: clamp(18px, 2.2vw, 21px);
+    line-height: 1.5;
+    color: var(--muted);
+    margin: 0;
+    max-width: 60ch;
+    text-wrap: pretty;
+  }
+
+  h2 {
+    font-size: 25px;
+    letter-spacing: -0.012em;
+    margin: 0 0 6px;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+
+  p { margin: 0 0 16px; text-wrap: pretty; }
+  p:last-child { margin-bottom: 0; }
+
+  section { display: flex; flex-direction: column; gap: 14px; }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 4px 0;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.855em;
+    background: var(--rule-soft);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+  }
+
+  strong { font-weight: 600; }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .canvas {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 10px 12px;
+  }
+
+  svg { display: block; max-width: 100%; height: auto; color: var(--ink); }
+
+  figcaption {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 74ch;
+    text-wrap: pretty;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* ---- svg primitives ---- */
+  .box   { fill: var(--surface); stroke: var(--rule); stroke-width: 1.25; }
+  .boxA  { fill: var(--surface); stroke: var(--btc-edge); stroke-width: 1.4; }
+  .boxB  { fill: var(--surface); stroke: var(--rh-edge);  stroke-width: 1.4; }
+  .panelA{ fill: var(--btc-tint); stroke: var(--btc-edge); stroke-width: 1; }
+  .panelB{ fill: var(--rh-tint);  stroke: var(--rh-edge);  stroke-width: 1; }
+  .warnbox { fill: var(--warn-tint); stroke: var(--warn); stroke-width: 1.25; }
+
+  .ln    { stroke: currentColor; stroke-width: 1.35; fill: none; opacity: .72; }
+  .lnA   { stroke: var(--btc); stroke-width: 1.9; fill: none; }
+  .lnB   { stroke: var(--rh);  stroke-width: 1.9; fill: none; }
+  .lnW   { stroke: var(--warn); stroke-width: 1.9; fill: none; }
+  .bound { stroke: currentColor; stroke-width: 1.35; stroke-dasharray: 5 6; opacity: .42; }
+
+  .t     { font-family: var(--serif); font-size: 13.5px; fill: currentColor; }
+  .tb    { font-family: var(--serif); font-size: 13.5px; fill: currentColor; font-weight: 600; }
+  .tm    { font-family: var(--mono);  font-size: 10px;   fill: var(--muted); }
+  .tlab  { font-family: var(--mono);  font-size: 10px;   fill: var(--muted); letter-spacing: .05em; }
+  .tkeyA { font-family: var(--mono);  font-size: 10.5px; fill: var(--btc); letter-spacing: .05em; font-weight: 600; }
+  .tkeyB { font-family: var(--mono);  font-size: 10.5px; fill: var(--rh);  letter-spacing: .05em; font-weight: 600; }
+  .tkeyW { font-family: var(--mono);  font-size: 10.5px; fill: var(--warn);letter-spacing: .05em; font-weight: 600; }
+  .teyeA { font-family: var(--mono);  font-size: 10.5px; fill: var(--btc); letter-spacing: .15em; font-weight: 600; }
+  .teyeB { font-family: var(--mono);  font-size: 10.5px; fill: var(--rh);  letter-spacing: .15em; font-weight: 600; }
+  .teyeN { font-family: var(--mono);  font-size: 10.5px; fill: var(--muted);letter-spacing: .15em; font-weight: 600; }
+
+  /* ---- tables ---- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15.5px; }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; background: var(--rule-soft); border-bottom: 1px solid var(--rule);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  .can    { color: var(--warn); font-weight: 600; }
+  .cannot { color: var(--rh);   font-weight: 600; }
+
+  .callout {
+    border-left: 2px solid var(--warn);
+    background: var(--warn-tint);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout p { font-size: 16px; }
+
+  .split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card p { font-size: 15.5px; margin: 0; color: var(--muted); }
+  .card .num {
+    font-family: var(--mono); font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .card .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+  footer { color: var(--muted); font-size: 14.5px; }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">HoodPups · how settlement works</div>
+    <h1>Moving Robinhood money back to Bitcoin owners</h1>
+    <p class="standfirst">
+      The protocol does not move Bitcoin Puppets across chains. It moves payment in the other
+      direction — and the Puppet never leaves the wallet it started in.
+    </p>
+  </header>
+
+  <hr>
+
+  <section class="measure">
+    <h2>The problem, stated exactly</h2>
+    <p>
+      Alice, on Robinhood Chain, wants a HoodPup derived from Bitcoin Puppet #123. Bob owns that
+      Puppet on Bitcoin, in a cold wallet, and has no intention of moving it, bridging it, or
+      handing it to a custodian.
+    </p>
+    <p>
+      A Robinhood Chain contract cannot read Bitcoin. It cannot parse an Ordinals index, inspect a
+      UTXO set, or verify a signature over a Taproot script. So the protocol doesn't pretend it can.
+      Instead it splits the problem into three machines, and only one thing ever crosses between
+      them.
+    </p>
+  </section>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1060 372" role="img"
+           aria-label="Three stages left to right. On Bitcoin, a Puppet sits in an unspent UTXO and Bob's cold wallet signs a message without spending it. Only the signature bytes cross a dashed boundary into a network of five independent verifier operators, each running its own Bitcoin node and ord indexer. Three of the five must agree to produce one EIP-712 attestation, which a relayer submits to the Robinhood Chain contracts, where an oracle consumes it once and the escrow atomically mints the HoodPup and routes the payment split.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--btc)"/>
+          </marker>
+          <marker id="ahB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rh)"/>
+          </marker>
+        </defs>
+
+        <!-- BITCOIN -->
+        <rect class="panelA" x="20" y="38" width="272" height="312" rx="10"/>
+        <text class="teyeA" x="38" y="26">BITCOIN</text>
+
+        <rect class="boxA" x="44" y="68" width="224" height="92" rx="8"/>
+        <text class="tb" x="156" y="98" text-anchor="middle">Bitcoin Puppet #123</text>
+        <text class="tm" x="156" y="118" text-anchor="middle">inscription abc…def i0</text>
+        <text class="t"  x="156" y="140" text-anchor="middle">in an unspent UTXO</text>
+
+        <text class="tlab" x="156" y="184" text-anchor="middle">stays exactly here — always</text>
+
+        <rect class="boxA" x="44" y="206" width="224" height="84" rx="8"/>
+        <text class="tb" x="156" y="236" text-anchor="middle">Bob’s cold wallet</text>
+        <text class="tm" x="156" y="256" text-anchor="middle">signs · never spends</text>
+        <text class="tm" x="156" y="274" text-anchor="middle">BIP-322</text>
+
+        <!-- BOUNDARY -->
+        <line class="bound" x1="310" y1="26" x2="310" y2="360"/>
+
+        <!-- the one thing that crosses -->
+        <line class="lnA" x1="268" y1="248" x2="352" y2="248" marker-end="url(#ahA)"/>
+        <text class="tkeyA" x="310" y="238" text-anchor="middle">signature bytes only</text>
+
+        <!-- VERIFIERS -->
+        <text class="teyeN" x="356" y="26">VERIFIER NETWORK</text>
+        <rect class="box" x="356" y="52" width="252" height="30" rx="6"/>
+        <text class="tm" x="370" y="71">operator 1 · own bitcoind + ord</text>
+        <rect class="box" x="356" y="90" width="252" height="30" rx="6"/>
+        <text class="tm" x="370" y="109">operator 2 · own bitcoind + ord</text>
+        <rect class="box" x="356" y="128" width="252" height="30" rx="6"/>
+        <text class="tm" x="370" y="147">operator 3 · own bitcoind + ord</text>
+        <rect class="box" x="356" y="166" width="252" height="30" rx="6"/>
+        <text class="tm" x="370" y="185">operator 4 · own bitcoind + ord</text>
+        <rect class="box" x="356" y="204" width="252" height="30" rx="6"/>
+        <text class="tm" x="370" y="223">operator 5 · own bitcoind + ord</text>
+
+        <!-- rail: each operator feeds the threshold gate independently -->
+        <polyline class="ln" points="608,67  632,67  632,150"/>
+        <polyline class="ln" points="608,105 632,105"/>
+        <polyline class="ln" points="608,143 632,143"/>
+        <polyline class="ln" points="608,181 632,181 632,150"/>
+        <polyline class="ln" points="608,219 632,219 632,150"/>
+
+        <rect class="box" x="356" y="272" width="252" height="62" rx="8"/>
+        <text class="tb" x="482" y="298" text-anchor="middle">3 of 5 must agree</text>
+        <text class="tm" x="482" y="318" text-anchor="middle">one EIP-712 attestation</text>
+        <polyline class="ln" points="632,150 632,303 616,303" marker-end="url(#ah)"/>
+
+        <!-- ROBINHOOD -->
+        <rect class="panelB" x="680" y="38" width="360" height="312" rx="10"/>
+        <text class="teyeB" x="698" y="26">ROBINHOOD CHAIN</text>
+
+        <line class="lnB" x1="608" y1="303" x2="668" y2="303"/>
+        <polyline class="lnB" points="668,303 668,96 700,96" marker-end="url(#ahB)"/>
+        <text class="tkeyB" x="640" y="345" text-anchor="middle">relayer</text>
+        <text class="tlab"  x="640" y="360" text-anchor="middle">pays the gas</text>
+
+        <rect class="boxB" x="704" y="66" width="312" height="60" rx="8"/>
+        <text class="tb" x="860" y="92" text-anchor="middle">BitcoinOwnershipOracle</text>
+        <text class="tm" x="860" y="112" text-anchor="middle">consumes the digest once, forever</text>
+
+        <line class="ln" x1="860" y1="126" x2="860" y2="156" marker-end="url(#ah)"/>
+
+        <rect class="boxB" x="704" y="156" width="312" height="60" rx="8"/>
+        <text class="tb" x="860" y="182" text-anchor="middle">HoodPupOfferEscrow</text>
+        <text class="tm" x="860" y="202" text-anchor="middle">holds Alice’s ETH</text>
+
+        <line class="ln" x1="860" y1="216" x2="860" y2="246" marker-end="url(#ah)"/>
+
+        <rect class="boxB" x="704" y="246" width="312" height="82" rx="8"/>
+        <text class="tb" x="860" y="272" text-anchor="middle">one atomic transaction</text>
+        <text class="tm" x="860" y="292" text-anchor="middle">mint HoodPup · route 50 / 25 / 25</text>
+        <text class="tm" x="860" y="310" text-anchor="middle">record the ownership epoch</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>The only thing that crosses the boundary is a signature.</b> Bob’s Puppet stays in its UTXO
+      and his wallet never spends it. Five operators each check the Bitcoin facts against their
+      <em>own</em> node and index — if they all read from one shared API, the 3-of-5 threshold means
+      nothing — and a relayer pays the gas, so neither Alice nor Bob needs to send the final
+      transaction.
+    </figcaption>
+  </figure>
+
+  <hr>
+
+  <section class="measure">
+    <h2>Bob picks how he gets paid</h2>
+    <p>
+      Ownership being proven is the same in both cases. What differs is what happens next, and the
+      ordering on the Bitcoin path is the part worth reading twice.
+    </p>
+  </section>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1060 452" role="img"
+           aria-label="A fork. After the ownership quorum is reached, an EVM-payout offer settles immediately: the HoodPup mints and Bob is credited ETH in the PayoutVault. A Bitcoin-payout offer instead moves to BTC_APPROVED with no mint yet; a bonded solver reserves it, sends the exact satoshi amount to Bob on Bitcoin, and only after a second three-of-five quorum attests that precise transaction output does the HoodPup mint and the solver get reimbursed. No HoodPup exists until the Bitcoin payment is confirmed.">
+        <defs>
+          <marker id="bh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="bhW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)"/>
+          </marker>
+        </defs>
+
+        <rect class="box" x="366" y="16" width="328" height="56" rx="8"/>
+        <text class="tb" x="530" y="40" text-anchor="middle">Ownership quorum reached</text>
+        <text class="tm" x="530" y="59" text-anchor="middle">3 of 5 attested Bob controls the Puppet</text>
+
+        <polyline class="ln" points="440,72 240,72 240,118" marker-end="url(#bh)"/>
+        <polyline class="ln" points="620,72 820,72 820,118" marker-end="url(#bh)"/>
+        <text class="tlab" x="300" y="90" text-anchor="middle">payout mode: EVM</text>
+        <text class="tlab" x="762" y="90" text-anchor="middle">payout mode: BTC</text>
+
+        <!-- LEFT: ETH -->
+        <rect class="boxB" x="60" y="118" width="360" height="56" rx="8"/>
+        <text class="tb" x="240" y="142" text-anchor="middle">Offer settles immediately</text>
+        <text class="tm" x="240" y="161" text-anchor="middle">one transaction, nothing to wait for</text>
+
+        <line class="ln" x1="240" y1="174" x2="240" y2="204" marker-end="url(#bh)"/>
+
+        <rect class="boxB" x="60" y="204" width="360" height="56" rx="8"/>
+        <text class="tb" x="240" y="228" text-anchor="middle">HoodPup mints to Alice</text>
+        <text class="tm" x="240" y="247" text-anchor="middle">50 / 25 / 25 routed</text>
+
+        <line class="ln" x1="240" y1="260" x2="240" y2="290" marker-end="url(#bh)"/>
+
+        <rect class="boxB" x="60" y="290" width="360" height="56" rx="8"/>
+        <text class="tb" x="240" y="314" text-anchor="middle">Bob credited ETH</text>
+        <text class="tm" x="240" y="333" text-anchor="middle">withdraws, or signs a gasless withdrawal</text>
+
+        <!-- RIGHT: BTC -->
+        <rect class="boxA" x="640" y="118" width="360" height="52" rx="8"/>
+        <text class="tb" x="820" y="140" text-anchor="middle">Offer becomes BTC_APPROVED</text>
+        <text class="tm" x="820" y="159" text-anchor="middle">no HoodPup exists yet</text>
+
+        <line class="ln" x1="820" y1="170" x2="820" y2="196" marker-end="url(#bh)"/>
+
+        <rect class="boxA" x="640" y="196" width="360" height="52" rx="8"/>
+        <text class="tb" x="820" y="218" text-anchor="middle">A bonded solver reserves it</text>
+        <text class="tm" x="820" y="237" text-anchor="middle">posts a bond it forfeits if it fails</text>
+
+        <line class="ln" x1="820" y1="248" x2="820" y2="274" marker-end="url(#bh)"/>
+
+        <rect class="warnbox" x="640" y="274" width="360" height="52" rx="8"/>
+        <text class="tb" x="820" y="296" text-anchor="middle">Solver sends exact sats to Bob</text>
+        <text class="tm" x="820" y="315" text-anchor="middle">real Bitcoin, from its own wallet</text>
+
+        <line class="lnW" x1="820" y1="326" x2="820" y2="352" marker-end="url(#bhW)"/>
+        <text class="tkeyW" x="1004" y="344" text-anchor="end">pays first —</text>
+        <text class="tkeyW" x="1004" y="358" text-anchor="end">reimbursed only after</text>
+
+        <rect class="boxA" x="640" y="352" width="360" height="52" rx="8"/>
+        <text class="tb" x="820" y="374" text-anchor="middle">Second quorum attests the exact output</text>
+        <text class="tm" x="820" y="393" text-anchor="middle">txid : vout · script · amount, all exact</text>
+
+        <line class="ln" x1="820" y1="404" x2="820" y2="424" marker-end="url(#bh)"/>
+        <text class="tb" x="820" y="440" text-anchor="middle">Only now: mint, and reimburse the solver</text>
+
+        <!-- bracket: nothing minted for the first three steps -->
+        <polyline class="ln" points="628,124 616,124 616,320 628,320"/>
+        <text class="tlab" x="606" y="230" text-anchor="middle" transform="rotate(-90 606 230)">no HoodPup exists</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>There is no price oracle anywhere in the Bitcoin path.</b> The offer fixes the exact number
+      of satoshis Bob receives and the exact ETH the solver is reimbursed, and Bob signs both. A
+      solver either finds that spread attractive or ignores the offer — which removes oracle
+      manipulation, price disputes and slippage from settlement entirely. The cost is that a stale
+      quote simply expires and refunds, which lands on the buyer rather than on the protocol.
+    </figcaption>
+  </figure>
+
+  <hr>
+
+  <section>
+    <h2 class="measure">What the quorum can and cannot do</h2>
+    <p class="measure">
+      This is the honest part, and it is the first thing in the repository’s documentation rather
+      than a footnote. Three colluding operators can lie about Bitcoin. Here is exactly how far that
+      goes.
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>A dishonest 3-of-5 quorum</th><th>What that means</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="can">can assert a false ownership fact</td><td>A HoodPup mints to the wrong recipient and the seller share is credited to the wrong address.</td></tr>
+          <tr><td class="can">can assert a false payment fact</td><td>A solver is reimbursed from escrow for a Bitcoin payment it never made.</td></tr>
+          <tr><td class="can">can censor</td><td>Refuse to attest anything. Escrowed funds are still refundable at expiry, so this costs time, not principal.</td></tr>
+          <tr><td class="cannot">cannot move anyone’s Bitcoin Puppet</td><td>Structural, not policy. The protocol holds no Bitcoin key, receives no seed, and never requires the inscription to move.</td></tr>
+          <tr><td class="cannot">cannot take credited balances</td><td>There is no code path that reduces a user’s claimable balance. Not for an admin, not for anyone.</td></tr>
+          <tr><td class="cannot">cannot mint a second HoodPup for a Root</td><td>Permanent and uncleanable, including by the deployer.</td></tr>
+          <tr><td class="cannot">cannot reuse a Bitcoin payment</td><td>Each <code>txid:vout</code> is consumed globally, once.</td></tr>
+          <tr><td class="cannot">cannot change the 50 / 25 / 25 split</td><td>Compiled into the bytecode with no setter and no upgrade path.</td></tr>
+          <tr><td class="cannot">cannot redirect a seller’s payout</td><td>The escrow pays the address inside the signed message and no other.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout measure">
+      <p>
+        That asymmetry is the whole design. The worst case is a bad mint and a bad reimbursement —
+        not a stolen Bitcoin asset. Anything in this project that reads as “trustless bridge” or
+        “atomic swap” is wrong, and a test fails the build if either phrase reaches user-facing copy.
+      </p>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2 class="measure">Where the money goes</h2>
+    <p class="measure">
+      Every paid mint splits the same way, computed from the gross escrow. Seller and treasury are
+      floor-divided and the protocol absorbs the remainder, so the three parts sum to the gross
+      exactly — including at one, two and three wei, where three independent divisions would strand
+      dust forever.
+    </p>
+    <div class="split">
+      <div class="card">
+        <span class="num">50%</span>
+        <span class="lbl">Bitcoin Puppet controller</span>
+        <p>Paid as ETH on Robinhood Chain, or as exact native BTC through a bonded solver.</p>
+      </div>
+      <div class="card">
+        <span class="num">25%</span>
+        <span class="lbl">Puppet ecosystem treasury</span>
+        <p>Destination is governable through the timelock. The percentage is not.</p>
+      </div>
+      <div class="card">
+        <span class="num">25%</span>
+        <span class="lbl">Protocol</span>
+        <p>Absorbs the rounding remainder, which is what makes conservation exact.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section class="measure">
+    <h2>What happens when Bob sells the Puppet</h2>
+    <p>
+      Paying a previous holder forever after they sold would be a bug, so ownership is tracked as
+      epochs. A watcher sees the inscription’s UTXO get spent and submits a spend attestation; the
+      Root goes inactive and future value accrues to a pending bucket rather than to Bob. Charlie
+      proves control, a new epoch opens, and the pending balance releases to him.
+    </p>
+    <p>
+      Money Bob already earned stays Bob’s. Only future value follows the new owner. The registry
+      records <em>attested</em> state rather than live Bitcoin state, so there is a real window
+      between the sale and the attestation — value accrued in it is recoverable because it lands in
+      the pending bucket, and the window is disclosed rather than hidden.
+    </p>
+  </section>
+
+  <hr>
+
+  <footer>
+    <p>
+      HoodPups Rooted Settlement Protocol · pre-audit. No mainnet deployment, and none until an
+      external audit, an independently reproduced manifest, and five genuinely independent operators
+      are all in place.
+    </p>
+  </footer>
+
+</div>

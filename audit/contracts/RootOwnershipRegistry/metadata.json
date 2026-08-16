@@ -1,0 +1,22 @@
+{
+  "contract": "RootOwnershipRegistry",
+  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "compiler": {
+    "solc": "0.8.28",
+    "evmVersion": "shanghai",
+    "optimizer": true,
+    "optimizerRuns": 800,
+    "viaIR": false
+  },
+  "source": {
+    "path": "contracts/src/RootOwnershipRegistry.sol",
+    "sha256": "2050dfcd63fd22de0d49d45cc026f327b197116be50d517f3a60726dd8352d0f",
+    "nonBlankLines": 565
+  },
+  "flattened": {
+    "path": "audit/contracts/RootOwnershipRegistry/RootOwnershipRegistry.flat.sol",
+    "sha256": "7d3e1a96b7bcebdbfe4e207f2eecea691d44594e3a70be99c457ce97cd90ad7a",
+    "nonBlankLines": 1795,
+    "standaloneCompile": "verified"
+  }
+}

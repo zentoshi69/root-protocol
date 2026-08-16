@@ -1,0 +1,67 @@
+# HoodPups — its own isolated stack on srv1505584.
+#
+# Two rules make this non-disruptive, and both are structural rather than careful:
+#
+# 1. IT PUBLISHES NO HOST PORTS. Not 80, not 443, not a debug port. The container joins the existing
+#    edge network and Caddy reaches it by container name. A stack that binds nothing cannot collide
+#    with anything, which removes the entire class of "port already allocated" failure rather than
+#    trying to avoid it by choosing carefully.
+#
+# 2. THE EDGE NETWORK IS `external: true`. This stack never creates it, never modifies it, and
+#    cannot affect any other container attached to it. If the network is missing, compose fails
+#    loudly instead of silently creating a second one that Caddy cannot see.
+#
+# EDGE_NET must come from `preflight.sh` output — read live from the running edge container, never
+# guessed. `docker compose up` will fail if it is unset, which is the intent.
+#
+#   sudo ./deploy/preflight.sh                 # must PASS first
+#   export EDGE_NET=<from preflight>
+#   docker compose -f deploy/docker-compose.yml up -d
+#
+# If `up` reports RECREATING a container this file does not define, STOP — that is a name collision
+# and you are about to disturb someone else's stack.
+
+name: hoodpups
+
+services:
+  web:
+    container_name: hoodpups-web
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    # No `ports:` — deliberately. See rule 1 above.
+    environment:
+      # Chain config. NEVER put a secret here; this file is committed.
+      # Secrets come from deploy/.env, which is gitignored.
+      NODE_ENV: production
+      HOODPUPS_CHAIN_ID: "${HOODPUPS_CHAIN_ID:-46630}"
+    env_file:
+      - path: ./.env
+        required: false
+    networks:
+      - edge
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  # The live edge, created and owned by the FINE TRADER deploy project. We attach to it and nothing
+  # more. `external: true` guarantees this stack can never create, rename or delete it.
+  edge:
+    external: true
+    name: ${EDGE_NET:?EDGE_NET must be set from preflight.sh output — do not guess the edge network name}
+
+  # Private network for anything this stack adds later that should not be reachable from the edge.
+  internal:
+    name: hoodpups_internal
+    internal: true

@@ -49,3 +49,6 @@ logs/
 # Per-agent isolated Foundry build dirs
 contracts/out-*/
 contracts/cache-*/
+
+# Deploy secrets — never committed
+deploy/.env
