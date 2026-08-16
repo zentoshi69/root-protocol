@@ -4,9 +4,9 @@ Everything the protocol deploys, in one compilation unit.
 
 | | |
 |---|---|
-| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
+| Commit | `e404330e7814b0bf8f20ec3dc14f7c23ac1074b8` |
 | Bundle | `HoodPupsProtocol.flat.sol` |
-| SHA-256 | `2e8ea97f274e60677a05a1a98bc2145738280de73378c29754d4411c2a1f83eb` |
+| SHA-256 | `9b97cc53b4b3f643c1cf82c7df6dc5a9f4a84243df3a572f906808ff6c834f7e` |
 | Lines | 12,980 (11,464 non-blank) |
 | Contracts | 10 protocol, 10 interfaces, 2 type/hash libraries, 32 vendored dependencies |
 | Compiler | solc 0.8.28, evm `shanghai`, optimizer on at 800 runs, no viaIR |

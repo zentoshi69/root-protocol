@@ -1,7 +1,7 @@
 // HoodPups Rooted Settlement Protocol — complete protocol source, single file.
 //
 // License: MIT
-// Commit:  dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b
+// Commit:  e404330e7814b0bf8f20ec3dc14f7c23ac1074b8
 // Compile: solc 0.8.28, evm shanghai, optimizer on, 800 runs, no viaIR
 //
 // This is every contract the protocol deploys, plus its dependencies, flattened and

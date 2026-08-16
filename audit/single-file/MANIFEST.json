@@ -1,6 +1,6 @@
 {
   "package": "hoodpups-single-file-audit-bundle",
-  "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
+  "commit": "e404330e7814b0bf8f20ec3dc14f7c23ac1074b8",
   "dirtyWorkingTree": false,
   "compiler": {
     "solc": "0.8.28",
@@ -11,7 +11,7 @@
   },
   "bundle": {
     "path": "HoodPupsProtocol.flat.sol",
-    "sha256": "2e8ea97f274e60677a05a1a98bc2145738280de73378c29754d4411c2a1f83eb",
+    "sha256": "9b97cc53b4b3f643c1cf82c7df6dc5a9f4a84243df3a572f906808ff6c834f7e",
     "lines": 12980,
     "nonBlankLines": 11464,
     "standaloneCompile": "verified"
