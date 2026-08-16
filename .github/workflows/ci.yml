@@ -141,18 +141,50 @@ jobs:
           # test fixtures. See .gitleaks.toml — every exclusion carries a written reason.
           GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
+      # An independent, allowlist-free check. gitleaks has a documented allowlist; this one has
+      # none, so a leak that slips through an allowlist entry still fails the build.
+      #
+      # It matches a private key rather than a string that NAMES one: a PEM header must be followed
+      # by an actual base64 body, and an extended key must carry a full-length payload. Without that
+      # distinction, the very test that proves our audit log REJECTS key material would be
+      # un-committable, and the usual response to that is to punch a file-shaped hole in the check —
+      # which is strictly worse than tightening the pattern.
       - name: No real keys, no mainnet broadcast artifacts
         run: |
-          set -e
-          # A private key committed to this repo is a launch-blocking incident, not a lint warning.
-          if grep -rIn --exclude-dir=node_modules --exclude-dir=lib --exclude-dir=.git \
-               -E '(BEGIN [A-Z ]*PRIVATE KEY|xprv[0-9a-zA-Z]{50,})' . ; then
-            echo "::error::private key material found in the repository"; exit 1
+          set -euo pipefail
+
+          PEM_RE='(?s)-----BEGIN [A-Z ]*PRIVATE KEY-----[\r\n]+[A-Za-z0-9+/=[:space:]]{64,}'
+          XPRV_RE='(xprv|tprv)[0-9a-zA-Z]{80,}'
+          EXCLUDES=(--exclude-dir=node_modules --exclude-dir=lib --exclude-dir=.git --exclude-dir=out --exclude-dir=cache)
+
+          # Prove the check still fires before trusting it to pass. A security check that has been
+          # accidentally neutered looks exactly like a clean repository.
+          canary=$(mktemp -d)
+          printf -- '-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIA%s\nAwEHoUQDQgAE%s\n-----END EC PRIVATE KEY-----\n' \
+            "$(head -c 48 /dev/zero | tr '\0' 'A')" "$(head -c 48 /dev/zero | tr '\0' 'B')" > "$canary/key.pem"
+          printf "xprv%s\n" "$(head -c 100 /dev/zero | tr '\0' 'z')" > "$canary/ext.txt"
+          if ! grep -rIlzP "$PEM_RE" "$canary" >/dev/null; then
+            echo "::error::self-test failed — the PEM detector no longer matches a real key"; exit 1
           fi
+          if ! grep -rIlE "$XPRV_RE" "$canary" >/dev/null; then
+            echo "::error::self-test failed — the extended-key detector no longer matches a real key"; exit 1
+          fi
+          rm -rf "$canary"
+          echo "secret detectors self-test: both fire on synthetic key material"
+
+          if grep -rIlzP "${EXCLUDES[@]}" "$PEM_RE" . ; then
+            echo "::error::PEM private key material found in the repository"; exit 1
+          fi
+          if grep -rInE "${EXCLUDES[@]}" "$XPRV_RE" . ; then
+            echo "::error::BIP-32 extended private key found in the repository"; exit 1
+          fi
+
           # Chain 4663 is Robinhood mainnet. Broadcast artifacts for it must never be committed.
           if [ -d contracts/broadcast ] && find contracts/broadcast -path '*/4663/*' -name '*.json' | grep -q . ; then
             echo "::error::mainnet (4663) broadcast artifact committed"; exit 1
           fi
+
+          echo "no key material, no mainnet broadcast artifacts"
 
   nightly-deep-fuzz:
     name: Deep stateful fuzzing
