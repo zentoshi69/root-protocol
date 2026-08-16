@@ -31,6 +31,23 @@ paths = [
   # deliberately so five independent implementations can be proven to agree. They are the opposite
   # of secret — the whole point is that everyone can reproduce them.
   '''data/test-fixtures/.*\.json''',
+
+  # The Solidity and TypeScript test files that PIN those same vectors.
+  #
+  # `generic-api-key` fires on constants like `EXPECT_ROOT_KEY_A = 0x<64 hex>` — keccak256 outputs
+  # with ~3.9 bits of entropy per character. They are published on purpose: the entire
+  # cross-language guarantee rests on everyone being able to reproduce them.
+  #
+  # What this gives up, stated plainly: a raw 32-byte EVM private key pasted into one of these test
+  # files would no longer be flagged, because a keccak hash and a secp256k1 key are the same shape.
+  # Verified by canary: a randomly generated credential in a NON-test path is still detected, so the
+  # exclusion really is path-scoped rather than a global blindfold. The residual is covered
+  # elsewhere — production attestor keys live in an HSM/KMS, `LocalDevSigner` refuses to run on a
+  # production chain id, and the allowlist-free PEM/xprv check in CI is unaffected by this file.
+  '''contracts/test/.*''',
+  '''packages/[^/]+/test/.*''',
+  '''services/[^/]+/test/.*''',
+  '''apps/[^/]+/test/.*''',
 ]
 
 regexes = [
