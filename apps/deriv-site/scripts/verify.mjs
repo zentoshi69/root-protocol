@@ -55,12 +55,15 @@ const mobileTemplate = embeddedTemplate(
 
 if (landingTemplate !== null) {
   const landingChecks = [
-    ['canonical HoodPups headline', landingTemplate.includes('HoodPups</span> are approved by <span style="color:#DE8C4F">Bitcoin Puppets.</span>')],
+    ['generic derivatives headline', landingTemplate.includes('Derivatives</span> are approved by <span style="color:#DE8C4F">OG holders.</span>')],
+    ['generic hero explanation', landingTemplate.includes('DERIV.WTF is where derivative collections earn approval from the holders of their OG collections.')],
+    ['live mint card remains specific', landingTemplate.includes('LIVE MINT NOW') && landingTemplate.includes('HoodPups</span> <span class="ux-approved-by">')],
     ['approval relationship card', landingTemplate.includes('class="ux-approval-card"')],
     ['clear primary action', landingTemplate.includes('EXPLORE THE APPROVAL MAP')],
-    ['accessible approval map', landingTemplate.includes('aria-label="Live one-to-one map of Bitcoin Puppet holder approvals')],
+    ['accessible approval map', landingTemplate.includes('aria-label="Live one-to-one map of OG holder approvals')],
     ['no raw dynamic image URL', !landingTemplate.includes('src="{{ hatSrc }}"')],
     ['old founder-first headline removed', !landingTemplate.includes("Founders don't choose the supply")],
+    ['old puppet-first headline removed', !landingTemplate.includes('HoodPups</span> are approved by <span style="color:#DE8C4F">Bitcoin Puppets.</span>')],
   ];
   for (const [label, ok] of landingChecks) if (!ok) failures.push(`index.html: ${label}`);
 }
@@ -79,7 +82,7 @@ if (rootTemplate !== null) {
 
 if (mobileTemplate !== null) {
   const mobileChecks = [
-    ['mobile approval headline', mobileTemplate.includes('HoodPups</span> are approved by <span style="color:#DE8C4F">Bitcoin Puppets.</span>')],
+    ['mobile generic approval headline', mobileTemplate.includes('Derivatives</span> are approved by <span style="color:#DE8C4F">OG holders.</span>')],
     ['mobile reversed title', mobileTemplate.includes('>HoodPups</span> <span style="color:rgba(233,233,227,.4)">←</span> <span style="color:#DE8C4F">Bitcoin Puppets</span>')],
     ['accessible mobile maps', occurrences(mobileTemplate, 'role="img" aria-label="Mobile') === 2],
   ];

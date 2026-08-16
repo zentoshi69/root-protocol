@@ -31,7 +31,7 @@ function transformSharedNavigation(template) {
     .replaceAll('>ROOT SPACES<', '>ROOT SPACE<')
     .replaceAll('>HOLDERS<', '>FOR HOLDERS<')
     .replaceAll('ROBINHOOD CHAIN · PRE-AUDIT', 'ROBINHOOD CHAIN · PRE-AUDIT DEMO')
-    .replaceAll('>LAUNCH APP<', '>EXPLORE HOODPUPS<')
+    .replaceAll('>LAUNCH APP<', '>LIVE MINT<')
     .replaceAll('>MINT A HOODPUP<', '>OPEN MINT DEMO<');
 }
 
@@ -45,25 +45,25 @@ function transformLanding(template) {
   template = replaceRequired(
     template,
     "ROOT PROTOCOL · CROSS-CHAIN CONSENT LAYER",
-    'HOODPUPS · APPROVED BY BITCOIN PUPPET HOLDERS',
+    'DERIV.WTF · OG HOLDER APPROVAL LAYER',
     'landing hero kicker',
   );
   template = replaceRequired(
     template,
     '<h1 data-rise="2" style="animation:rise .7s cubic-bezier(.16,.8,.24,1) .08s backwards;margin:0 0 24px;font-family:\'Silkscreen\',ui-monospace,monospace;font-size:clamp(30px,3.6vw,56px);line-height:1.14;letter-spacing:0;font-weight:700;text-wrap:balance;color:#FFFFFF">Founders don\'t choose the supply. The community <em style="font-style:italic;color:#C8F135">reveals</em> it.</h1>',
-    '<h1 data-rise="2" style="animation:rise .7s cubic-bezier(.16,.8,.24,1) .08s backwards;margin:0 0 24px;font-family:\'Silkscreen\',ui-monospace,monospace;font-size:clamp(30px,3.6vw,56px);line-height:1.14;letter-spacing:0;font-weight:700;text-wrap:balance;color:#FFFFFF"><span style="color:#C8F135">HoodPups</span> are approved by <span style="color:#DE8C4F">Bitcoin Puppets.</span></h1>',
+    '<h1 data-rise="2" style="animation:rise .7s cubic-bezier(.16,.8,.24,1) .08s backwards;margin:0 0 24px;font-family:\'Silkscreen\',ui-monospace,monospace;font-size:clamp(30px,3.6vw,56px);line-height:1.14;letter-spacing:0;font-weight:700;text-wrap:balance;color:#FFFFFF"><span style="color:#C8F135">Derivatives</span> are approved by <span style="color:#DE8C4F">OG holders.</span></h1>',
     'landing hero headline',
   );
   template = replaceRequired(
     template,
     "DERIV.WTF is where original NFT communities approve their derivatives instead of merely being copied by them. The community governs the proposal, every single ID needs its own holder's signature, and the final supply is discovered by participation — never picked by a founder.",
-    "Each HoodPup maps to one Bitcoin Puppet. A HoodPup can exist only when the holder of its matching Bitcoin Puppet approves it. No approval means no mint — and the original always stays on Bitcoin.",
+    "DERIV.WTF is where derivative collections earn approval from the holders of their OG collections. Each derivative ID maps to one original ID, and no mint can open unless the matching holder signs. The original stays where it belongs.",
     'landing hero explanation',
   );
   template = replaceRequired(
     template,
     'Your Bitcoin Puppet never leaves Bitcoin.',
-    'NO BRIDGE · NO TRANSFER · YOUR BITCOIN PUPPET NEVER LEAVES BITCOIN',
+    'NO BRIDGE · NO TRANSFER · THE OG NEVER LEAVES ITS HOME CHAIN',
     'landing custody assurance',
   );
   template = replaceRequired(
@@ -80,10 +80,10 @@ function transformLanding(template) {
   );
 
   const approvalCard = `
-  <aside class="ux-approval-card" data-rise="6" aria-label="How Bitcoin Puppet holder approval creates a HoodPup slot">
-    <div class="ux-card-kicker"><span>THE RELATIONSHIP</span><span class="ux-live-chip"><i></i> PRE-AUDIT DEMO</span></div>
+  <aside class="ux-approval-card" data-rise="6" aria-label="Live HoodPups mint approval by Bitcoin Puppet holders">
+    <div class="ux-card-kicker"><span>LIVE MINT NOW</span><span class="ux-live-chip"><i></i> PRE-AUDIT DEMO</span></div>
     <h2><span class="ux-hoodpup">HoodPups</span> <span class="ux-approved-by">← APPROVED BY</span> <span class="ux-puppet">Bitcoin Puppets</span></h2>
-    <p>HoodPup #0420 can exist only if the holder of Bitcoin Puppet #0420 approves it. Every ID is matched one-to-one.</p>
+    <p>The active mint is HoodPups. Each HoodPup can exist only if the holder of its matching Bitcoin Puppet approves it. Every ID is matched one-to-one.</p>
     <div class="ux-proof-grid" role="list" aria-label="Approval guarantees">
       <div role="listitem"><strong>1:1</strong><span>MATCHED IDS</span></div>
       <div role="listitem"><strong>1</strong><span>HOLDER SIGNATURE</span></div>
@@ -142,20 +142,48 @@ function transformLanding(template) {
   );
 
   return template
-    .replaceAll('LIVE — OG APPROVALS, ONE SIGNATURE AT A TIME', 'LIVE DEMO — HOLDER APPROVALS, ONE PUPPET AT A TIME')
-    .replaceAll('BITCOIN — 10,001 PUPPETS', 'BITCOIN — 10,001 ORIGINAL PUPPETS')
-    .replaceAll('THE ORIGINALS. THEY NEVER MOVE.', 'THE ORIGINALS STAY ON BITCOIN.')
+    .replaceAll('LIVE — OG APPROVALS, ONE SIGNATURE AT A TIME', 'LIVE DEMO - OG HOLDER APPROVALS')
+    .replaceAll('BITCOIN — 10,001 PUPPETS', 'OG COLLECTION - ORIGINAL IDS')
+    .replaceAll('THE ORIGINALS. THEY NEVER MOVE.', 'ORIGINALS STAY PUT.')
     .replaceAll('SIGNATURE<br>BYTES ONLY →', 'ONE HOLDER<br>SIGNATURE →')
-    .replaceAll('ROBINHOOD — HOODPUPS ', 'ROBINHOOD — APPROVED HOODPUPS ')
+    .replaceAll('ROBINHOOD — HOODPUPS ', 'DERIVATIVE - APPROVED SLOTS ')
     .replaceAll('DERIVATIVES APPROVED BY THEIR OG', 'ONLY MATCHING APPROVED IDS CAN MINT')
     .replaceAll('OG — NOT SIGNED', 'NOT YET APPROVED')
     .replaceAll('CONSIDERING AN OFFER', 'REVIEWING AN OFFER')
     .replaceAll('>CONSENT SIGNED</span>', '>HOLDER APPROVED</span>')
     .replaceAll('>SLOT AWAITING CONSENT</span>', '>MINT SLOT PENDING</span>')
-    .replaceAll('>HOODPUP APPROVED</span>', '>HOODPUP SLOT OPEN</span>')
+    .replaceAll('>HOODPUP APPROVED</span>', '>DERIVATIVE SLOT OPEN</span>')
     .replaceAll('>OG APPROVALS · LIVE</div>', '>HOLDER APPROVALS · LIVE</div>')
     .replaceAll('>UNIQUE OG HOLDERS</div>', '>UNIQUE HOLDERS</div>')
-    .replaceAll('<canvas ref="{{ mapRef }}" style="width:100%;display:block;margin:0 0 14px;image-rendering:pixelated"></canvas>', '<canvas ref="{{ mapRef }}" role="img" aria-label="Live one-to-one map of Bitcoin Puppet holder approvals and matching HoodPup slots" style="width:100%;display:block;margin:0 0 14px;image-rendering:pixelated"></canvas>');
+    .replaceAll('It can never move, spend or encumber your Puppet — the protocol holds no Bitcoin key.', 'It can never move, spend, or encumber the original asset - the protocol holds no source-chain key.')
+    .replaceAll('Your Bitcoin Puppet never leaves Bitcoin, and no signature this site asks for can spend it.', 'The original asset never leaves its home chain, and no signature this site asks for can spend it.')
+    .replaceAll('Nothing here is an endorsement by the Bitcoin Puppets project or Robinhood.', 'Nothing here is an endorsement by any OG collection, derivative collection, or destination chain.')
+    .replaceAll('THE BITCOIN PUPPETS PROJECT OR ROBINHOOD', 'ANY OG COLLECTION, DERIVATIVE COLLECTION, OR DESTINATION CHAIN')
+    .replaceAll('A collection-wide vote can approve the road. It can never force a single Puppet onto it.', 'A collection-wide vote can approve the road. It can never force a single original asset onto it.')
+    .replaceAll('one whale holding 2,000 Puppets can never be "the community."', 'one whale holding 2,000 originals can never be "the community."')
+    .replaceAll("After the vote passes, an activation window opens. HoodPup #123 can exist only because the holder of Bitcoin Puppet #123 signed for it — one BIP-322 message, from the wallet that controls the inscription. #6969's holder stays silent, so #6969 can never exist.", "After the vote passes, an activation window opens. Derivative #123 can exist only because the holder of original #123 signed for it - one wallet message from the address that controls the original. If #6969's holder stays silent, derivative #6969 can never exist.")
+    .replaceAll('The HoodPups launch, worked end to end:', 'A live branch, worked end to end:')
+    .replaceAll('One verified HoodPup may be minted per protocol Root.', 'One verified derivative may be minted per protocol root ID.')
+    .replaceAll('The Puppet itself never moves.', 'The original asset itself never moves.')
+    .replaceAll('Bitcoin Puppet #123', 'Original #123')
+    .replaceAll('mint HoodPup · route 50 / 20 / 20 / 10', 'mint derivative · route 50 / 20 / 20 / 10')
+    .replaceAll('Your Puppet is not converted into a token on another chain, and nobody holds it on your behalf. It stays exactly where it is, under your key.', 'Your original is not converted into a token on another chain, and nobody holds it on your behalf. It stays exactly where it is, under your key.')
+    .replaceAll('HOODPUPS LAUNCH SPLIT — EVERY PAID MINT, FROM GROSS ESCROW', 'LIVE BRANCH SPLIT - EVERY PAID MINT, FROM GROSS ESCROW')
+    .replaceAll('ROOT TREASURY — PUPPETS COMMUNITY', 'ROOT TREASURY - OG COMMUNITY')
+    .replaceAll('BRANCH BUILDER — HOODPUPS TEAM', 'BRANCH BUILDER - DERIVATIVE TEAM')
+    .replaceAll('WORKED — HOODPUP #123 SELLS FOR 0.10 ETH', 'WORKED - DERIVATIVE #123 SELLS FOR 0.10 ETH')
+    .replaceAll('holder of Bitcoin Puppet #123', 'holder of original #123')
+    .replaceAll('A HoodPup mints to the wrong recipient', 'A derivative mints to the wrong recipient')
+    .replaceAll("Move anyone's Bitcoin Puppet.", "Move anyone's original asset.")
+    .replaceAll('Mint a second HoodPup for a Root', 'Mint a second derivative for a root ID')
+    .replaceAll('HoodPups sits here.', 'A community-approved branch sits here.')
+    .replaceAll('FIRST BRANCH · BITCOIN PUPPETS → ROBINHOOD CHAIN', 'LIVE BRANCH · OG COLLECTION → DESTINATION CHAIN')
+    .replaceAll('10,001 Bitcoin Puppets were invited. Their holders are deciding, one signature at a time, how many HoodPups get to exist. The mint supply is not announced — it is watched live.', '10,001 originals are eligible. Their holders decide, one signature at a time, how many derivatives get to exist. The mint supply is not announced - it is watched live.')
+    .replaceAll('I HOLD A PUPPET', 'I HOLD AN OG')
+    .replaceAll('Puppets Root Space', 'Live Root Space')
+    .replaceAll('spend or encumber your Puppet', 'spend or encumber your original')
+    .replaceAll('Your Bitcoin Puppet never leaves Bitcoin', 'Your original never leaves its home chain')
+    .replaceAll('<canvas ref="{{ mapRef }}" style="width:100%;display:block;margin:0 0 14px;image-rendering:pixelated"></canvas>', '<canvas ref="{{ mapRef }}" role="img" aria-label="Live one-to-one map of OG holder approvals and matching derivative slots" style="width:100%;display:block;margin:0 0 14px;image-rendering:pixelated"></canvas>');
 }
 
 function transformRootSpace(template) {
@@ -220,10 +248,10 @@ function transformRootSpace(template) {
 
 function transformMobilePreview(template) {
   return template
-    .replaceAll('ROOT PROTOCOL · CONSENT LAYER', 'HOODPUPS · HOLDER-APPROVED')
-    .replaceAll("Founders don't choose the supply. The community <em style=\"color:#C8F135\">reveals</em> it.", '<span style="color:#C8F135">HoodPups</span> are approved by <span style="color:#DE8C4F">Bitcoin Puppets.</span>')
-    .replaceAll('Original communities approve their derivatives instead of merely being copied by them.', 'One matching holder approval opens one HoodPup slot. The original stays on Bitcoin.')
-    .replaceAll('YOUR PUPPET NEVER LEAVES BITCOIN.', 'NO BRIDGE · YOUR PUPPET STAYS ON BITCOIN.')
+    .replaceAll('ROOT PROTOCOL · CONSENT LAYER', 'OG HOLDER APPROVAL LAYER')
+    .replaceAll("Founders don't choose the supply. The community <em style=\"color:#C8F135\">reveals</em> it.", '<span style="color:#C8F135">Derivatives</span> are approved by <span style="color:#DE8C4F">OG holders.</span>')
+    .replaceAll('Original communities approve their derivatives instead of merely being copied by them.', 'Each derivative opens only when the matching original holder approves it.')
+    .replaceAll('YOUR PUPPET NEVER LEAVES BITCOIN.', 'NO BRIDGE · THE OG STAYS HOME.')
     .replaceAll('ROOT SPACES / BITCOIN-PUPPETS', 'ROOT SPACE / BITCOIN PUPPETS')
     .replaceAll('<span style="color:#DE8C4F">Puppets</span> <span style="color:rgba(233,233,227,.4)">→</span> <span style="color:#C8F135">HoodPups</span>', '<span style="color:#C8F135">HoodPups</span> <span style="color:rgba(233,233,227,.4)">←</span> <span style="color:#DE8C4F">Bitcoin Puppets</span>')
     .replaceAll('>COMMUNITY APPROVED</span>', '>PUPPET HOLDER APPROVED</span>')

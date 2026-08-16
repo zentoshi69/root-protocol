@@ -24,9 +24,9 @@ const pages = [
     source: 'Landing.dc.html',
     route: '/',
     output: 'index.html',
-    title: 'HoodPups, approved by Bitcoin Puppets — DERIV.WTF',
+    title: 'Derivatives approved by OG holders - DERIV.WTF',
     description:
-      'Each HoodPup maps to one Bitcoin Puppet and can exist only with its matching holder approval. Explore the pre-audit Root Protocol demonstration.',
+      'DERIV.WTF lets OG collection holders approve derivative mints one matched ID and one signature at a time. Explore the pre-audit Root Protocol demonstration.',
   },
   {
     source: 'Root Space.dc.html',
