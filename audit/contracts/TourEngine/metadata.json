@@ -1,0 +1,22 @@
+{
+  "contract": "TourEngine",
+  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "compiler": {
+    "solc": "0.8.28",
+    "evmVersion": "shanghai",
+    "optimizer": true,
+    "optimizerRuns": 800,
+    "viaIR": false
+  },
+  "source": {
+    "path": "contracts/src/TourEngine.sol",
+    "sha256": "0ee2ffdcc6ff4c234b9cba95713e8ef2782e841197ee6d3beebd08c09fe94d58",
+    "nonBlankLines": 526
+  },
+  "flattened": {
+    "path": "audit/contracts/TourEngine/TourEngine.flat.sol",
+    "sha256": "44b9b463574ff6fd5525f17535a55a4982dc449f66f5f3d26518d1e4e65f51f3",
+    "nonBlankLines": 1517,
+    "standaloneCompile": "verified"
+  }
+}

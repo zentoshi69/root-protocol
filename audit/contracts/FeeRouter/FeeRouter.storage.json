@@ -1,0 +1,95 @@
+{
+  "storage": [
+    {
+      "astId": 39386,
+      "contract": "src/FeeRouter.sol:FeeRouter",
+      "label": "_roles",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)"
+    },
+    {
+      "astId": 42772,
+      "contract": "src/FeeRouter.sol:FeeRouter",
+      "label": "_status",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 55870,
+      "contract": "src/FeeRouter.sol:FeeRouter",
+      "label": "_puppetTreasury",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_address"
+    },
+    {
+      "astId": 55873,
+      "contract": "src/FeeRouter.sol:FeeRouter",
+      "label": "_protocolTreasury",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_address"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RoleData)39381_storage"
+    },
+    "t_struct(RoleData)39381_storage": {
+      "encoding": "inplace",
+      "label": "struct AccessControl.RoleData",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 39378,
+          "contract": "src/FeeRouter.sol:FeeRouter",
+          "label": "hasRole",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_mapping(t_address,t_bool)"
+        },
+        {
+          "astId": 39380,
+          "contract": "src/FeeRouter.sol:FeeRouter",
+          "label": "adminRole",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

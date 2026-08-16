@@ -1,0 +1,287 @@
+{
+  "storage": [
+    {
+      "astId": 39386,
+      "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+      "label": "_roles",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)"
+    },
+    {
+      "astId": 42653,
+      "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+      "label": "_paused",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_bool"
+    },
+    {
+      "astId": 42772,
+      "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+      "label": "_status",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 61482,
+      "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+      "label": "_rootState",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_bytes32,t_struct(RootState)66306_storage)"
+    },
+    {
+      "astId": 61490,
+      "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+      "label": "_rootEpochInfo",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_bytes32,t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage))"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_bytes32,t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage))": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => mapping(uint64 => struct PuppetTypes.RootEpochInfo))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage)"
+    },
+    "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RoleData)39381_storage"
+    },
+    "t_mapping(t_bytes32,t_struct(RootState)66306_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct PuppetTypes.RootState)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RootState)66306_storage"
+    },
+    "t_mapping(t_uint64,t_struct(RootEpochInfo)66324_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint64",
+      "label": "mapping(uint64 => struct PuppetTypes.RootEpochInfo)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RootEpochInfo)66324_storage"
+    },
+    "t_struct(RoleData)39381_storage": {
+      "encoding": "inplace",
+      "label": "struct AccessControl.RoleData",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 39378,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "hasRole",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_mapping(t_address,t_bool)"
+        },
+        {
+          "astId": 39380,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "adminRole",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_struct(RootEpochInfo)66324_storage": {
+      "encoding": "inplace",
+      "label": "struct PuppetTypes.RootEpochInfo",
+      "numberOfBytes": "160",
+      "members": [
+        {
+          "astId": 66309,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "beneficiary",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 66311,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "outpointHash",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66313,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "ownerScriptHash",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66315,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "activatedAtBitcoinHeight",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66317,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "activatedAtBlockTimestamp",
+          "offset": 8,
+          "slot": "3",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66319,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "deactivatedAtBitcoinHeight",
+          "offset": 16,
+          "slot": "3",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66321,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "deactivatedAtBlockTimestamp",
+          "offset": 24,
+          "slot": "3",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66323,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "ownershipDigest",
+          "offset": 0,
+          "slot": "4",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_struct(RootState)66306_storage": {
+      "encoding": "inplace",
+      "label": "struct PuppetTypes.RootState",
+      "numberOfBytes": "288",
+      "members": [
+        {
+          "astId": 66287,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "epoch",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66289,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "active",
+          "offset": 8,
+          "slot": "0",
+          "type": "t_bool"
+        },
+        {
+          "astId": 66291,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "currentOutpointHash",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66293,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "ownerScriptHash",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66295,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "beneficiary",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_address"
+        },
+        {
+          "astId": 66297,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "ownershipDigest",
+          "offset": 0,
+          "slot": "4",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66299,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "bip322ProofHash",
+          "offset": 0,
+          "slot": "5",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66301,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "verifiedBitcoinHeight",
+          "offset": 0,
+          "slot": "6",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 66303,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "lastBitcoinBlockHash",
+          "offset": 0,
+          "slot": "7",
+          "type": "t_bytes32"
+        },
+        {
+          "astId": 66305,
+          "contract": "src/RootOwnershipRegistry.sol:RootOwnershipRegistry",
+          "label": "invalidatingSpendTxid",
+          "offset": 0,
+          "slot": "8",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint64": {
+      "encoding": "inplace",
+      "label": "uint64",
+      "numberOfBytes": "8"
+    }
+  }
+}

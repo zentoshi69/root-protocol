@@ -1,0 +1,22 @@
+{
+  "contract": "HoodPups",
+  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "compiler": {
+    "solc": "0.8.28",
+    "evmVersion": "shanghai",
+    "optimizer": true,
+    "optimizerRuns": 800,
+    "viaIR": false
+  },
+  "source": {
+    "path": "contracts/src/HoodPups.sol",
+    "sha256": "a4c9e29e5307f5969ed8cff2cfcfebfb31a27699f59e8742a26665f4c8aa9a25",
+    "nonBlankLines": 477
+  },
+  "flattened": {
+    "path": "audit/contracts/HoodPups/HoodPups.flat.sol",
+    "sha256": "bbfae65d823d4b703f4d9e90e8dd9a4104ae42fefb754538f200d71650fbd334",
+    "nonBlankLines": 4065,
+    "standaloneCompile": "verified"
+  }
+}

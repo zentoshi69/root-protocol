@@ -1,0 +1,138 @@
+{
+  "storage": [
+    {
+      "astId": 39386,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_roles",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)"
+    },
+    {
+      "astId": 42653,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_paused",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_bool"
+    },
+    {
+      "astId": 43876,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_nameFallback",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_string_storage"
+    },
+    {
+      "astId": 43878,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_versionFallback",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_string_storage"
+    },
+    {
+      "astId": 52799,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_consumedDigests",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_bytes32,t_bool)"
+    },
+    {
+      "astId": 52804,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_consumedPaymentOutputs",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_mapping(t_bytes32,t_bool)"
+    },
+    {
+      "astId": 52809,
+      "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+      "label": "_consumerPurposeMask",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_mapping(t_address,t_uint256)"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32",
+      "value": "t_uint256"
+    },
+    "t_mapping(t_bytes32,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+      "numberOfBytes": "32",
+      "value": "t_struct(RoleData)39381_storage"
+    },
+    "t_string_storage": {
+      "encoding": "bytes",
+      "label": "string",
+      "numberOfBytes": "32"
+    },
+    "t_struct(RoleData)39381_storage": {
+      "encoding": "inplace",
+      "label": "struct AccessControl.RoleData",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 39378,
+          "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+          "label": "hasRole",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_mapping(t_address,t_bool)"
+        },
+        {
+          "astId": 39380,
+          "contract": "src/BitcoinOwnershipOracle.sol:BitcoinOwnershipOracle",
+          "label": "adminRole",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes32"
+        }
+      ]
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

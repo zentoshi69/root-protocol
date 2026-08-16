@@ -1,0 +1,22 @@
+{
+  "contract": "BtcSolverSettlement",
+  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "compiler": {
+    "solc": "0.8.28",
+    "evmVersion": "shanghai",
+    "optimizer": true,
+    "optimizerRuns": 800,
+    "viaIR": false
+  },
+  "source": {
+    "path": "contracts/src/BtcSolverSettlement.sol",
+    "sha256": "baa6dde3664cee601e186710b10456da638377dad3c1eb5e27108713982708ed",
+    "nonBlankLines": 696
+  },
+  "flattened": {
+    "path": "audit/contracts/BtcSolverSettlement/BtcSolverSettlement.flat.sol",
+    "sha256": "118cd02a5056545b6e1d91d71c9184d61777b6e879568fbbd9dbd623097fd104",
+    "nonBlankLines": 1812,
+    "standaloneCompile": "verified"
+  }
+}
