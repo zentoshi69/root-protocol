@@ -1,35 +1,35 @@
 {
-  "buildId": "20260816T175500Z",
+  "buildId": "20260816T192241Z",
   "pages": {
     "/": {
       "file": "index.html",
-      "bytes": 595257,
-      "sha256": "f86633edc63bc76da3a82db537450aaa4414f366685e521c6cb7df527ccd9d58"
+      "bytes": 619255,
+      "sha256": "75a3460c7ac064bd2f7572ed7cec5f39cb549242761b0839a5a79464bfbd765b"
     },
     "/root-space/": {
       "file": "root-space/index.html",
-      "bytes": 414716,
-      "sha256": "2cfbd6d169600dc67c0c695ebc1ef5bec914125f9278592cd3b89ffd5d4cd942"
+      "bytes": 437703,
+      "sha256": "95ef49f14792d6b9b8ea4bd5a16eb6c26e131d7bed1f1f57f1018ce2888a3480"
     },
     "/mint/": {
       "file": "mint/index.html",
-      "bytes": 275897,
-      "sha256": "51fd4db904bf407d10f53731d1bf54563858946db652e818c0ecea62f65fd1a0"
+      "bytes": 298409,
+      "sha256": "723e674b4756d608e4a162c19322ad6cd682f327fb5ec0f2e4c54a2848f6cd6c"
     },
     "/holders/": {
       "file": "holders/index.html",
-      "bytes": 280035,
-      "sha256": "3b11a6d2c1fe89c83962f409c01bc8831918cc101f627bbd2598aebc92d77d30"
+      "bytes": 302547,
+      "sha256": "d3b92ef5a83e314f8a8a54fff8d443e10ca7a1220c32752d44444afd3c52f180"
     },
     "/protocol/": {
       "file": "protocol/index.html",
-      "bytes": 264504,
-      "sha256": "0a1764f9345cc90ed486b142b00930eb6983ceb16f7b45f104f6c9cdc57dc685"
+      "bytes": 287016,
+      "sha256": "0a958ac4556d60594e698dfed99bd5487311017ed1c0204faedab2179a4f9d3c"
     },
     "/mobile/": {
       "file": "mobile/index.html",
-      "bytes": 1159539,
-      "sha256": "3dbd028e71d5c3ae6f81be8e49cf7d430e795d11325df0cc257709d7013cef3f"
+      "bytes": 1182204,
+      "sha256": "52f8bab5b48d8bd1e1960c3c9094c94b452ffcfc6af6209df2ce948d8f1b2598"
     }
   }
 }

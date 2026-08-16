@@ -1,8 +1,10 @@
 # DERIV.WTF production site
 
 This directory turns the supplied self-contained design export into the public `deriv.wtf` site.
-The design runtime, visual system, interactions, copy and simulations are preserved; the build adds
-clean routes, durable metadata, indexing assets, version evidence and a reproducible static release.
+The design runtime, visual system, interactions and simulations are preserved. A deterministic UX
+transformation then gives the landing and Root Space a first-view approval story, clearer holder
+language, responsive hierarchy and accessible controls before the build adds clean routes, durable
+metadata, indexing assets, version evidence and a reproducible static release.
 
 ## Build and verify
 
