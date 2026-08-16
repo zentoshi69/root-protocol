@@ -50,6 +50,31 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)
 
+  services/attestor:
+    dependencies:
+      '@hoodpups/bitcoin-verifier':
+        specifier: workspace:*
+        version: link:../bitcoin-verifier
+      '@hoodpups/canonical-message':
+        specifier: workspace:*
+        version: link:../../packages/canonical-message
+      '@hoodpups/protocol-sdk':
+        specifier: workspace:*
+        version: link:../../packages/protocol-sdk
+      viem:
+        specifier: 2.21.55
+        version: 2.21.55(typescript@5.7.2)
+    devDependencies:
+      tsx:
+        specifier: 4.19.2
+        version: 4.19.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   services/bitcoin-verifier:
     dependencies:
       '@hoodpups/canonical-message':
