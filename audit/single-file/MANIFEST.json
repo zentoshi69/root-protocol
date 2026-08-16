@@ -1,7 +1,7 @@
 {
   "package": "hoodpups-single-file-audit-bundle",
-  "commit": "5d853a42604f54d71ffb0ac740302e5aa7e4adef",
-  "dirtyWorkingTree": true,
+  "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
+  "dirtyWorkingTree": false,
   "compiler": {
     "solc": "0.8.28",
     "evmVersion": "shanghai",
@@ -11,51 +11,51 @@
   },
   "bundle": {
     "path": "HoodPupsProtocol.flat.sol",
-    "sha256": "c4f9c3d2e9cbda272706183a15d2ef83276758438520aceb195815ec297a6d4b",
-    "lines": 12981,
-    "nonBlankLines": 11465,
+    "sha256": "2e8ea97f274e60677a05a1a98bc2145738280de73378c29754d4411c2a1f83eb",
+    "lines": 12980,
+    "nonBlankLines": 11464,
     "standaloneCompile": "verified"
   },
   "protocolContracts": [
     {
       "name": "PuppetCollectionRegistry",
-      "line": 6122
+      "line": 6121
     },
     {
       "name": "BitcoinAttestorRegistry",
-      "line": 6349
+      "line": 6348
     },
     {
       "name": "BitcoinOwnershipOracle",
-      "line": 11617
+      "line": 11616
     },
     {
       "name": "PayoutVault",
-      "line": 12382
+      "line": 12381
     },
     {
       "name": "RootOwnershipRegistry",
-      "line": 8855
+      "line": 8854
     },
     {
       "name": "FeeRouter",
-      "line": 6860
+      "line": 6859
     },
     {
       "name": "HoodPups",
-      "line": 11041
+      "line": 11040
     },
     {
       "name": "HoodPupOfferEscrow",
-      "line": 9955
+      "line": 9954
     },
     {
       "name": "BtcSolverSettlement",
-      "line": 8054
+      "line": 8053
     },
     {
       "name": "TourEngine",
-      "line": 7438
+      "line": 7437
     }
   ],
   "declarationCounts": {

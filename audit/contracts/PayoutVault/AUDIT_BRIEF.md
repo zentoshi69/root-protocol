@@ -8,7 +8,7 @@
 | Flattened | `PayoutVault.flat.sol` · 4239 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `8427a0dc5e54a2efd073bea283c9dd0f664af397104dbd48cf87003738bf3b63` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

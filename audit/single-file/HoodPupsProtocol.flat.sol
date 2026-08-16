@@ -1,8 +1,7 @@
 // HoodPups Rooted Settlement Protocol — complete protocol source, single file.
 //
 // License: MIT
-// Commit:  5d853a42604f54d71ffb0ac740302e5aa7e4adef
-// WARNING: exported from a DIRTY working tree — this does not match the commit above.
+// Commit:  dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b
 // Compile: solc 0.8.28, evm shanghai, optimizer on, 800 runs, no viaIR
 //
 // This is every contract the protocol deploys, plus its dependencies, flattened and
@@ -40,66 +39,66 @@
 // TABLE OF CONTENTS
 //
 //   THE TEN PROTOCOL CONTRACTS
-//     line   6122  contract  PuppetCollectionRegistry
-//     line   6349  contract  BitcoinAttestorRegistry
-//     line  11617  contract  BitcoinOwnershipOracle
-//     line  12382  contract  PayoutVault
-//     line   8855  contract  RootOwnershipRegistry
-//     line   6860  contract  FeeRouter
-//     line  11041  contract  HoodPups
-//     line   9955  contract  HoodPupOfferEscrow
-//     line   8054  contract  BtcSolverSettlement
-//     line   7438  contract  TourEngine
+//     line   6121  contract  PuppetCollectionRegistry
+//     line   6348  contract  BitcoinAttestorRegistry
+//     line  11616  contract  BitcoinOwnershipOracle
+//     line  12381  contract  PayoutVault
+//     line   8854  contract  RootOwnershipRegistry
+//     line   6859  contract  FeeRouter
+//     line  11040  contract  HoodPups
+//     line   9954  contract  HoodPupOfferEscrow
+//     line   8053  contract  BtcSolverSettlement
+//     line   7437  contract  TourEngine
 //
 //   PROTOCOL INTERFACES
-//     line    828  interface IBitcoinAttestorRegistry
-//     line    973  interface IFeeRouter
-//     line   1044  interface IPayoutVault
-//     line   1152  interface ITourEngine
-//     line   3129  interface IBitcoinOwnershipOracle
-//     line   3237  interface IBtcSolverSettlement
-//     line   3459  interface IHoodPupOfferEscrow
-//     line   3624  interface IHoodPups
-//     line   3679  interface IPuppetCollectionRegistry
-//     line   3726  interface IRootOwnershipRegistry
+//     line    827  interface IBitcoinAttestorRegistry
+//     line    972  interface IFeeRouter
+//     line   1043  interface IPayoutVault
+//     line   1151  interface ITourEngine
+//     line   3128  interface IBitcoinOwnershipOracle
+//     line   3236  interface IBtcSolverSettlement
+//     line   3458  interface IHoodPupOfferEscrow
+//     line   3623  interface IHoodPups
+//     line   3678  interface IPuppetCollectionRegistry
+//     line   3725  interface IRootOwnershipRegistry
 //
 //   PROTOCOL TYPES AND HASHING
-//     line   1301  library   PuppetTypes
-//     line   4454  library   PuppetHashing
+//     line   1300  library   PuppetTypes
+//     line   4453  library   PuppetHashing
 //
 //   THIRD-PARTY DEPENDENCIES (OpenZeppelin, unmodified)
-//     line    123  contract  Context
-//     line    147  library   ECDSA
-//     line    356  library   EnumerableSet
-//     line    701  library   Hashes
-//     line    730  interface IAccessControl
-//     line    877  interface IERC1271
-//     line    899  interface IERC165
-//     line    915  interface IERC5267
-//     line    948  interface IERC721Receiver
-//     line   1254  library   Panic
-//     line   1566  contract  ReentrancyGuard
-//     line   1647  library   SafeCast
-//     line   2824  library   StorageSlot
-//     line   2943  interface IERC20Errors
-//     line   2989  interface IERC721Errors
-//     line   3047  interface IERC1155Errors
-//     line   3113  contract  ERC165
-//     line   3325  interface IERC721
-//     line   3606  interface IERC4907
-//     line   3833  library   MerkleProof
-//     line   4331  contract  Pausable
-//     line   4741  library   ShortStrings
-//     line   4832  library   SignedMath
-//     line   4902  library   ERC721Utils
-//     line   4946  interface IERC721Metadata
-//     line   4970  library   Math
-//     line   5654  library   SignatureChecker
-//     line   5735  contract  AccessControl
-//     line   5904  library   Strings
-//     line   6021  library   MessageHashUtils
-//     line   6689  contract  EIP712
-//     line   9463  contract  ERC721
+//     line    122  contract  Context
+//     line    146  library   ECDSA
+//     line    355  library   EnumerableSet
+//     line    700  library   Hashes
+//     line    729  interface IAccessControl
+//     line    876  interface IERC1271
+//     line    898  interface IERC165
+//     line    914  interface IERC5267
+//     line    947  interface IERC721Receiver
+//     line   1253  library   Panic
+//     line   1565  contract  ReentrancyGuard
+//     line   1646  library   SafeCast
+//     line   2823  library   StorageSlot
+//     line   2942  interface IERC20Errors
+//     line   2988  interface IERC721Errors
+//     line   3046  interface IERC1155Errors
+//     line   3112  contract  ERC165
+//     line   3324  interface IERC721
+//     line   3605  interface IERC4907
+//     line   3832  library   MerkleProof
+//     line   4330  contract  Pausable
+//     line   4740  library   ShortStrings
+//     line   4831  library   SignedMath
+//     line   4901  library   ERC721Utils
+//     line   4945  interface IERC721Metadata
+//     line   4969  library   Math
+//     line   5653  library   SignatureChecker
+//     line   5734  contract  AccessControl
+//     line   5903  library   Strings
+//     line   6020  library   MessageHashUtils
+//     line   6688  contract  EIP712
+//     line   9462  contract  ERC721
 //
 // Generated by scripts/export-single-file.sh — do not edit this file by hand.
 

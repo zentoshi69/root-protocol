@@ -8,7 +8,7 @@
 | Flattened | `RootOwnershipRegistry.flat.sol` · 1832 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `00c130b38cd85c841aa124860e3f023185e83a14599f908b1a901797369af17f` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

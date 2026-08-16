@@ -8,7 +8,7 @@
 | Flattened | `BitcoinAttestorRegistry.flat.sol` · 1002 non-blank lines |
 | Standalone compile | **verified** |
 | sha256 (flattened) | `e21a219e821ba25a0374a94740ccb632c3c08855995a4de2ef0e9d4e2be11988` |
-| Commit | `5d853a42604f54d71ffb0ac740302e5aa7e4adef` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does

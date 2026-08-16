@@ -1,6 +1,6 @@
 {
   "contract": "HoodPupOfferEscrow",
-  "commit": "5d853a42604f54d71ffb0ac740302e5aa7e4adef",
+  "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
   "compiler": {
     "solc": "0.8.28",
     "evmVersion": "shanghai",
