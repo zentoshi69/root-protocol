@@ -1,0 +1,59 @@
+{
+  "_READ_THIS_FIRST": "############ EXAMPLE FILE - NOT A MANIFEST - DO NOT DEPLOY ############ This file exists ONLY to document the shape of data/bitcoin-puppets-mainnet.json. Every value below is a self-identifying placeholder. The first 16 bytes of every inscriptionTxid are the ASCII string \"EXAMPLE-NOT-REAL\", so none of these identities can exist on Bitcoin. No real Bitcoin Puppets inscription id appears in this repository, and none ever should be invented.",
+  "_HOW_TO_PRODUCE_THE_REAL_FILE": "Source the canonical Bitcoin Puppets inscription set yourself, from an indexer you operate or independently trust, and have at least two people reconcile it against a second independent index before it is used. Save it as data/bitcoin-puppets-mainnet.json. That file is intentionally NOT committed here: committing it would make an unreviewed list look blessed by the repository.",
+  "_FAIL_CLOSED": "The manifest builder MUST refuse to run when data/bitcoin-puppets-mainnet.json is missing, and MUST NOT fall back to this example. PuppetCollectionRegistry takes its Merkle root as an immutable constructor argument, so a deployment without a verified manifest either does not happen or permanently commits to a wrong root. There is no setter and no upgrade path that can repair it afterwards.",
+  "_CANONICAL_MEANS": "\"Canonical\" means canonical to this protocol deployment. It is not an endorsement, affiliation or approval claim by the Bitcoin Puppets project, and it must never be presented as one.",
+  "_TRUST_BOUNDARY": "This registry answers membership only. It never asserts who currently owns an inscription; Bitcoin facts are asserted by a 3-of-5 quorum of independent attestors elsewhere in the protocol. The original Bitcoin Puppet never leaves Bitcoin.",
+
+  "schema": "hoodpups.collection-manifest/1",
+  "network": "bitcoin-mainnet",
+  "manifestVersion": "EXAMPLE-REPLACE-ME-bitcoin-puppets-mainnet-YYYY-MM",
+  "sourcedFrom": "REPLACE-ME: indexer name, endpoint, snapshot height and the second index used to reconcile it",
+  "snapshotBitcoinHeight": 0,
+
+  "merkleRoot": null,
+  "manifestHash": null,
+  "leafCount": null,
+  "_derivedFieldsNote": "merkleRoot, manifestHash and leafCount are OUTPUTS of the builder, not inputs. They are null here on purpose: a placeholder root that looked real is exactly the kind of value that gets copy-pasted into a deployment script.",
+
+  "entries": [
+    {
+      "inscriptionTxid": "0x4558414d504c452d4e4f542d5245414c00000000000000000000000000000001",
+      "inscriptionIndex": 0,
+      "_placeholder": true
+    },
+    {
+      "inscriptionTxid": "0x4558414d504c452d4e4f542d5245414c00000000000000000000000000000002",
+      "inscriptionIndex": 0,
+      "_placeholder": true
+    },
+    {
+      "inscriptionTxid": "0x4558414d504c452d4e4f542d5245414c00000000000000000000000000000003",
+      "inscriptionIndex": 1,
+      "_placeholder": true,
+      "_note": "Shares its reveal transaction with the next entry. A reveal transaction can carry several inscriptions, so (txid, index) is the identity and txid alone is not."
+    },
+    {
+      "inscriptionTxid": "0x4558414d504c452d4e4f542d5245414c00000000000000000000000000000003",
+      "inscriptionIndex": 2,
+      "_placeholder": true
+    }
+  ],
+
+  "entryRules": {
+    "inscriptionTxid": "Reveal transaction id in big-endian / RPC display order (the order a block explorer shows), lowercase 64-hex, 0x-prefixed, left-padded into bytes32. Byte order is a security primitive: the SDK, the Merkle builder, the attestors and Solidity must all agree.",
+    "inscriptionIndex": "Inscription index within that reveal transaction (the iN suffix). Non-negative and must fit uint32.",
+    "uniqueness": "The pair (inscriptionTxid, inscriptionIndex) must be unique across the whole file. The builder must reject duplicates rather than silently deduplicate them: a duplicate means the source list is wrong, and it also makes proof generation ambiguous."
+  },
+
+  "algorithm": {
+    "collectionId": "keccak256(\"BITCOIN_PUPPETS_MAINNET_V1\")",
+    "rootKey": "keccak256(abi.encode(collectionId, bytes32 inscriptionTxid, uint32 inscriptionIndex))",
+    "leaf": "keccak256(abi.encode(rootKey))",
+    "leafOrdering": "sorted ascending as unsigned big-endian 256-bit integers; duplicates rejected",
+    "pairHash": "keccak256(abi.encodePacked(min(a,b), max(a,b)))",
+    "oddNode": "promoted unchanged to the next level; never self-paired",
+    "manifestHash": "keccak256(abi.encode(collectionId, keccak256(bytes(manifestVersion)), sortedLeaves))",
+    "reference": "contracts/test/helpers/MerkleFixture.sol carries the same algorithm spelled out step by step, and data/test-fixtures/puppets-fixture-manifest.json carries executable golden vectors for it."
+  }
+}

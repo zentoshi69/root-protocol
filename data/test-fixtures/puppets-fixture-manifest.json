@@ -1,0 +1,209 @@
+{
+  "_WARNING": "TEST FIXTURE ONLY -- THIS IS NOT THE BITCOIN PUPPETS COLLECTION. Every inscription txid below is a synthetic placeholder whose first 16 bytes are the ASCII string \"FIXTURE-NOT-REAL\". These identities do not exist on Bitcoin and must NEVER be deployed to any network. The production manifest lives in data/bitcoin-puppets-mainnet.json, is independently sourced and verified, and is not committed to this repository.",
+  "_purpose": "Deterministic Merkle fixture for contracts/test/unit/PuppetCollectionRegistry.t.sol and for cross-checking the off-chain TypeScript manifest builder.",
+  "schema": "hoodpups.collection-manifest.fixture/1",
+  "generatedBy": "cast keccak / cast abi-encode (foundry 1.5.1-stable), values observed, never hand-derived",
+  "network": "none (fixture)",
+  "manifestVersion": "hoodpups-fixture-manifest-v1",
+  "manifestVersionHash": "0x109e217091c94727eb46ba3ac9f972d5b264c10f0281007892293c9ac2859a67",
+  "collectionId": "0x3343dd53bae221cbae39fcca5d3c2c62e89e268149b83a35ba197aefd15463e6",
+  "leafCount": 11,
+  "merkleRoot": "0xeb007e33528c7a949ec5241836ea3366a7841facef47a4006361ace8bc7770bd",
+  "manifestHash": "0xe1269b472f9f1bf139c5ca6539283c406dad1f123aaae12430d37666435e80ff",
+  "algorithm": {
+    "collectionId": "keccak256(\"BITCOIN_PUPPETS_MAINNET_V1\")",
+    "rootKey": "keccak256(abi.encode(collectionId, bytes32 inscriptionTxid, uint32 inscriptionIndex))",
+    "leaf": "keccak256(abi.encode(rootKey))  // double hashed: rootKey is already a keccak output",
+    "txidByteOrder": "big-endian / RPC display order, left-padded into bytes32",
+    "leafOrdering": "leaves sorted ascending as unsigned big-endian 256-bit integers; duplicates rejected",
+    "pairHash": "keccak256(abi.encodePacked(min(a,b), max(a,b)))  // OpenZeppelin MerkleProof._hashPair",
+    "oddNode": "an unpaired tail node is PROMOTED UNCHANGED to the next level; never self-paired, never zero-paired",
+    "singleLeafTree": "root == leaf, and the only valid proof is the empty array",
+    "manifestHash": "keccak256(abi.encode(collectionId, keccak256(bytes(manifestVersion)), sortedLeaves))",
+    "manifestHashRationale": "Hashing the canonical leaf SET rather than the raw file bytes makes the commitment invariant to JSON whitespace, key order and line endings, so an independent implementation can reproduce it without byte-for-byte agreeing on file formatting."
+  },
+  "reproduce": {
+    "command": "cd contracts && forge test --out out-collection --cache-path cache-collection --match-path 'test/unit/PuppetCollectionRegistry.t.sol' -vv",
+    "note": "test_DeterministicRootReproduction and test_ManifestHashReproduction rebuild merkleRoot and manifestHash from the entries below and assert equality with the pinned values."
+  },
+  "sortedLeaves": [
+    "0x43a71c33183e4d0c6f41817c693318dab458d67692f74e5833dbd845f81b81f3",
+    "0x58259c751decde1860b97d4de5903c7ae90a8ec978d85c6be1a765788c335f80",
+    "0x64821948d319c474c3f47dc5978e23db85bc66d1fa680b90081145f1a2783d86",
+    "0x703055c9d34b9a08109beef80407ed8dde26da63b33d9263e0087abc5d6eb1d3",
+    "0x7ffe23d3f3f0962200c130bf76d338d64938e12f4f7f84fb0f2488da4474cbee",
+    "0x98c8ba4dff08ae25818d583694c597ecc8acc2d6289629419da3823e852c5ca9",
+    "0xb5c80269ca1f282922bdb5e056f21e515c86590b0c32ae3b1815173f1bc2fd64",
+    "0xc3b175fdaad07a84e5adeb13a7226bda7494769e7b30b8967232230de0f91b46",
+    "0xd25288e241410d7b447a59159d4cf60cdb9aad69cdc20c751dfd08116e530fdd",
+    "0xf0adf820da0c54cbf413b59316b46ec293e3b4130933bf6f0c950baf21951af0",
+    "0xff6c7972ca56d9ed0c6c56681a48224bf8f68f1cc35ea411a14fb46238750860"
+  ],
+  "entries": [
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000001",
+      "inscriptionIndex": 0,
+      "rootKey": "0x87c3f70920e8882ba0697efd43a9015b28829c60962df15f8f57d33177f920e2",
+      "leaf": "0x43a71c33183e4d0c6f41817c693318dab458d67692f74e5833dbd845f81b81f3",
+      "proof": [
+        "0x58259c751decde1860b97d4de5903c7ae90a8ec978d85c6be1a765788c335f80",
+        "0xa301c9abd41b5735608b959529021a90438951bc2680a0512661967fa3c12e0e",
+        "0x34abe7adbb8128144e292a4123e6b91d1bce7d6935c57ef039074d551c45ee24",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000002",
+      "inscriptionIndex": 0,
+      "rootKey": "0x29beb79a9f34540e9417fb61179f09851476e8c0ca3239049d3eb74305f9d847",
+      "leaf": "0xc3b175fdaad07a84e5adeb13a7226bda7494769e7b30b8967232230de0f91b46",
+      "proof": [
+        "0xb5c80269ca1f282922bdb5e056f21e515c86590b0c32ae3b1815173f1bc2fd64",
+        "0xacdf1962820a7e66b7148c3b41c038cc30fa68d6dfbd2cc864c63ce65cd9829b",
+        "0xbdd1f4ea3a855372fdd8e9c436b41d9a7a4bc096a2effcc546f3f92f4674b14a",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000003",
+      "inscriptionIndex": 0,
+      "rootKey": "0xfa9cf70ac1b386015a3d792a3e2230564d48dd389f34b1035cfa70bb540c5652",
+      "leaf": "0x64821948d319c474c3f47dc5978e23db85bc66d1fa680b90081145f1a2783d86",
+      "note": "Shares its reveal txid with the next entry; only the index differs.",
+      "proof": [
+        "0x703055c9d34b9a08109beef80407ed8dde26da63b33d9263e0087abc5d6eb1d3",
+        "0x8ba3af78f72ae4e35681f2aa6f3b0ff5d35d09beb694670145673246541ff6cb",
+        "0x34abe7adbb8128144e292a4123e6b91d1bce7d6935c57ef039074d551c45ee24",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000003",
+      "inscriptionIndex": 1,
+      "rootKey": "0x3a8bbe9a71ba22bf57df5180090b50618fd524c50a982fa8c9e8e5f185f7df42",
+      "leaf": "0xb5c80269ca1f282922bdb5e056f21e515c86590b0c32ae3b1815173f1bc2fd64",
+      "note": "Same reveal txid as the previous entry, different inscription index.",
+      "proof": [
+        "0xc3b175fdaad07a84e5adeb13a7226bda7494769e7b30b8967232230de0f91b46",
+        "0xacdf1962820a7e66b7148c3b41c038cc30fa68d6dfbd2cc864c63ce65cd9829b",
+        "0xbdd1f4ea3a855372fdd8e9c436b41d9a7a4bc096a2effcc546f3f92f4674b14a",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000004",
+      "inscriptionIndex": 0,
+      "rootKey": "0xa13ccb34b1a822b6d08a5849c59d48626aeeed6c862320f1b17fa54e39e685e3",
+      "leaf": "0xff6c7972ca56d9ed0c6c56681a48224bf8f68f1cc35ea411a14fb46238750860",
+      "proof": [
+        "0xbcf006ad3fceda05ef61136e1049074d9fa15a8022d64474475ca64841b30e17",
+        "0x8d72c576224aaf46d62a1c1d3dfb407ee396440336fd0e295f8bec3f3aef69df"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000005",
+      "inscriptionIndex": 2,
+      "rootKey": "0xb6f697cbd784f83128b37a20a5220e56da048589992b2b1e1450b6c740f89e42",
+      "leaf": "0x98c8ba4dff08ae25818d583694c597ecc8acc2d6289629419da3823e852c5ca9",
+      "proof": [
+        "0x7ffe23d3f3f0962200c130bf76d338d64938e12f4f7f84fb0f2488da4474cbee",
+        "0x67d34acefb125689ceee388376f51d89bcf0dbba4089ee14cca56882d8ba2116",
+        "0xbdd1f4ea3a855372fdd8e9c436b41d9a7a4bc096a2effcc546f3f92f4674b14a",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000006",
+      "inscriptionIndex": 0,
+      "rootKey": "0x354877c85832f19ff0835ded196085a938bf4a54b900cefd5e81105e87fd3c42",
+      "leaf": "0x58259c751decde1860b97d4de5903c7ae90a8ec978d85c6be1a765788c335f80",
+      "proof": [
+        "0x43a71c33183e4d0c6f41817c693318dab458d67692f74e5833dbd845f81b81f3",
+        "0xa301c9abd41b5735608b959529021a90438951bc2680a0512661967fa3c12e0e",
+        "0x34abe7adbb8128144e292a4123e6b91d1bce7d6935c57ef039074d551c45ee24",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000007",
+      "inscriptionIndex": 0,
+      "rootKey": "0xcded9d727893b79a9f8fe1ae4073f48e81ec009d7a573ee25707ac90d213353c",
+      "leaf": "0x7ffe23d3f3f0962200c130bf76d338d64938e12f4f7f84fb0f2488da4474cbee",
+      "proof": [
+        "0x98c8ba4dff08ae25818d583694c597ecc8acc2d6289629419da3823e852c5ca9",
+        "0x67d34acefb125689ceee388376f51d89bcf0dbba4089ee14cca56882d8ba2116",
+        "0xbdd1f4ea3a855372fdd8e9c436b41d9a7a4bc096a2effcc546f3f92f4674b14a",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000008",
+      "inscriptionIndex": 3,
+      "rootKey": "0x7d35cd481d5e475b632d3965283c56409d81948bca2ed7fdce2483893bee832b",
+      "leaf": "0xd25288e241410d7b447a59159d4cf60cdb9aad69cdc20c751dfd08116e530fdd",
+      "proof": [
+        "0xf0adf820da0c54cbf413b59316b46ec293e3b4130933bf6f0c950baf21951af0",
+        "0xff6c7972ca56d9ed0c6c56681a48224bf8f68f1cc35ea411a14fb46238750860",
+        "0x8d72c576224aaf46d62a1c1d3dfb407ee396440336fd0e295f8bec3f3aef69df"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000009",
+      "inscriptionIndex": 0,
+      "rootKey": "0xfe9f9fab0ef0777b704f8fdf0783d3bdc5b766523622d275dc6667aabdb4e966",
+      "leaf": "0xf0adf820da0c54cbf413b59316b46ec293e3b4130933bf6f0c950baf21951af0",
+      "proof": [
+        "0xd25288e241410d7b447a59159d4cf60cdb9aad69cdc20c751dfd08116e530fdd",
+        "0xff6c7972ca56d9ed0c6c56681a48224bf8f68f1cc35ea411a14fb46238750860",
+        "0x8d72c576224aaf46d62a1c1d3dfb407ee396440336fd0e295f8bec3f3aef69df"
+      ]
+    },
+    {
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c0000000000000000000000000000000a",
+      "inscriptionIndex": 0,
+      "rootKey": "0x3de817b5f1b9d6e20774f576523488c8b870b26c2e79bbb9d51d3d694b506f3b",
+      "leaf": "0x703055c9d34b9a08109beef80407ed8dde26da63b33d9263e0087abc5d6eb1d3",
+      "proof": [
+        "0x64821948d319c474c3f47dc5978e23db85bc66d1fa680b90081145f1a2783d86",
+        "0x8ba3af78f72ae4e35681f2aa6f3b0ff5d35d09beb694670145673246541ff6cb",
+        "0x34abe7adbb8128144e292a4123e6b91d1bce7d6935c57ef039074d551c45ee24",
+        "0xae86ddf4c794d70881780e69176c9a91b883992d7dc49facbe47e98f11cc70b0"
+      ]
+    }
+  ],
+  "singleLeafFixture": {
+    "_note": "Degenerate one-entry manifest. Proves root == leaf and that the empty proof verifies.",
+    "inscriptionTxid": "0x464958545552452d4e4f542d5245414c000000000000000000000000000000e1",
+    "inscriptionIndex": 0,
+    "rootKey": "0xa7e7067aa2fc99d64cd987d3daa80de22ac8d05c2c575b2c01ff65adb442b070",
+    "leaf": "0xf74668e885623a91d74aa71cf1a6b6291e1bf154de8ee8ff54248b971751009b",
+    "merkleRoot": "0xf74668e885623a91d74aa71cf1a6b6291e1bf154de8ee8ff54248b971751009b",
+    "proof": [],
+    "manifestHash": "0x5104377bbc0e3c0b6fa1e92ad2f24819daf13c6ef62d11f16785b26e52e8a6ad",
+    "manifestVersion": "hoodpups-fixture-single-leaf-v1"
+  },
+  "nonMember": {
+    "_note": "Deliberately absent from the manifest above. No proof exists for it.",
+    "inscriptionTxid": "0x464958545552452d4e4f542d5245414c000000000000000000000000000000ff",
+    "inscriptionIndex": 0,
+    "rootKey": "0x65ec102372bc07e48472c09c9aff7964ea1bd7ac85d36713cd35df34ca060c8f",
+    "leaf": "0xbe6e4569bd26685ceb8add9cd47f1d59e8c4548a7d7d1788e94c466a9bbc017b"
+  },
+  "negativeCases": {
+    "mutatedTxid": {
+      "_note": "entries[0] with the final txid byte flipped from 0x01 to 0x11. Must not verify under entries[0].proof.",
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000011",
+      "inscriptionIndex": 0
+    },
+    "mutatedIndexSameTxid": {
+      "_note": "entries[0]'s txid with inscriptionIndex 1 instead of 0. Same reveal transaction, different inscription; must not verify.",
+      "inscriptionTxid": "0x464958545552452d4e4f542d5245414c00000000000000000000000000000001",
+      "inscriptionIndex": 1
+    },
+    "memberWithAnotherMembersProof": {
+      "_note": "entries[3] is a real member, but presented with entries[2].proof it must still fail: a proof is bound to one leaf.",
+      "entryIndex": 3,
+      "proofFromEntryIndex": 2
+    }
+  }
+}

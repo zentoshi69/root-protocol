@@ -4,13 +4,13 @@ pragma solidity 0.8.28;
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {Test} from "forge-std/Test.sol";
 
+import {IBitcoinOwnershipOracle} from "../../src/interfaces/IBitcoinOwnershipOracle.sol";
+import {IHoodPups} from "../../src/interfaces/IHoodPups.sol";
+import {IPuppetCollectionRegistry} from "../../src/interfaces/IPuppetCollectionRegistry.sol";
 import {PuppetHashing} from "../../src/types/PuppetHashing.sol";
 import {PuppetTypes} from "../../src/types/PuppetTypes.sol";
 import {AttestorSet} from "../helpers/AttestorSet.sol";
 import {MerkleFixture} from "../helpers/MerkleFixture.sol";
-import {IBitcoinOwnershipOracle} from "../../src/interfaces/IBitcoinOwnershipOracle.sol";
-import {IHoodPups} from "../../src/interfaces/IHoodPups.sol";
-import {IPuppetCollectionRegistry} from "../../src/interfaces/IPuppetCollectionRegistry.sol";
 import {ConsumerHarness} from "../mocks/ConsumerHarness.sol";
 import {MockAttestorRegistry} from "../mocks/MockAttestorRegistry.sol";
 import {MockCollectionRegistry} from "../mocks/MockCollectionRegistry.sol";
@@ -18,9 +18,7 @@ import {MockERC1271Wallet} from "../mocks/MockERC1271Wallet.sol";
 import {MockHoodPups} from "../mocks/MockHoodPups.sol";
 import {MockOwnershipOracle} from "../mocks/MockOwnershipOracle.sol";
 import {MockRootOwnershipRegistry} from "../mocks/MockRootOwnershipRegistry.sol";
-import {
-    GasGuzzlingReceiver, MockERC721Receiver, ReenteringReceiver, RejectingReceiver
-} from "../mocks/Receivers.sol";
+import {GasGuzzlingReceiver, MockERC721Receiver, ReenteringReceiver, RejectingReceiver} from "../mocks/Receivers.sol";
 
 /// @title PuppetHashingFixtures
 /// @notice Shared fixture inputs for the golden-vector suite.
@@ -1096,8 +1094,7 @@ contract SharedMockSmokeTest is PuppetHashingFixtures {
         assertEq(guzzler.totalReceived(), 1 wei, "and books the value");
 
         EthSink sink = new EthSink();
-        ReenteringReceiver reenterer =
-            new ReenteringReceiver(address(sink), abi.encodeCall(EthSink.ping, ()), 1);
+        ReenteringReceiver reenterer = new ReenteringReceiver(address(sink), abi.encodeCall(EthSink.ping, ()), 1);
         vm.deal(address(this), 1 ether);
         (bool sent,) = address(reenterer).call{value: 1 wei}("");
         assertTrue(sent, "receive succeeded");
