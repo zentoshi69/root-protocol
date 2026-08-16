@@ -8,6 +8,19 @@ import {PuppetHashing} from "../../src/types/PuppetHashing.sol";
 import {PuppetTypes} from "../../src/types/PuppetTypes.sol";
 import {AttestorSet} from "../helpers/AttestorSet.sol";
 import {MerkleFixture} from "../helpers/MerkleFixture.sol";
+import {IBitcoinOwnershipOracle} from "../../src/interfaces/IBitcoinOwnershipOracle.sol";
+import {IHoodPups} from "../../src/interfaces/IHoodPups.sol";
+import {IPuppetCollectionRegistry} from "../../src/interfaces/IPuppetCollectionRegistry.sol";
+import {ConsumerHarness} from "../mocks/ConsumerHarness.sol";
+import {MockAttestorRegistry} from "../mocks/MockAttestorRegistry.sol";
+import {MockCollectionRegistry} from "../mocks/MockCollectionRegistry.sol";
+import {MockERC1271Wallet} from "../mocks/MockERC1271Wallet.sol";
+import {MockHoodPups} from "../mocks/MockHoodPups.sol";
+import {MockOwnershipOracle} from "../mocks/MockOwnershipOracle.sol";
+import {MockRootOwnershipRegistry} from "../mocks/MockRootOwnershipRegistry.sol";
+import {
+    GasGuzzlingReceiver, MockERC721Receiver, ReenteringReceiver, RejectingReceiver
+} from "../mocks/Receivers.sol";
 
 /// @title PuppetHashingFixtures
 /// @notice Shared fixture inputs for the golden-vector suite.
@@ -895,4 +908,253 @@ contract AttestorSetTest is Test {
         uint8 v = uint8((uint256(vs) >> 255) + 27);
         return ecrecover(digest, v, r, s);
     }
+}
+
+/// @title SharedMockSmokeTest
+/// @notice Deployment and behaviour smoke test for every shared mock.
+/// @dev Also here for file-ownership reasons. Nine downstream suites import these mocks; a mock
+///      whose constructor reverts, or whose relaxation quietly broke a rule the real contract
+///      enforces, would surface as nine unrelated failures. This contract deploys each one and
+///      pins the handful of behaviours the mocks promise to keep honest.
+contract SharedMockSmokeTest is PuppetHashingFixtures {
+    AttestorSet internal attestorSet;
+    MockAttestorRegistry internal attestorRegistry;
+    MockCollectionRegistry internal collectionRegistry;
+    MockOwnershipOracle internal oracle;
+    MockRootOwnershipRegistry internal rootRegistry;
+    MockHoodPups internal hoodPups;
+    ConsumerHarness internal harness;
+
+    PuppetTypes.RootId internal rootA;
+
+    function setUp() public {
+        attestorSet = new AttestorSet(5, keccak256("HOODPUPS_MOCK_SMOKE_SEED"));
+        attestorRegistry = new MockAttestorRegistry(attestorSet.addresses(), 3, 1, 1);
+        collectionRegistry = new MockCollectionRegistry(bytes32(0), false);
+        oracle = new MockOwnershipOracle();
+        rootRegistry = new MockRootOwnershipRegistry();
+        hoodPups = new MockHoodPups();
+        harness = new ConsumerHarness(oracle);
+
+        rootA = PuppetTypes.RootId({inscriptionTxid: TXID_A, inscriptionIndex: INDEX_A});
+    }
+
+    /// @notice The attestor registry reports a coherent 3-of-5 quorum context.
+    function test_AttestorRegistryQuorumContext() public view {
+        (uint8 threshold, uint64 epoch, uint32 policy) = attestorRegistry.quorumContext();
+        assertEq(threshold, 3, "threshold");
+        assertEq(epoch, 1, "epoch");
+        assertEq(policy, 1, "policy");
+        assertEq(attestorRegistry.attestorCount(), 5, "five attestors");
+        assertTrue(attestorRegistry.isAttestor(attestorSet.addressAt(0)), "member");
+        assertFalse(attestorRegistry.isAttestor(attestorSet.outsider()), "outsider excluded");
+    }
+
+    /// @notice Membership can be mutated WITHOUT bumping the epoch.
+    /// @dev The real registry always bumps. The mock deliberately decouples them so a suite can
+    ///      construct the "removed attestor, unchanged epoch" scenario the real design forbids.
+    function test_AttestorRegistryDecouplesMembershipFromEpoch() public {
+        uint64 before = attestorRegistry.attestorEpoch();
+        attestorRegistry.removeAttestor(attestorSet.addressAt(0));
+        assertEq(attestorRegistry.attestorCount(), 4, "removed");
+        assertEq(attestorRegistry.attestorEpoch(), before, "epoch deliberately unchanged");
+        assertEq(attestorRegistry.bumpEpoch(), before + 1, "explicit bump");
+    }
+
+    /// @notice The collection registry verifies real proofs, and `allowAll` short-circuits them.
+    function test_CollectionRegistryMembership() public {
+        PuppetTypes.RootId[] memory roots = new PuppetTypes.RootId[](3);
+        roots[0] = rootA;
+        roots[1] = PuppetTypes.RootId({inscriptionTxid: TXID_A, inscriptionIndex: INDEX_B});
+        roots[2] = PuppetTypes.RootId({inscriptionTxid: TXID_C, inscriptionIndex: INDEX_C});
+        collectionRegistry.setMerkleRoot(MerkleFixture.buildFromRoots(roots));
+
+        bytes32[] memory proof = MerkleFixture.proofFromRoots(roots, 0);
+        assertTrue(collectionRegistry.isMember(rootA, proof), "valid proof accepted");
+        assertEq(collectionRegistry.requireMember(rootA, proof), PuppetHashing.rootKey(TXID_A, INDEX_A), "key");
+
+        bytes32[] memory empty = new bytes32[](0);
+        assertFalse(collectionRegistry.isMember(rootA, empty), "empty proof rejected");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPuppetCollectionRegistry.NotCollectionMember.selector, PuppetHashing.rootKey(TXID_A, INDEX_A)
+            )
+        );
+        collectionRegistry.requireMember(rootA, empty);
+
+        collectionRegistry.setAllowAll(true);
+        assertTrue(collectionRegistry.isMember(rootA, empty), "allowAll short-circuits");
+    }
+
+    /// @notice The oracle mock still enforces one-time digest consumption.
+    function test_OracleEnforcesOneTimeConsumption() public {
+        PuppetTypes.OwnershipAttestation memory a = ownershipFixture();
+        bytes[] memory sigs = attestorSet.sign(oracle.hashOwnershipAttestation(a), 3);
+        bytes32[] memory proof = new bytes32[](0);
+
+        (bytes32 digest,) = oracle.consumeOwnership(a, sigs, proof);
+        assertTrue(oracle.isDigestConsumed(digest), "consumed");
+        assertEq(oracle.ownershipConsumeCount(), 1, "recorded");
+        assertEq(oracle.lastOwnership().consumer, address(this), "consumer recorded");
+
+        vm.expectRevert(abi.encodeWithSelector(IBitcoinOwnershipOracle.DigestAlreadyConsumed.selector, digest));
+        oracle.consumeOwnership(a, sigs, proof);
+    }
+
+    /// @notice One Bitcoin output can settle at most one offer, even in the mock.
+    function test_OracleEnforcesPaymentOutputUniqueness() public {
+        PuppetTypes.BitcoinPaymentAttestation memory p = paymentFixture();
+        bytes[] memory sigs = attestorSet.sign(oracle.hashBitcoinPaymentAttestation(p), 3);
+
+        (, bytes32 key) = oracle.consumeBitcoinPayment(p, sigs);
+        assertTrue(oracle.isPaymentOutputConsumed(p.bitcoinTxid, p.outputIndex), "output burned");
+
+        // A different attestation over the SAME Bitcoin output must still be rejected.
+        p.authorizationId = keccak256("HOODPUPS_FIXTURE_AUTHORIZATION_4");
+        bytes[] memory sigs2 = attestorSet.sign(oracle.hashBitcoinPaymentAttestation(p), 3);
+        vm.expectRevert(abi.encodeWithSelector(IBitcoinOwnershipOracle.PaymentOutputAlreadyConsumed.selector, key));
+        oracle.consumeBitcoinPayment(p, sigs2);
+    }
+
+    /// @notice The forced-failure switch is sticky and clears only on an explicit reset.
+    function test_OracleForcedRevertSwitch() public {
+        PuppetTypes.OwnershipAttestation memory a = ownershipFixture();
+        bytes[] memory sigs = attestorSet.sign(oracle.hashOwnershipAttestation(a), 3);
+        bytes32[] memory proof = new bytes32[](0);
+
+        oracle.setNextCallReverts(true);
+        vm.expectRevert(MockOwnershipOracle.MockOracleForcedRevert.selector);
+        oracle.consumeOwnership(a, sigs, proof);
+
+        assertTrue(oracle.nextCallReverts(), "still armed after the revert rolled back");
+        oracle.setNextCallReverts(false);
+        oracle.consumeOwnership(a, sigs, proof);
+        assertEq(oracle.ownershipConsumeCount(), 1, "happy path restored");
+    }
+
+    /// @notice `ConsumerHarness` reaches the oracle as a contract caller, not an EOA.
+    function test_ConsumerHarnessForwardsAsAContract() public {
+        PuppetTypes.OwnershipAttestation memory a = ownershipFixture();
+        bytes[] memory sigs = attestorSet.sign(oracle.hashOwnershipAttestation(a), 3);
+        bytes32[] memory proof = new bytes32[](0);
+
+        (bytes32 digest,) = harness.consumeOwnership(a, sigs, proof);
+        assertEq(oracle.lastOwnership().consumer, address(harness), "msg.sender is the harness");
+        assertEq(harness.lastDigest(), digest, "harness recorded the digest");
+        assertEq(harness.forwardCount(), 1, "forwarded once");
+    }
+
+    /// @notice The root registry can be driven into active and inactive states directly.
+    function test_RootRegistrySettableState() public {
+        bytes32 key = PuppetHashing.rootKey(TXID_A, INDEX_A);
+        rootRegistry.setRoot(key, RECIPIENT, true, 3);
+
+        (address beneficiary, bool active, uint64 epoch) = rootRegistry.currentBeneficiary(key);
+        assertEq(beneficiary, RECIPIENT, "beneficiary");
+        assertTrue(active, "active");
+        assertEq(epoch, 3, "epoch");
+
+        rootRegistry.setActive(key, false);
+        assertFalse(rootRegistry.isActive(key), "deactivated");
+    }
+
+    /// @notice The HoodPups mock keeps the protocol's central rule: one Root, one HoodPup, ever.
+    function test_HoodPupsEnforcesOneMintPerRoot() public {
+        uint256 tokenId = hoodPups.mintRooted(RECIPIENT, rootA);
+        bytes32 key = PuppetHashing.rootKey(TXID_A, INDEX_A);
+
+        assertEq(tokenId, 1, "ids start at 1");
+        assertTrue(hoodPups.rootMinted(key), "root recorded");
+        assertEq(hoodPups.tokenOfRoot(key), tokenId, "token lookup");
+        assertEq(hoodPups.rootKeyOf(tokenId), key, "reverse lookup");
+
+        vm.expectRevert(abi.encodeWithSelector(IHoodPups.RootAlreadyMinted.selector, key, tokenId));
+        hoodPups.mintRooted(BUYER, rootA);
+    }
+
+    /// @notice Pausing blocks new mints and never touches an existing read path.
+    function test_HoodPupsPauseBlocksOnlyMinting() public {
+        uint256 tokenId = hoodPups.mintRooted(RECIPIENT, rootA);
+        hoodPups.setMintingPaused(true);
+
+        PuppetTypes.RootId memory other = PuppetTypes.RootId({inscriptionTxid: TXID_C, inscriptionIndex: INDEX_C});
+        vm.expectRevert(IHoodPups.MintingPaused.selector);
+        hoodPups.mintRooted(RECIPIENT, other);
+
+        assertEq(hoodPups.ownerOf(tokenId), RECIPIENT, "reads unaffected by pause");
+    }
+
+    /// @notice A rejecting receiver really does reject, and a reentrancy probe really does call back.
+    function test_ReceiversBehaveHostilely() public {
+        RejectingReceiver rejecting = new RejectingReceiver();
+        (bool ok,) = address(rejecting).call{value: 1 wei}("");
+        assertFalse(ok, "rejecting receiver must reject");
+
+        GasGuzzlingReceiver guzzler = new GasGuzzlingReceiver(20);
+        (bool guzzled,) = address(guzzler).call{value: 1 wei}("");
+        assertTrue(guzzled, "guzzler accepts with full gas");
+        assertEq(guzzler.totalReceived(), 1 wei, "and books the value");
+
+        EthSink sink = new EthSink();
+        ReenteringReceiver reenterer =
+            new ReenteringReceiver(address(sink), abi.encodeCall(EthSink.ping, ()), 1);
+        vm.deal(address(this), 1 ether);
+        (bool sent,) = address(reenterer).call{value: 1 wei}("");
+        assertTrue(sent, "receive succeeded");
+        assertEq(reenterer.attempts(), 1, "callback attempted");
+        assertEq(reenterer.succeeded(), 1, "callback reached the target");
+        assertEq(sink.pings(), 1, "target observed the reentrant call");
+    }
+
+    /// @notice The ERC-721 receiver returns the magic selector only in its good mode.
+    function test_ERC721ReceiverBehaviours() public {
+        MockERC721Receiver good = new MockERC721Receiver(MockERC721Receiver.Behaviour.ACCEPT);
+        assertEq(
+            good.onERC721Received(address(this), address(0), 1, ""),
+            MockERC721Receiver.onERC721Received.selector,
+            "good receiver"
+        );
+        assertEq(good.receivedCount(), 1, "recorded");
+
+        MockERC721Receiver wrong = new MockERC721Receiver(MockERC721Receiver.Behaviour.WRONG_SELECTOR);
+        assertEq(wrong.onERC721Received(address(this), address(0), 1, ""), bytes4(0xdeadbeef), "wrong selector");
+
+        MockERC721Receiver reverting = new MockERC721Receiver(MockERC721Receiver.Behaviour.REVERT_ON_RECEIVE);
+        vm.expectRevert(MockERC721Receiver.ReceiverRejected.selector);
+        reverting.onERC721Received(address(this), address(0), 1, "");
+    }
+
+    /// @notice The ERC-1271 wallet accepts its owner's signature and nothing else.
+    function test_ERC1271WalletValidation() public {
+        uint256 ownerKey = attestorSet.keyAt(0);
+        MockERC1271Wallet wallet = new MockERC1271Wallet(vm.addr(ownerKey));
+
+        bytes32 hash = keccak256("HOODPUPS_MOCK_1271_DIGEST");
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerKey, hash);
+        bytes memory ownerSig = abi.encodePacked(r, s, v);
+        assertEq(wallet.isValidSignature(hash, ownerSig), bytes4(0x1626ba7e), "owner signature accepted");
+
+        bytes memory outsiderSig = attestorSet.signAsOutsider(hash);
+        assertEq(wallet.isValidSignature(hash, outsiderSig), bytes4(0xffffffff), "outsider signature rejected");
+
+        wallet.setAlwaysReject(true);
+        assertEq(wallet.isValidSignature(hash, ownerSig), bytes4(0xffffffff), "alwaysReject wins");
+
+        wallet.setAlwaysReject(false);
+        wallet.setAlwaysAccept(true);
+        assertEq(wallet.isValidSignature(hash, hex"00"), bytes4(0x1626ba7e), "alwaysAccept rubber-stamps garbage");
+    }
+}
+
+/// @notice Trivial reentrancy target used only to prove `ReenteringReceiver` actually calls back.
+contract EthSink {
+    /// @notice Number of times `ping` was called.
+    uint256 public pings;
+
+    /// @notice Records a call.
+    function ping() external {
+        pings++;
+    }
+
+    receive() external payable {}
 }
