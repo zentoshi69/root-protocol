@@ -1,0 +1,210 @@
+{
+  "schema": "hoodpups.eip712-vectors.v1",
+  "generatedBy": "contracts/test/unit/BitcoinOwnershipOracle.t.sol",
+  "solidityContract": "contracts/src/BitcoinOwnershipOracle.sol",
+  "companionFile": "data/test-fixtures/hashing-vectors.json",
+  "notes": [
+    "This file is the cross-language EIP-712 contract for BitcoinOwnershipOracle. The five attestor",
+    "services and packages/protocol-sdk MUST reproduce every value here byte for byte. An",
+    "implementation that builds a different digest does not produce an invalid signature — it",
+    "produces a signature for a DIFFERENT message, which the oracle simply will not recognise. That",
+    "failure is silent from the signer's point of view, which is exactly why it is pinned here.",
+    "",
+    "EVERY EXPECTED VALUE WAS OBSERVED BY RUNNING SOLIDITY, NEVER HAND-DERIVED. The domain",
+    "separator and all four digests were produced by the real BitcoinOwnershipOracle runtime",
+    "bytecode executing at the pinned chainId and verifyingContract below, and are re-derived on",
+    "every test run (see test_PinnedDomainSeparatorMatchesTheContract and",
+    "test_PinnedDigestsMatchTheContract).",
+    "",
+    "THE STRUCT HASHES COMPOSE WITH hashing-vectors.json. Three of the four message instances reuse",
+    "that file's hashStruct fixtures field for field, so the two files chain together:",
+    "  digest == keccak256(0x1901 || domainSeparator || structHash)",
+    "A drift in either file therefore fails both suites rather than neither.",
+    "",
+    "THE TXIDS ARE SYNTHETIC. They are structurally valid 32-byte values chosen for reproducibility.",
+    "None is a real Bitcoin transaction and none identifies a real Bitcoin Puppets inscription.",
+    "Byte order: every txid is big-endian / RPC display order, the order a block explorer shows.",
+    "uint256 and uint64 values are strings because they exceed the safe integer range of JSON.",
+    "",
+    "TRUST BOUNDARY: none of these hashes verifies a Bitcoin fact, and the oracle that consumes them",
+    "cannot verify one either. Bitcoin facts are asserted by a 3-of-5 quorum of independent attestor",
+    "operators. This is an attested settlement system, not a trustless bridge."
+  ],
+
+  "_HOW_TO_MAKE_CI_DIFF_THIS_FILE": {
+    "problem": [
+      "The Foundry project root is contracts/, and contracts/foundry.toml grants read access to",
+      "'./' only, so vm.readFile(\"../data/test-fixtures/eip712-vectors.json\") is denied and the",
+      "Solidity suite cannot parse this file directly. The authoritative values therefore live as",
+      "constants in contracts/test/unit/BitcoinOwnershipOracle.t.sol (PINNED_DOMAIN_SEPARATOR,",
+      "PINNED_OWNERSHIP_DIGEST, PINNED_OWNERSHIP_SELF_CAST_DIGEST, PINNED_PAYMENT_DIGEST,",
+      "PINNED_ROOT_SPEND_DIGEST) and were copied here verbatim."
+    ],
+    "fix": [
+      "Add the parent directory to fs_permissions in contracts/foundry.toml:",
+      "  fs_permissions = [{ access = \"read\", path = \"./\" }, { access = \"read\", path = \"../data\" }]",
+      "then have the suite assert the parsed file against those same constants. Until that lands,",
+      "a change to this file that is not mirrored into the Solidity constants will NOT be caught by",
+      "Foundry. The TypeScript SDK test that consumes this file should assert against it directly."
+    ]
+  },
+
+  "domain": {
+    "name": "HoodPups Bitcoin Oracle",
+    "version": "1",
+    "chainId": 31337,
+    "verifyingContract": "0x0000000000000000000000000000000000c0ffee",
+    "verifyingContractNote": "A PLACEHOLDER, not a deployment. The vector pins the DOMAIN so an off-chain implementation can be validated before any address exists. At runtime the domain uses the live chainId and the real oracle address, so this separator must never be hard-coded into a service.",
+    "eip712DomainTypeString": "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)",
+    "eip712DomainTypeHash": "0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f",
+    "nameHash": "0xa12925433689b1995673e24e497b6c81b2103f06dd9c34aeaec4827273dfbdda",
+    "versionHash": "0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6",
+    "domainSeparator": "0xb576263998b174b7c6045062e95c46b6b5e9506ac48adfc71d2d2ab1330173c0",
+    "derivation": "keccak256(abi.encode(eip712DomainTypeHash, nameHash, versionHash, chainId, verifyingContract))"
+  },
+
+  "digestDerivation": "keccak256(bytes.concat(0x19, 0x01, domainSeparator, structHash))",
+
+  "types": {
+    "OwnershipAttestation": {
+      "encodeType": "OwnershipAttestation(uint8 purpose,bytes32 rootTxid,uint32 rootIndex,bytes32 contextId,bytes32 offerTermsHash,bytes32 currentOutpointHash,bytes32 ownerScriptHash,bytes32 bip322ProofHash,address buyer,address recipient,uint8 payoutMode,address evmPayout,bytes32 btcPayoutScriptHash,uint64 sellerSats,uint256 grossWei,uint256 sellerWei,bytes32 bitcoinBlockHash,uint64 bitcoinHeight,bytes32 authorizationId,uint64 deadline,uint64 attestorEpoch,uint32 policyVersion)",
+      "typeHash": "0x037dba76c7e82198c99e9916727cd68ba1e6db8e050f5ea9bef8f91586905f9e",
+      "encodeDataWords": 23,
+      "note": "22 fields, all value types, one 32-byte word each, plus the typehash. Field order is frozen by PuppetTypes.sol and changing it is a new deployment, never an in-place edit."
+    },
+    "BitcoinPaymentAttestation": {
+      "encodeType": "BitcoinPaymentAttestation(bytes32 contextId,bytes32 ownershipDigest,address solver,bytes32 bitcoinTxid,uint32 outputIndex,bytes32 recipientScriptHash,uint64 amountSats,bytes32 bitcoinBlockHash,uint64 bitcoinHeight,bytes32 authorizationId,uint64 deadline,uint64 attestorEpoch,uint32 policyVersion)",
+      "typeHash": "0x8c5c41a9463a7a99719b7b4dfd4b32ca57bafc2358fe8e9a21f18812be37e5d3",
+      "encodeDataWords": 14
+    },
+    "RootSpendAttestation": {
+      "encodeType": "RootSpendAttestation(bytes32 rootTxid,uint32 rootIndex,bytes32 previousOutpointHash,bytes32 spendingTxid,bytes32 bitcoinBlockHash,uint64 bitcoinHeight,bytes32 authorizationId,uint64 deadline,uint64 attestorEpoch,uint32 policyVersion)",
+      "typeHash": "0xc34007d672b0d728da6a12c630547c9fd1d8af74fb088f4f3a09b519adf12ca5",
+      "encodeDataWords": 11
+    }
+  },
+
+  "vectors": {
+    "ownershipAttestation": {
+      "primaryType": "OwnershipAttestation",
+      "message": {
+        "purpose": 0,
+        "rootTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "rootIndex": 0,
+        "contextId": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4",
+        "offerTermsHash": "0x8d980d7bc135673fcf6b5f8de2b3029feac6fe51448352999f3d58cc680bdfb8",
+        "currentOutpointHash": "0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526",
+        "ownerScriptHash": "0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d",
+        "bip322ProofHash": "0x05164637df72d81c3d23f034ced84407afdf70f899d7e5a5243bc2d68e554756",
+        "buyer": "0x2222222222222222222222222222222222222222",
+        "recipient": "0x3333333333333333333333333333333333333333",
+        "payoutMode": 1,
+        "evmPayout": "0x4444444444444444444444444444444444444444",
+        "btcPayoutScriptHash": "0xfe4da2fb7b6e4bd4d89d528e680844b60ffba5f41cbfbd2401e7d52c7a4ea16e",
+        "sellerSats": "250000",
+        "grossWei": "1000000000000000000",
+        "sellerWei": "500000000000000000",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880000",
+        "authorizationId": "0xee7620f74b8888194261a6d381ca219b11f9f3973776e0500e0030d3518288f1",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "structHash": "0xb02af5de3a4d7b7536a5fbe847a692c8966ef3560d5c9cd9cb7646c4f219720b",
+      "digest": "0x4b9ec9611a2dbcf6834ff97f8a9a8f509862877fc5a95669a873c3a1624ddc7d",
+      "note": "IDENTICAL FIELDS to hashStruct/OwnershipAttestation in hashing-vectors.json, so the two files chain. This is a HASHING vector, not a semantically valid attestation: purpose 0 (PAID_EVM_MINT) with payoutMode 1 (EVM) would be rejected by BitcoinOwnershipOracle's payout-shape check because btcPayoutScriptHash and sellerSats are non-zero. Every field is deliberately non-zero — zero fields hide field-ordering bugs. Use ownershipAttestationSelfCast for a vector that both hashes correctly AND passes verifyOwnership."
+    },
+    "ownershipAttestationSelfCast": {
+      "primaryType": "OwnershipAttestation",
+      "message": {
+        "purpose": 2,
+        "rootTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "rootIndex": 0,
+        "contextId": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4",
+        "offerTermsHash": "0x8d980d7bc135673fcf6b5f8de2b3029feac6fe51448352999f3d58cc680bdfb8",
+        "currentOutpointHash": "0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526",
+        "ownerScriptHash": "0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d",
+        "bip322ProofHash": "0x05164637df72d81c3d23f034ced84407afdf70f899d7e5a5243bc2d68e554756",
+        "buyer": "0x0000000000000000000000000000000000000000",
+        "recipient": "0x3333333333333333333333333333333333333333",
+        "payoutMode": 0,
+        "evmPayout": "0x0000000000000000000000000000000000000000",
+        "btcPayoutScriptHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "sellerSats": "0",
+        "grossWei": "0",
+        "sellerWei": "0",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880000",
+        "authorizationId": "0xee7620f74b8888194261a6d381ca219b11f9f3973776e0500e0030d3518288f1",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "structHash": "0x9cc04bf0738b648cea39fe05b4c0d2f4f919f49da94571b2e8043a8e0a3bc552",
+      "digest": "0x1fbedfa6877e82e605f8a64efca78b5aee879885280a1c3cebc8cbfd65d61238",
+      "note": "purpose 2 is AuthorizationPurpose.SELF_CAST; payoutMode 0 is PayoutMode.NONE. This is the SEMANTICALLY VALID vector: a self-cast moves no money, so every payout and monetary field is zero, which is exactly what BitcoinOwnershipOracle enforces. The same zero-payout shape is required for ROOT_BIND (purpose 3) and ROOT_INVALIDATE (purpose 4)."
+    },
+    "bitcoinPaymentAttestation": {
+      "primaryType": "BitcoinPaymentAttestation",
+      "message": {
+        "contextId": "0x59b74fc7f15158d3fe2af015aa1cd19e16d6d44bc195d2590e45200ef7af39e4",
+        "ownershipDigest": "0x840ab6e778db7e0e0bd0dfead427aedd32ee8ca505aef41caf4ed3fa8adc28cf",
+        "solver": "0x5555555555555555555555555555555555555555",
+        "bitcoinTxid": "0x3e5a7c9e0b2d4f6183a5c7e9012b3d5f7a9c1e3f5b7d90124a6c8e0b2d4f6183",
+        "outputIndex": 1,
+        "recipientScriptHash": "0xa8dff22a679ccee9973bbcce0bf96a43738f5034bfcf3d27a8f75ee450fe4c8d",
+        "amountSats": "250000",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880001",
+        "authorizationId": "0xe542a5fd8cfa920156ec941384fbf34106e12827c0d6a84c204467640b5e3b75",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "structHash": "0x8cdccdfbbf7f4dbeb03ae231279a7cceea59a2db60257f029728fd4c28824720",
+      "digest": "0xb9d6f38cc86314dc287a822ca2d66d8d6587aa0f4ad48ae75c70eb4a0cd81aa6",
+      "derivedPaymentOutputKey": "0x63ce9de79ab386e0e5f8b1ee79460f7a2c059b4d1ef0c8cc6b5e10266ccc08cc",
+      "note": "IDENTICAL FIELDS to hashStruct/BitcoinPaymentAttestation in hashing-vectors.json. derivedPaymentOutputKey is PuppetHashing.paymentOutputKey(bitcoinTxid, outputIndex) and is the value the oracle marks consumed alongside the digest; it is quoted here (and pinned in hashing-vectors.json as paymentOutputKey/fixturePayment) so a settlement service can pre-check isPaymentOutputKeyConsumed before broadcasting a Bitcoin payment."
+    },
+    "rootSpendAttestation": {
+      "primaryType": "RootSpendAttestation",
+      "message": {
+        "rootTxid": "0x1f9f8a6d2c4b7e0135a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7",
+        "rootIndex": 0,
+        "previousOutpointHash": "0x1e910b1b6b7ed6bc6e12a2b6549a3bbb6ceedae0aae41b546200403b7a872526",
+        "spendingTxid": "0xb4d6f8092a4c6e801b3d5f7991a3c5e7092b4d6f81a3c5e79b0d2f4a6c8e0193",
+        "bitcoinBlockHash": "0x0000000000000000000159f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5",
+        "bitcoinHeight": "880002",
+        "authorizationId": "0x96c40ac3410eda9d552afb40f4dfb52e0c01de3fbeeafdfd639630634e50e7c7",
+        "deadline": "1893456000",
+        "attestorEpoch": "7",
+        "policyVersion": 1
+      },
+      "structHash": "0x7d3fff25a330d6aaf3de6ee172afaf703947ab560c25eb617943d8d9b2cfeb28",
+      "digest": "0xd6e9890cd2404b96d579501dcebf113f851cca391e73945d441e266b151851c3",
+      "note": "IDENTICAL FIELDS to hashStruct/RootSpendAttestation in hashing-vectors.json."
+    }
+  },
+
+  "signatureRules": {
+    "encodings": [
+      "65 bytes: r (32) || s (32) || v (1), with v in {27, 28}.",
+      "64 bytes: EIP-2098 compact, r (32) || vs (32), where the top bit of vs carries yParity."
+    ],
+    "ordering": "The signatures array MUST be sorted strictly ascending by RECOVERED SIGNER ADDRESS, not by signature bytes. This single rule rejects duplicate signers, makes the accepted form of a quorum canonical, and lets the oracle verify in one pass. Sorting the signature bytes instead orders by ECDSA output, which has no relationship to the signer, and will be rejected.",
+    "malleability": "An upper-half s value is rejected. Signing libraries must produce a low-s signature (every mainstream library does). The compact 64-byte form cannot express an upper-half s at all, since that bit carries the recovery id.",
+    "freshness": "attestorEpoch and policyVersion must EQUAL the live values from BitcoinAttestorRegistry.quorumContext() at execution time, and deadline must be >= block.timestamp (the expiry second itself is still valid). Any registry mutation bumps the epoch and invalidates every in-flight signature; re-request attestations rather than retrying.",
+    "singleUse": "Each digest is consumable exactly once, permanently. A Bitcoin payment output, keyed by PuppetHashing.paymentOutputKey(txid, vout), is likewise consumable exactly once across the whole protocol."
+  },
+
+  "crossLanguageChecklist": [
+    "Build the domain separator from the four domain fields, using the LIVE chainId and the deployed oracle address — never the placeholder above.",
+    "Build encodeData as the typehash followed by one 32-byte word per field, in the frozen order. Do not use packed encoding, and do not sort or omit fields.",
+    "Left-pad every txid and script hash to 32 bytes and keep display (big-endian) byte order.",
+    "digest = keccak256(0x19 || 0x01 || domainSeparator || structHash).",
+    "Sign the digest directly. Do NOT apply the personal_sign / EIP-191 prefix on top of it.",
+    "Sort the collected signatures by recovered signer address, ascending, before submitting.",
+    "Re-run this file's four vectors on every release of the SDK and of each attestor service."
+  ]
+}

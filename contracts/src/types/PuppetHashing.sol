@@ -48,38 +48,35 @@ library PuppetHashing {
     //////////////////////////////////////////////////////////////*/
 
     /// @dev Field order MUST match `PuppetTypes.OwnershipAttestation` exactly.
-    string internal constant OWNERSHIP_ATTESTATION_TYPE = "OwnershipAttestation("
-        "uint8 purpose," "bytes32 rootTxid," "uint32 rootIndex," "bytes32 contextId," "bytes32 offerTermsHash,"
-        "bytes32 currentOutpointHash," "bytes32 ownerScriptHash," "bytes32 bip322ProofHash," "address buyer,"
-        "address recipient," "uint8 payoutMode," "address evmPayout," "bytes32 btcPayoutScriptHash,"
-        "uint64 sellerSats," "uint256 grossWei," "uint256 sellerWei," "bytes32 bitcoinBlockHash,"
-        "uint64 bitcoinHeight," "bytes32 authorizationId," "uint64 deadline," "uint64 attestorEpoch,"
-        "uint32 policyVersion" ")";
+    string internal constant OWNERSHIP_ATTESTATION_TYPE = "OwnershipAttestation(" "uint8 purpose," "bytes32 rootTxid,"
+        "uint32 rootIndex," "bytes32 contextId," "bytes32 offerTermsHash," "bytes32 currentOutpointHash,"
+        "bytes32 ownerScriptHash," "bytes32 bip322ProofHash," "address buyer," "address recipient," "uint8 payoutMode,"
+        "address evmPayout," "bytes32 btcPayoutScriptHash," "uint64 sellerSats," "uint256 grossWei,"
+        "uint256 sellerWei," "bytes32 bitcoinBlockHash," "uint64 bitcoinHeight," "bytes32 authorizationId,"
+        "uint64 deadline," "uint64 attestorEpoch," "uint32 policyVersion" ")";
 
     /// @dev Field order MUST match `PuppetTypes.BitcoinPaymentAttestation` exactly.
-    string internal constant BITCOIN_PAYMENT_ATTESTATION_TYPE = "BitcoinPaymentAttestation("
-        "bytes32 contextId," "bytes32 ownershipDigest," "address solver," "bytes32 bitcoinTxid,"
-        "uint32 outputIndex," "bytes32 recipientScriptHash," "uint64 amountSats," "bytes32 bitcoinBlockHash,"
+    string internal constant BITCOIN_PAYMENT_ATTESTATION_TYPE = "BitcoinPaymentAttestation(" "bytes32 contextId,"
+        "bytes32 ownershipDigest," "address solver," "bytes32 bitcoinTxid," "uint32 outputIndex,"
+        "bytes32 recipientScriptHash," "uint64 amountSats," "bytes32 bitcoinBlockHash," "uint64 bitcoinHeight,"
+        "bytes32 authorizationId," "uint64 deadline," "uint64 attestorEpoch," "uint32 policyVersion" ")";
+
+    /// @dev Field order MUST match `PuppetTypes.RootSpendAttestation` exactly.
+    string internal constant ROOT_SPEND_ATTESTATION_TYPE = "RootSpendAttestation(" "bytes32 rootTxid,"
+        "uint32 rootIndex," "bytes32 previousOutpointHash," "bytes32 spendingTxid," "bytes32 bitcoinBlockHash,"
         "uint64 bitcoinHeight," "bytes32 authorizationId," "uint64 deadline," "uint64 attestorEpoch,"
         "uint32 policyVersion" ")";
 
-    /// @dev Field order MUST match `PuppetTypes.RootSpendAttestation` exactly.
-    string internal constant ROOT_SPEND_ATTESTATION_TYPE = "RootSpendAttestation("
-        "bytes32 rootTxid," "uint32 rootIndex," "bytes32 previousOutpointHash," "bytes32 spendingTxid,"
-        "bytes32 bitcoinBlockHash," "uint64 bitcoinHeight," "bytes32 authorizationId," "uint64 deadline,"
-        "uint64 attestorEpoch," "uint32 policyVersion" ")";
-
     /// @dev EIP-712 type used by `PayoutVault.withdrawWithAuthorization`.
-    string internal constant WITHDRAWAL_TYPE =
-        "Withdrawal(" "address beneficiary," "address recipient," "uint256 amount," "uint256 nonce," "uint64 deadline" ")";
+    string internal constant WITHDRAWAL_TYPE = "Withdrawal(" "address beneficiary," "address recipient,"
+        "uint256 amount," "uint256 nonce," "uint64 deadline" ")";
 
     /*//////////////////////////////////////////////////////////////
                             EIP-712 TYPE HASHES
     //////////////////////////////////////////////////////////////*/
 
     bytes32 internal constant OWNERSHIP_ATTESTATION_TYPEHASH = keccak256(bytes(OWNERSHIP_ATTESTATION_TYPE));
-    bytes32 internal constant BITCOIN_PAYMENT_ATTESTATION_TYPEHASH =
-        keccak256(bytes(BITCOIN_PAYMENT_ATTESTATION_TYPE));
+    bytes32 internal constant BITCOIN_PAYMENT_ATTESTATION_TYPEHASH = keccak256(bytes(BITCOIN_PAYMENT_ATTESTATION_TYPE));
     bytes32 internal constant ROOT_SPEND_ATTESTATION_TYPEHASH = keccak256(bytes(ROOT_SPEND_ATTESTATION_TYPE));
     bytes32 internal constant WITHDRAWAL_TYPEHASH = keccak256(bytes(WITHDRAWAL_TYPE));
 

@@ -1,0 +1,30 @@
+{
+  "name": "@hoodpups/attestor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "One of five independent attestors. Re-verifies every Bitcoin fact itself and signs only the EIP-712 digest it computed.",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@hoodpups/bitcoin-verifier": "workspace:*",
+    "@hoodpups/canonical-message": "workspace:*",
+    "@hoodpups/protocol-sdk": "workspace:*",
+    "viem": "2.21.55"
+  },
+  "devDependencies": {
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

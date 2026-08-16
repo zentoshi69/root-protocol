@@ -32,7 +32,9 @@ interface IHoodPups is IERC4907 {
     error UserIsOwner();
     error ExpiryInPast(uint64 expires, uint256 nowTs);
 
-    event RootedMint(uint256 indexed tokenId, bytes32 indexed rootKey, address indexed recipient, bytes32 rootTxid, uint32 rootIndex);
+    event RootedMint(
+        uint256 indexed tokenId, bytes32 indexed rootKey, address indexed recipient, bytes32 rootTxid, uint32 rootIndex
+    );
     event BaseURIUpdated(string previous, string next);
     event ContractURIUpdated(string previous, string next);
     event MetadataFrozenForever();

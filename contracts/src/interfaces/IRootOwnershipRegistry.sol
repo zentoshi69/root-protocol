@@ -47,10 +47,7 @@ interface IRootOwnershipRegistry {
     /// @return beneficiary Zero if no epoch was ever activated.
     /// @return active False when the inscription is known to have moved.
     /// @return epoch Current epoch number; zero if never activated.
-    function currentBeneficiary(bytes32 rootKey)
-        external
-        view
-        returns (address beneficiary, bool active, uint64 epoch);
+    function currentBeneficiary(bytes32 rootKey) external view returns (address beneficiary, bool active, uint64 epoch);
 
     /// @notice True when the recorded owner is currently believed valid.
     function isActive(bytes32 rootKey) external view returns (bool);

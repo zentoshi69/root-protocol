@@ -43,11 +43,21 @@ interface ITourEngine {
     error InvalidBounds();
 
     event TourStarted(
-        uint256 indexed tokenId, address indexed user, address indexed ownerAtStart, uint64 startedAt, uint64 expires, uint64 season
+        uint256 indexed tokenId,
+        address indexed user,
+        address indexed ownerAtStart,
+        uint64 startedAt,
+        uint64 expires,
+        uint64 season
     );
     event TourCheckIn(uint256 indexed tokenId, address indexed user, uint64 checkedInAt, uint64 season);
     event TourFinalized(
-        uint256 indexed tokenId, address indexed user, uint64 season, uint64 durationSeconds, uint256 newMiles, uint256 completedTours
+        uint256 indexed tokenId,
+        address indexed user,
+        uint64 season,
+        uint64 durationSeconds,
+        uint256 newMiles,
+        uint256 completedTours
     );
     event TourCancelled(uint256 indexed tokenId, address indexed user, string reason);
     event SeasonUpdated(uint64 previous, uint64 next);
