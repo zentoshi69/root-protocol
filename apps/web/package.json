@@ -1,0 +1,32 @@
+{
+  "name": "@hoodpups/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Buyer, Bitcoin-holder, payout and Root-ownership flows for the HoodPups Rooted Settlement Protocol.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hoodpups/canonical-message": "workspace:*",
+    "@hoodpups/protocol-sdk": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "viem": "2.21.55"
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.1.0",
+    "@types/react": "18.3.17",
+    "@types/react-dom": "18.3.5",
+    "@vitejs/plugin-react": "4.3.4",
+    "jsdom": "25.0.1",
+    "typescript": "5.7.2",
+    "vite": "5.4.11",
+    "vitest": "2.1.8"
+  }
+}
