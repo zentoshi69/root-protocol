@@ -727,6 +727,9 @@ contract MerkleFixtureTest is PuppetHashingFixtures {
     function _leaves(uint256 n) private pure returns (bytes32[] memory leaves) {
         leaves = new bytes32[](n);
         for (uint256 i = 0; i < n; i++) {
+            // casting to 'uint32' is safe because callers pass single-digit fixture sizes, far
+            // below 2**32; the cast only exists to match the inscription-index width.
+            // forge-lint: disable-next-line(unsafe-typecast)
             leaves[i] = PuppetHashing.collectionLeaf(PuppetHashing.rootKey(TXID_C, uint32(i + 1)));
         }
     }
