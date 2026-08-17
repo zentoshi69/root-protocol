@@ -4,6 +4,11 @@ Day-to-day operation of the HoodPups Rooted Settlement Protocol. For emergencies
 [`INCIDENT_RESPONSE.md`](./INCIDENT_RESPONSE.md); for pausing see
 [`PAUSE_AND_RECOVERY.md`](./PAUSE_AND_RECOVERY.md).
 
+> **Pre-production template:** the repository currently contains off-chain domain modules, not the
+> deployable attestor/relayer/solver processes or the example endpoints used below. This runbook
+> becomes executable only after those services, production key custody, persistence, monitoring
+> and operator infrastructure are implemented and independently tested.
+
 ## System inventory
 
 | Component | Count | Who runs it | Failure mode |
@@ -33,7 +38,7 @@ cast call $PAYOUT_VAULT "totalLiability()(uint256)" --rpc-url $RH_RPC
 cast balance $PAYOUT_VAULT --rpc-url $RH_RPC
 
 # 4. Nobody holds admin except the timelock
-node scripts/verify-roles.mjs --chain $CHAIN_ID
+node scripts/verify-roles.mjs --chain "$CHAIN_ID" --rpc "$RH_RPC"
 ```
 
 ### Alert thresholds
@@ -90,10 +95,11 @@ Disagreement is a **feature firing**, not a fault. Do not "fix" it by overriding
 4. Never ask an operator to sign a fact its own verification rejected. That is the exact behaviour
    the 3-of-5 design exists to prevent.
 
-### Adding or removing an attestor
+### Rotating an attestor
 
-Timelocked. See [`KEY_ROTATION.md`](./KEY_ROTATION.md). Every mutation bumps `attestorEpoch`, which
-invalidates every in-flight signature — announce a quiet window first.
+Timelocked and atomic through `replaceAttestor`. The set cannot grow or shrink from exactly five.
+Every rotation bumps `attestorEpoch`, which invalidates every in-flight signature — announce a
+quiet window first.
 
 ### Rotating a treasury address
 

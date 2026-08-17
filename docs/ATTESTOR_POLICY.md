@@ -154,9 +154,11 @@ ROOT_ALREADY_MINTED         PAYOUT_SHAPE_INVALID
 STALE_ATTESTOR_EPOCH        STALE_POLICY_VERSION
 PAYMENT_OUTPUT_CONSUMED     PAYMENT_AMOUNT_MISMATCH
 PAYMENT_SCRIPT_MISMATCH     NODE_UNAVAILABLE
-ORD_INDEX_LAGGING           INTERNAL_ERROR
+BITCOIN_NETWORK_MISMATCH    ORD_INDEX_LAGGING
+ORD_INDEX_INCONSISTENT      INTERNAL_ERROR
 ```
 
-`NODE_UNAVAILABLE` and `ORD_INDEX_LAGGING` are honest "I don't know" answers. An operator that
-cannot verify must say so rather than defer to the others — a quorum of four honest operators and
-one that guesses is worse than a quorum of four.
+`NODE_UNAVAILABLE`, `BITCOIN_NETWORK_MISMATCH`, `ORD_INDEX_LAGGING` and
+`ORD_INDEX_INCONSISTENT` are honest "I don't know" answers. An operator that cannot verify must say
+so rather than defer to the others — a quorum of four honest operators and one that guesses is
+worse than a quorum of four.

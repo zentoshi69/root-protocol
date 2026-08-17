@@ -60,6 +60,18 @@ const selfCastFields = (): AuthorizationMessageFields => ({
   sellerWei: 0n,
 });
 
+const rootBindFields = (): AuthorizationMessageFields => ({
+  ...selfCastFields(),
+  purpose: 'ROOT_BIND',
+  payoutMode: 'EVM',
+  evmPayout: '0x6666666666666666666666666666666666666666',
+});
+
+const rootInvalidateFields = (): AuthorizationMessageFields => ({
+  ...selfCastFields(),
+  purpose: 'ROOT_INVALIDATE',
+});
+
 describe('canonical message format', () => {
   it('renders the exact expected bytes for a PAID_EVM authorization', () => {
     // This literal IS the specification. If it changes, the message version must change with it,
@@ -90,7 +102,7 @@ describe('canonical message format', () => {
   });
 
   it('is pure ASCII, LF only, and ends with exactly one newline', () => {
-    for (const fields of [evmFields(), btcFields(), selfCastFields()]) {
+    for (const fields of [evmFields(), btcFields(), selfCastFields(), rootBindFields(), rootInvalidateFields()]) {
       const msg = buildMessage(fields);
       expect(msg).not.toContain('\r');
       expect(msg.endsWith('\n')).toBe(true);
@@ -118,7 +130,7 @@ describe('canonical message format', () => {
   });
 
   it('round-trips build -> parse -> build for every purpose', () => {
-    for (const fields of [evmFields(), btcFields(), selfCastFields()]) {
+    for (const fields of [evmFields(), btcFields(), selfCastFields(), rootBindFields(), rootInvalidateFields()]) {
       const raw = buildMessage(fields);
       const parsed = parseMessage(raw);
       expect(parsed.fields).toEqual(fields);
@@ -233,6 +245,33 @@ describe('payout shape enforcement', () => {
   it('rejects a self-cast that carries money', () => {
     expect(() => buildMessage({ ...selfCastFields(), grossWei: 1n })).toThrow(/SELF_CAST/);
     expect(() => buildMessage({ ...selfCastFields(), payoutMode: 'EVM' })).toThrow(/SELF_CAST|non-zero evm_payout/);
+  });
+
+  it('uses the on-chain ROOT_BIND shape: EVM beneficiary with no money', () => {
+    expect(buildMessage(rootBindFields())).toContain('purpose=ROOT_BIND\n');
+    expect(() => buildMessage({ ...rootBindFields(), payoutMode: 'NONE' })).toThrow(/ROOT_BIND/);
+    expect(() => buildMessage({ ...rootBindFields(), evmPayout: ZERO_ADDRESS })).toThrow(/ROOT_BIND/);
+    expect(() => buildMessage({ ...rootBindFields(), grossWei: 1n })).toThrow(/ROOT_BIND/);
+    expect(() => buildMessage({ ...rootBindFields(), sellerWei: 1n })).toThrow(/ROOT_BIND/);
+    expect(() => buildMessage({ ...rootBindFields(), sellerSats: 1n })).toThrow(/ROOT_BIND/);
+    expect(() => buildMessage({ ...rootBindFields(), btcPayoutScriptHash: `0x${'99'.repeat(32)}` })).toThrow(
+      /ROOT_BIND/,
+    );
+  });
+
+  it('requires every ROOT_INVALIDATE payout and monetary field to be zero', () => {
+    expect(buildMessage(rootInvalidateFields())).toContain('purpose=ROOT_INVALIDATE\n');
+    expect(() => buildMessage({ ...rootInvalidateFields(), payoutMode: 'EVM' })).toThrow(/ROOT_INVALIDATE/);
+    expect(() => buildMessage({ ...rootInvalidateFields(), grossWei: 1n })).toThrow(/ROOT_INVALIDATE/);
+  });
+
+  it('rejects a seller share larger than the escrowed total', () => {
+    expect(() => buildMessage({ ...evmFields(), sellerWei: evmFields().grossWei + 1n })).toThrow(
+      /cannot exceed gross_wei/,
+    );
+    expect(() => buildMessage({ ...btcFields(), sellerWei: btcFields().grossWei + 1n })).toThrow(
+      /cannot exceed gross_wei/,
+    );
   });
 });
 

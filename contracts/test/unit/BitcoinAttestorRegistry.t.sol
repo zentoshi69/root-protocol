@@ -167,14 +167,14 @@ contract BitcoinAttestorRegistryTest is Test {
     }
 
     function test_ConstructorAcceptsMaxAttestors() public {
-        BitcoinAttestorRegistry big = _deploy(32, 32);
-        assertEq(big.attestorCount(), registry.MAX_ATTESTORS(), "32 members accepted");
-        assertEq(big.threshold(), 32, "threshold may equal count");
+        BitcoinAttestorRegistry exact = _deploy(5, 5);
+        assertEq(exact.attestorCount(), registry.MAX_ATTESTORS(), "five members accepted");
+        assertEq(exact.threshold(), 5, "threshold may equal count");
     }
 
     function test_ProductionConstantsAreTheSpecifiedOnes() public view {
         assertEq(registry.MIN_ATTESTORS(), 5, "MIN_ATTESTORS");
-        assertEq(registry.MAX_ATTESTORS(), 32, "MAX_ATTESTORS");
+        assertEq(registry.MAX_ATTESTORS(), 5, "MAX_ATTESTORS");
         assertEq(registry.MIN_THRESHOLD(), 3, "MIN_THRESHOLD");
     }
 
@@ -198,8 +198,8 @@ contract BitcoinAttestorRegistryTest is Test {
     }
 
     function test_RevertWhen_ConstructorCountAboveMaximum() public {
-        vm.expectRevert(abi.encodeWithSelector(IBitcoinAttestorRegistry.AttestorCountOutOfRange.selector, uint256(33)));
-        new BitcoinAttestorRegistry(deployer, _syntheticSet(33), GENESIS_THRESHOLD, GENESIS_POLICY);
+        vm.expectRevert(abi.encodeWithSelector(IBitcoinAttestorRegistry.AttestorCountOutOfRange.selector, uint256(6)));
+        new BitcoinAttestorRegistry(deployer, _syntheticSet(6), GENESIS_THRESHOLD, GENESIS_POLICY);
     }
 
     function test_RevertWhen_ConstructorHasZeroAttestor() public {
@@ -234,17 +234,16 @@ contract BitcoinAttestorRegistryTest is Test {
                               ADD ATTESTOR
     //////////////////////////////////////////////////////////////*/
 
-    function test_AddAttestor() public {
+    function test_AddAttestorCannotDiluteTheFixedFiveMemberSet() public {
         address newcomer = outsider;
         uint64 before = registry.attestorEpoch();
 
-        vm.expectEmit(true, false, false, true);
-        emit IBitcoinAttestorRegistry.AttestorAdded(newcomer, before, before + 1);
+        vm.expectRevert(abi.encodeWithSelector(IBitcoinAttestorRegistry.AttestorCountOutOfRange.selector, uint256(6)));
         registry.addAttestor(newcomer);
 
-        assertTrue(registry.isAttestor(newcomer), "added");
-        assertEq(registry.attestorCount(), 6, "count grew by one");
-        assertEq(registry.attestorEpoch() - before, 1, "epoch bumped exactly once");
+        assertFalse(registry.isAttestor(newcomer), "not added");
+        assertEq(registry.attestorCount(), 5, "count fixed at five");
+        assertEq(registry.attestorEpoch(), before, "rejected growth does not bump epoch");
     }
 
     function test_RevertWhen_AddingDuplicate() public {
@@ -259,29 +258,24 @@ contract BitcoinAttestorRegistryTest is Test {
     }
 
     function test_RevertWhen_AddingBeyondMaxAttestors() public {
-        BitcoinAttestorRegistry big = _deploy(32, GENESIS_THRESHOLD);
-        vm.expectRevert(abi.encodeWithSelector(IBitcoinAttestorRegistry.AttestorCountOutOfRange.selector, uint256(33)));
-        big.addAttestor(_synthetic(32));
-        assertEq(big.attestorCount(), 32, "count untouched by the rejected add");
-        assertEq(big.attestorEpoch(), GENESIS_EPOCH, "rejected mutation must not bump the epoch");
+        vm.expectRevert(abi.encodeWithSelector(IBitcoinAttestorRegistry.AttestorCountOutOfRange.selector, uint256(6)));
+        registry.addAttestor(_synthetic(32));
+        assertEq(registry.attestorCount(), 5, "count untouched by the rejected add");
+        assertEq(registry.attestorEpoch(), GENESIS_EPOCH, "rejected mutation must not bump the epoch");
     }
 
     /*//////////////////////////////////////////////////////////////
                              REMOVE ATTESTOR
     //////////////////////////////////////////////////////////////*/
 
-    function test_RemoveAttestor() public {
-        BitcoinAttestorRegistry six = _deploy(6, GENESIS_THRESHOLD);
-        address leaving = _synthetic(1);
-        uint64 before = six.attestorEpoch();
+    function test_RemoveAttestorCannotShrinkTheFixedFiveMemberSet() public {
+        address leaving = genesisAttestors[1];
+        vm.expectRevert(abi.encodeWithSelector(IBitcoinAttestorRegistry.AttestorCountOutOfRange.selector, uint256(4)));
+        registry.removeAttestor(leaving);
 
-        vm.expectEmit(true, false, false, true);
-        emit IBitcoinAttestorRegistry.AttestorRemoved(leaving, before, before + 1);
-        six.removeAttestor(leaving);
-
-        assertFalse(six.isAttestor(leaving), "removed");
-        assertEq(six.attestorCount(), 5, "count shrank by one");
-        assertEq(six.attestorEpoch() - before, 1, "epoch bumped exactly once");
+        assertTrue(registry.isAttestor(leaving), "member preserved by revert");
+        assertEq(registry.attestorCount(), 5, "count fixed at five");
+        assertEq(registry.attestorEpoch(), GENESIS_EPOCH, "rejected shrink does not bump epoch");
     }
 
     function test_RevertWhen_RemovingUnknownAttestor() public {
@@ -299,22 +293,6 @@ contract BitcoinAttestorRegistryTest is Test {
         assertEq(registry.attestorCount(), 5, "membership unchanged");
         assertTrue(registry.isAttestor(member), "member restored by the revert");
         assertEq(registry.attestorEpoch(), GENESIS_EPOCH, "rejected mutation must not bump the epoch");
-    }
-
-    /// @dev Guards the liveness failure that matters most: `threshold > count` makes quorum
-    ///      unreachable forever, freezing every settlement path in the protocol.
-    function test_RevertWhen_RemovingWouldStrandTheThreshold() public {
-        BitcoinAttestorRegistry six = _deploy(6, 6);
-        vm.expectRevert(
-            abi.encodeWithSelector(IBitcoinAttestorRegistry.ThresholdOutOfRange.selector, uint8(6), uint256(5))
-        );
-        six.removeAttestor(_synthetic(0));
-
-        // Lowering the threshold first is the supported ordering.
-        six.setThreshold(5);
-        six.removeAttestor(_synthetic(0));
-        assertEq(six.attestorCount(), 5, "removal succeeds once the threshold fits");
-        assertEq(six.threshold(), 5, "threshold intact");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -442,31 +420,22 @@ contract BitcoinAttestorRegistryTest is Test {
                             EPOCH ACCOUNTING
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Every mutation kind, once each, must move the epoch by exactly one.
+    /// @notice Every permitted mutation kind, once each, moves the epoch exactly once.
     function test_EveryMutationBumpsEpochExactlyOnce() public {
-        BitcoinAttestorRegistry six = _deploy(6, GENESIS_THRESHOLD);
-        uint64 epoch = six.attestorEpoch();
+        uint64 epoch = registry.attestorEpoch();
 
-        six.addAttestor(_synthetic(100));
-        assertEq(six.attestorEpoch() - epoch, 1, "add");
-        epoch = six.attestorEpoch();
+        registry.replaceAttestor(genesisAttestors[0], _synthetic(101));
+        assertEq(registry.attestorEpoch() - epoch, 1, "replace");
+        epoch = registry.attestorEpoch();
 
-        six.removeAttestor(_synthetic(100));
-        assertEq(six.attestorEpoch() - epoch, 1, "remove");
-        epoch = six.attestorEpoch();
+        registry.setThreshold(4);
+        assertEq(registry.attestorEpoch() - epoch, 1, "threshold");
+        epoch = registry.attestorEpoch();
 
-        six.replaceAttestor(_synthetic(0), _synthetic(101));
-        assertEq(six.attestorEpoch() - epoch, 1, "replace");
-        epoch = six.attestorEpoch();
+        registry.setPolicyVersion(2);
+        assertEq(registry.attestorEpoch() - epoch, 1, "policy");
 
-        six.setThreshold(4);
-        assertEq(six.attestorEpoch() - epoch, 1, "threshold");
-        epoch = six.attestorEpoch();
-
-        six.setPolicyVersion(2);
-        assertEq(six.attestorEpoch() - epoch, 1, "policy");
-
-        assertEq(six.attestorEpoch(), GENESIS_EPOCH + 5, "five mutations, five bumps, no more");
+        assertEq(registry.attestorEpoch(), GENESIS_EPOCH + 3, "three mutations, three bumps, no more");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -477,20 +446,21 @@ contract BitcoinAttestorRegistryTest is Test {
     /// @dev This is the property the epoch counter exists for: no window in which a just-removed
     ///      operator's signature still counts.
     function test_AnyMutationInvalidatesInFlightAttestations() public {
-        BitcoinAttestorRegistry six = _deploy(6, GENESIS_THRESHOLD);
-        EpochBoundConsumer consumer = new EpochBoundConsumer(six);
+        EpochBoundConsumer consumer = new EpochBoundConsumer(registry);
 
-        (uint8 t, uint64 signedEpoch, uint32 signedPolicy) = six.quorumContext();
+        (uint8 t, uint64 signedEpoch, uint32 signedPolicy) = registry.quorumContext();
         consumer.acceptAttestation(signedEpoch, signedPolicy, t);
 
-        six.removeAttestor(_synthetic(5));
+        registry.replaceAttestor(genesisAttestors[0], outsider);
         vm.expectRevert(
-            abi.encodeWithSelector(EpochBoundConsumer.StaleAttestorEpoch.selector, signedEpoch, six.attestorEpoch())
+            abi.encodeWithSelector(
+                EpochBoundConsumer.StaleAttestorEpoch.selector, signedEpoch, registry.attestorEpoch()
+            )
         );
         consumer.acceptAttestation(signedEpoch, signedPolicy, t);
 
         // Re-gathering under the new context works again.
-        (uint8 t2, uint64 e2, uint32 p2) = six.quorumContext();
+        (uint8 t2, uint64 e2, uint32 p2) = registry.quorumContext();
         consumer.acceptAttestation(e2, p2, t2);
     }
 
@@ -589,7 +559,7 @@ contract BitcoinAttestorRegistryTest is Test {
         // ...but it can still grant the rotation role to someone else.
         registry.grantRole(mutatorRole, timelock);
         vm.prank(timelock);
-        registry.addAttestor(_synthetic(201));
+        registry.replaceAttestor(genesisAttestors[0], _synthetic(201));
         assertTrue(registry.isAttestor(_synthetic(201)), "grantee can rotate");
     }
 
@@ -630,7 +600,7 @@ contract BitcoinAttestorRegistryTest is Test {
         uint256 count = bound(rawCount, 1, 40);
         uint8 thresholdValue = uint8(bound(uint256(rawThreshold), 0, 40));
 
-        bool countOk = count >= 5 && count <= 32;
+        bool countOk = count == 5;
         bool thresholdOk = thresholdValue >= 3 && uint256(thresholdValue) <= count;
 
         if (!countOk) {
@@ -651,12 +621,12 @@ contract BitcoinAttestorRegistryTest is Test {
         }
     }
 
-    /// @notice Random add/remove sequences never break the size or threshold invariants, and the
+    /// @notice Random mutation sequences never break the fixed size or threshold invariants, and the
     ///         epoch advances by exactly the number of accepted mutations.
     /// @dev Rejected attempts are expected and are the point: the assertions below must hold after
     ///      every step whether the call succeeded or reverted.
     function testFuzz_AddRemoveSequenceKeepsInvariants(uint256 seed, uint8 steps) public {
-        BitcoinAttestorRegistry target = _deploy(8, 4);
+        BitcoinAttestorRegistry target = _deploy(5, 4);
         uint256 stepCount = bound(uint256(steps), 1, 60);
         uint64 accepted = 0;
 
@@ -680,8 +650,7 @@ contract BitcoinAttestorRegistryTest is Test {
             }
 
             uint256 count = target.attestorCount();
-            assertGe(count, 5, "count floor");
-            assertLe(count, 32, "count ceiling");
+            assertEq(count, 5, "count remains exactly five");
             assertGe(target.threshold(), 3, "threshold floor");
             assertLe(uint256(target.threshold()), count, "threshold never exceeds count");
             assertEq(target.attestors().length, count, "snapshot matches count");
@@ -702,12 +671,7 @@ contract AttestorRegistryHandler {
     /// @notice Number of mutations that actually took effect.
     uint256 public acceptedMutations;
 
-    /// @notice Largest attestor count observed across the campaign.
-    /// @dev Coverage witness. A stateful campaign that silently never grows the set would make
-    ///      every invariant below vacuously true, so this counter was probed with a temporary
-    ///      always-failing assertion: at the committed 128 runs x 64 depth the campaign reaches an
-    ///      attestor count of at least 16 (and never 25+, which is why the `MAX_ATTESTORS` ceiling
-    ///      is pinned by a dedicated unit test rather than left to the fuzzer).
+    /// @notice Largest attestor count observed across the campaign (always five by invariant).
     uint256 public maxCountSeen;
 
     constructor(BitcoinAttestorRegistry registry) {
@@ -715,9 +679,7 @@ contract AttestorRegistryHandler {
         maxCountSeen = registry.attestorCount();
     }
 
-    /// @dev Fixed 48-address candidate pool: larger than `MAX_ATTESTORS` so the ceiling is
-    ///      reachable in principle, and small enough that removals and duplicate-adds actually
-    ///      collide with existing members instead of always hitting fresh addresses.
+    /// @dev Fixed pool makes replacements, duplicate adds, and unknown removals collide often.
     function _candidate(uint256 index) private pure returns (address) {
         return address(uint160(0xBEEF0000 + (index % 48)));
     }
@@ -801,8 +763,8 @@ contract BitcoinAttestorRegistryInvariants is StdInvariant, Test {
     /// @notice The verifier set can never leave the production size window.
     function invariant_CountStaysWithinProductionBounds() public view {
         uint256 count = registry.attestorCount();
-        assertGe(count, registry.MIN_ATTESTORS(), "below MIN_ATTESTORS");
-        assertLe(count, registry.MAX_ATTESTORS(), "above MAX_ATTESTORS");
+        assertEq(count, 5, "attestor count departed from fixed trust shape");
+        assertEq(registry.MIN_ATTESTORS(), registry.MAX_ATTESTORS(), "fixed membership bounds drifted");
     }
 
     /// @notice Quorum is always both meaningful (>= 3) and reachable (<= count).

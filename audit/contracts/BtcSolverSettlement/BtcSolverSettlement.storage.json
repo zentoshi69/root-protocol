@@ -25,7 +25,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 54398,
+      "astId": 54494,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_minimumBondWei",
       "offset": 0,
@@ -33,7 +33,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 54400,
+      "astId": 54496,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_reservationDuration",
       "offset": 0,
@@ -41,7 +41,7 @@
       "type": "t_uint64"
     },
     {
-      "astId": 54402,
+      "astId": 54498,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_buyerSlashBps",
       "offset": 8,
@@ -49,7 +49,7 @@
       "type": "t_uint16"
     },
     {
-      "astId": 54404,
+      "astId": 54500,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_protocolSlashRecipient",
       "offset": 10,
@@ -57,15 +57,15 @@
       "type": "t_address"
     },
     {
-      "astId": 54409,
+      "astId": 54505,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_reservations",
       "offset": 0,
       "slot": "5",
-      "type": "t_mapping(t_bytes32,t_struct(Reservation)64091_storage)"
+      "type": "t_mapping(t_bytes32,t_struct(Reservation)64576_storage)"
     },
     {
-      "astId": 54414,
+      "astId": 54510,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_settledOfferForRoot",
       "offset": 0,
@@ -73,7 +73,7 @@
       "type": "t_mapping(t_bytes32,t_bytes32)"
     },
     {
-      "astId": 54417,
+      "astId": 54513,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_totalActiveBondWei",
       "offset": 0,
@@ -81,7 +81,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 54419,
+      "astId": 54515,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_totalBondsPosted",
       "offset": 0,
@@ -89,7 +89,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 54421,
+      "astId": 54517,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_totalBondsReturned",
       "offset": 0,
@@ -97,7 +97,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 54423,
+      "astId": 54519,
       "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
       "label": "_totalBondsSlashed",
       "offset": 0,
@@ -135,12 +135,12 @@
       "numberOfBytes": "32",
       "value": "t_bytes32"
     },
-    "t_mapping(t_bytes32,t_struct(Reservation)64091_storage)": {
+    "t_mapping(t_bytes32,t_struct(Reservation)64576_storage)": {
       "encoding": "mapping",
       "key": "t_bytes32",
       "label": "mapping(bytes32 => struct IBtcSolverSettlement.Reservation)",
       "numberOfBytes": "32",
-      "value": "t_struct(Reservation)64091_storage"
+      "value": "t_struct(Reservation)64576_storage"
     },
     "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)": {
       "encoding": "mapping",
@@ -149,13 +149,13 @@
       "numberOfBytes": "32",
       "value": "t_struct(RoleData)39381_storage"
     },
-    "t_struct(Reservation)64091_storage": {
+    "t_struct(Reservation)64576_storage": {
       "encoding": "inplace",
       "label": "struct IBtcSolverSettlement.Reservation",
       "numberOfBytes": "96",
       "members": [
         {
-          "astId": 64080,
+          "astId": 64565,
           "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
           "label": "solver",
           "offset": 0,
@@ -163,7 +163,7 @@
           "type": "t_address"
         },
         {
-          "astId": 64082,
+          "astId": 64567,
           "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
           "label": "bondWei",
           "offset": 0,
@@ -171,7 +171,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 64084,
+          "astId": 64569,
           "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
           "label": "reservedAt",
           "offset": 0,
@@ -179,7 +179,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 64086,
+          "astId": 64571,
           "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
           "label": "reservationExpiry",
           "offset": 8,
@@ -187,7 +187,7 @@
           "type": "t_uint64"
         },
         {
-          "astId": 64088,
+          "astId": 64573,
           "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
           "label": "buyerSlashBpsSnapshot",
           "offset": 16,
@@ -195,7 +195,7 @@
           "type": "t_uint16"
         },
         {
-          "astId": 64090,
+          "astId": 64575,
           "contract": "src/BtcSolverSettlement.sol:BtcSolverSettlement",
           "label": "status",
           "offset": 18,

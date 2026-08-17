@@ -12,7 +12,9 @@ name: hoodpups-regtest
 
 services:
   bitcoind:
-    image: ruimarinho/bitcoin-core:24
+    # Bitcoin Core 24 is end-of-life. This manifest is the multi-platform 31.1 image index; it is
+    # an explicitly test-only image containing the release binaries from bitcoincore.org.
+    image: bitcoin/bitcoin:31.1@sha256:da25cedc66b1daefff9f412ee196c901a899c3fa68a33b20849c3e08b5c40d63
     container_name: hoodpups-bitcoind
     restart: unless-stopped
     command:
@@ -25,13 +27,12 @@ services:
       - -rpcpassword=regtest-only-not-a-secret
       - -fallbackfee=0.0002
       - -maxtxfee=1.0
-      - -deprecatedrpc=create_bdb
       - -zmqpubrawblock=tcp://0.0.0.0:28332
       - -zmqpubrawtx=tcp://0.0.0.0:28333
     ports:
-      - "18443:18443"   # RPC
-      - "28332:28332"   # ZMQ raw block
-      - "28333:28333"   # ZMQ raw tx
+      - "127.0.0.1:18443:18443"   # RPC; never expose public regtest credentials to the LAN
+      - "127.0.0.1:28332:28332"   # ZMQ raw block
+      - "127.0.0.1:28333:28333"   # ZMQ raw tx
     volumes:
       - bitcoin-data:/home/bitcoin/.bitcoin
     healthcheck:
@@ -42,7 +43,13 @@ services:
       start_period: 10s
 
   ord:
-    image: ordinals/ord:0.18.5
+    # Upstream does not publish a public 0.27.1 container. Dockerfile.ord verifies the official
+    # release asset checksum. The released Linux binary is x86_64-only.
+    platform: linux/amd64
+    image: hoodpups/ord:0.27.1
+    build:
+      context: .
+      dockerfile: Dockerfile.ord
     container_name: hoodpups-ord
     restart: unless-stopped
     depends_on:
@@ -59,7 +66,7 @@ services:
       - server
       - --http-port=8080
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ord-data:/data
     healthcheck:
@@ -72,7 +79,7 @@ services:
   # Stands in for Robinhood Chain locally. Chain id 31337 is what the deploy script treats as the
   # local-development override; it will refuse any unrecognised chain id without one.
   anvil:
-    image: ghcr.io/foundry-rs/foundry:stable
+    image: ghcr.io/foundry-rs/foundry:v1.5.1@sha256:3a70bfa9bd2c732a767bb60d12c8770b40e8f9b6cca28efc4b12b1be81c7f28e
     container_name: hoodpups-anvil
     restart: unless-stopped
     entrypoint: ["anvil"]
@@ -85,7 +92,7 @@ services:
       - --balance=10000
       - --mnemonic=test test test test test test test test test test test junk
     ports:
-      - "8545:8545"
+      - "127.0.0.1:8545:8545"
     healthcheck:
       test: ["CMD-SHELL", "cast block-number --rpc-url http://127.0.0.1:8545 || exit 1"]
       interval: 3s

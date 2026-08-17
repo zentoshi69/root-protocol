@@ -304,7 +304,7 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
         // log can never describe a split that a later revert undid halfway.
         emit MintRouted(rootKey, seller, ROUTE_MINT_EVM, gross, sellerAmount, puppetAmount, protocolAmount);
 
-        _creditSplit(seller, sellerAmount, puppetAmount, protocolAmount);
+        _creditSplit(seller, sellerAmount, puppetAmount, protocolAmount, false);
         _assertNothingRetained(preExistingBalance);
     }
 
@@ -332,7 +332,9 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
 
         emit MintRouted(rootKey, solver, ROUTE_MINT_BTC, gross, solverAmount, puppetAmount, protocolAmount);
 
-        _creditSplit(solver, solverAmount, puppetAmount, protocolAmount);
+        // The solver may already have paid irreversible BTC. Route through the vault's terminal
+        // accounting path so an ordinary credit pause cannot strand that cross-chain obligation.
+        _creditSplit(solver, solverAmount, puppetAmount, protocolAmount, true);
         _assertNothingRetained(preExistingBalance);
     }
 
@@ -375,14 +377,14 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
         );
 
         if (payBeneficiaryDirectly) {
-            _creditSplit(beneficiary, rootAmount, puppetAmount, protocolAmount);
+            _creditSplit(beneficiary, rootAmount, puppetAmount, protocolAmount, false);
         } else {
             // `rootAmount` is zero only for a sub-2-wei gross; the vault rejects zero-value credits,
             // so the call is skipped rather than allowed to revert the whole settlement over dust.
             if (rootAmount > 0) {
                 PAYOUT_VAULT.creditRoot{value: rootAmount}(rootKey);
             }
-            _creditSplit(address(0), 0, puppetAmount, protocolAmount);
+            _creditSplit(address(0), 0, puppetAmount, protocolAmount, false);
         }
 
         _assertNothingRetained(preExistingBalance);
@@ -498,9 +500,13 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
     /// @param primaryAmount The 50% share.
     /// @param puppetAmount The Puppet ecosystem treasury share.
     /// @param protocolAmount The protocol treasury share.
-    function _creditSplit(address primary, uint256 primaryAmount, uint256 puppetAmount, uint256 protocolAmount)
-        private
-    {
+    function _creditSplit(
+        address primary,
+        uint256 primaryAmount,
+        uint256 puppetAmount,
+        uint256 protocolAmount,
+        bool terminal
+    ) private {
         // Defensive: the callers already reject a zero seller/solver/beneficiary, and the recurring
         // pending branch only ever passes a zero primary with a zero amount. Kept because this is a
         // value-moving path and a silent credit to address(0) would be an unrecoverable burn.
@@ -533,7 +539,12 @@ contract FeeRouter is IFeeRouter, AccessControl, ReentrancyGuard {
 
         // The vault independently re-checks that the sum of `amounts` equals the value sent, so the
         // conservation property is enforced on both sides of this call rather than trusted once.
-        PAYOUT_VAULT.creditBatch{value: primaryAmount + puppetAmount + protocolAmount}(beneficiaries, amounts);
+        uint256 total = primaryAmount + puppetAmount + protocolAmount;
+        if (terminal) {
+            PAYOUT_VAULT.creditTerminalBatch{value: total}(beneficiaries, amounts);
+        } else {
+            PAYOUT_VAULT.creditBatch{value: total}(beneficiaries, amounts);
+        }
     }
 
     /// @dev Asserts the router forwarded every wei it was paid.

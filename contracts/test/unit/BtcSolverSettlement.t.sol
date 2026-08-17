@@ -78,6 +78,7 @@ contract MockOfferEscrow is IHoodPupOfferEscrow {
 
     mapping(bytes32 => PuppetTypes.Offer) private _offers;
     mapping(bytes32 => PuppetTypes.RootId) private _rootIds;
+    mapping(bytes32 => bytes32) private _activeBtcOfferForRoot;
 
     uint256 private _seedNonce;
 
@@ -106,6 +107,11 @@ contract MockOfferEscrow is IHoodPupOfferEscrow {
     /// @notice Wire the address allowed to drive the three BTC hooks.
     function setBtcSettlement(address settlement) external {
         btcSettlement = settlement;
+    }
+
+    /// @inheritdoc IHoodPupOfferEscrow
+    function btcSettlementCoordinator() external view returns (address) {
+        return btcSettlement;
     }
 
     /// @notice Make `finalizeBtcSettlement` revert, so atomic-rollback behaviour is testable.
@@ -189,7 +195,11 @@ contract MockOfferEscrow is IHoodPupOfferEscrow {
         if (o.status != uint8(PuppetTypes.OfferStatus.BTC_APPROVED)) {
             revert InvalidOfferStatus(offerId, o.status, uint8(PuppetTypes.OfferStatus.BTC_APPROVED));
         }
+        if (HOODPUPS.rootMinted(o.rootKey)) revert RootAlreadyMinted(o.rootKey);
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != bytes32(0)) revert RootReservationActive(o.rootKey, activeOfferId);
 
+        _activeBtcOfferForRoot[o.rootKey] = offerId;
         o.status = uint8(PuppetTypes.OfferStatus.BTC_RESERVED);
         o.reservedSolver = solver;
         o.reservationExpiry = reservationExpiry;
@@ -208,6 +218,9 @@ contract MockOfferEscrow is IHoodPupOfferEscrow {
         }
 
         address solver = o.reservedSolver;
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != offerId) revert RootReservationActive(o.rootKey, activeOfferId);
+        delete _activeBtcOfferForRoot[o.rootKey];
         o.status = uint8(PuppetTypes.OfferStatus.BTC_APPROVED);
         o.reservedSolver = address(0);
         o.reservationExpiry = 0;
@@ -236,16 +249,19 @@ contract MockOfferEscrow is IHoodPupOfferEscrow {
             IBtcSolverSettlement(msg.sender).reserve{value: 1 ether}(offerId);
         }
 
+        bytes32 activeOfferId = _activeBtcOfferForRoot[o.rootKey];
+        if (activeOfferId != offerId) revert RootReservationActive(o.rootKey, activeOfferId);
+        delete _activeBtcOfferForRoot[o.rootKey];
         o.status = uint8(PuppetTypes.OfferStatus.SETTLED);
         finalizeCount++;
         lastPaymentDigest = paymentDigest;
         lastFinalizeSolver = solver;
 
-        tokenId = HOODPUPS.mintRooted(o.recipient, _rootIds[offerId]);
+        tokenId = HOODPUPS.mintRootedTerminal(o.recipient, _rootIds[offerId]);
 
         // Bob was already paid in BTC, so the seller share goes to the solver.
         if (address(VAULT) != address(0) && o.sellerWei != 0) {
-            VAULT.credit{value: o.sellerWei}(solver);
+            VAULT.creditTerminal{value: o.sellerWei}(solver);
         }
 
         emit OfferSettled(offerId, o.rootKey, tokenId, o.recipient, solver, o.grossWei, o.kind);
@@ -258,6 +274,11 @@ contract MockOfferEscrow is IHoodPupOfferEscrow {
     /// @inheritdoc IHoodPupOfferEscrow
     function getOffer(bytes32 offerId) external view returns (PuppetTypes.Offer memory) {
         return _offers[offerId];
+    }
+
+    /// @inheritdoc IHoodPupOfferEscrow
+    function activeBtcOfferForRoot(bytes32 rootKey) external view returns (bytes32 offerId) {
+        return _activeBtcOfferForRoot[rootKey];
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -1085,8 +1106,9 @@ contract BtcSolverSettlementTest is Test {
 
         // A real production mutation on the real registry bumps the epoch under the in-flight
         // signatures. Every attestation collected before it becomes worthless.
+        address outgoing = attestors.addresses()[0];
         vm.prank(admin);
-        attestorRegistry.addAttestor(address(0xADD1));
+        attestorRegistry.replaceAttestor(outgoing, address(0xADD1));
 
         vm.prank(solver);
         vm.expectRevert(
@@ -1162,21 +1184,25 @@ contract BtcSolverSettlementTest is Test {
         assertEq(vault.claimable(solver), 1 ether + SELLER_WEI, "a pause blocked an already-paid solver");
     }
 
-    function test_SettleRevertsWhenTheOracleIsPaused() public {
-        // The incident lever the specification asks for lives on the oracle, where the risk is.
+    function test_SettleWorksWhenTheOracleAndVaultArePaused() public {
+        // Once Bitcoin has been paid, incident controls must not strand the solver's bond.
         bytes32 offerId = _seedOffer(rootA);
         _reserve(offerId, solver, 1 ether);
 
         vm.prank(admin);
         oracle.pause();
+        vm.prank(admin);
+        vault.pause();
 
         PuppetTypes.BitcoinPaymentAttestation memory a =
             _payment(offerId, solver, _fixtureTxid("oracle-paused"), 0, SELLER_SATS);
         bytes[] memory sigs = attestors.sign(oracle.hashBitcoinPaymentAttestation(a), 3);
 
         vm.prank(solver);
-        vm.expectRevert(Pausable.EnforcedPause.selector);
         settlement.settle(offerId, a, sigs);
+
+        assertEq(vault.claimable(solver), 1 ether + SELLER_WEI, "bond and reimbursement remain claimable");
+        assertEq(hoodPups.mintCount(), 1, "paid BTC settlement still mints");
     }
 
     function test_SettleRevertsWithoutThePaymentConsumerRole() public {

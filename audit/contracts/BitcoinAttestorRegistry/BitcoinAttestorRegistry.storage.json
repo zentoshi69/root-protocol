@@ -9,7 +9,7 @@
       "type": "t_mapping(t_bytes32,t_struct(RoleData)39381_storage)"
     },
     {
-      "astId": 52087,
+      "astId": 52118,
       "contract": "src/BitcoinAttestorRegistry.sol:BitcoinAttestorRegistry",
       "label": "_attestorSet",
       "offset": 0,
@@ -17,7 +17,7 @@
       "type": "t_struct(AddressSet)49238_storage"
     },
     {
-      "astId": 52090,
+      "astId": 52121,
       "contract": "src/BitcoinAttestorRegistry.sol:BitcoinAttestorRegistry",
       "label": "_attestorEpoch",
       "offset": 0,
@@ -25,7 +25,7 @@
       "type": "t_uint64"
     },
     {
-      "astId": 52092,
+      "astId": 52123,
       "contract": "src/BitcoinAttestorRegistry.sol:BitcoinAttestorRegistry",
       "label": "_threshold",
       "offset": 8,
@@ -33,7 +33,7 @@
       "type": "t_uint8"
     },
     {
-      "astId": 52094,
+      "astId": 52125,
       "contract": "src/BitcoinAttestorRegistry.sol:BitcoinAttestorRegistry",
       "label": "_policyVersion",
       "offset": 9,

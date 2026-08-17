@@ -607,17 +607,39 @@ contract RootOwnershipRegistryTest is Test {
         registry.bindRootOwner(a, sigs, proofA);
     }
 
-    /// @notice "Not older than" is inclusive: an attestation at exactly the recorded height binds.
-    function test_BindRootOwnerAcceptsEqualBitcoinHeight() public {
+    /// @notice Equal-height updates are accepted only when they identify the same Bitcoin block.
+    function test_BindRootOwnerAcceptsEqualBitcoinHeightInTheSameBlock() public {
         _recordBobsMint();
 
         PuppetTypes.OwnershipAttestation memory a = _bindAttestation(
             TXID_A, INDEX_A, charlie, outpointTwo, scriptCharlie, HEIGHT_ONE, keccak256("FIXTURE-auth-eq")
         );
+        a.bitcoinBlockHash = keccak256("FIXTURE-block-880000");
         bytes[] memory sigs = _sigsFor(a);
 
         (uint64 epoch,) = registry.bindRootOwner(a, sigs, proofA);
-        assertEq(epoch, 2, "equal height is accepted");
+        assertEq(epoch, 2, "same height and same block is accepted");
+    }
+
+    /// @notice Two different blocks cannot both be canonical at the same Bitcoin height.
+    function test_BindRootOwnerRejectsConflictingBlockAtEqualBitcoinHeight() public {
+        _recordBobsMint();
+
+        PuppetTypes.OwnershipAttestation memory a = _bindAttestation(
+            TXID_A, INDEX_A, charlie, outpointTwo, scriptCharlie, HEIGHT_ONE, keccak256("FIXTURE-auth-fork")
+        );
+        bytes32 recordedBlockHash = keccak256("FIXTURE-block-880000");
+        bytes[] memory sigs = _sigsFor(a);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRootOwnershipRegistry.ConflictingBitcoinBlockAtHeight.selector,
+                HEIGHT_ONE,
+                recordedBlockHash,
+                a.bitcoinBlockHash
+            )
+        );
+        registry.bindRootOwner(a, sigs, proofA);
     }
 
     /// @notice An invalidation advances the recorded height, so a pre-spend proof cannot reinstate
@@ -1055,6 +1077,26 @@ contract RootOwnershipRegistryTest is Test {
         registry.invalidateRoot(spend, sigs, proofA);
     }
 
+    function test_InvalidateRootRejectsConflictingBlockAtEqualBitcoinHeight() public {
+        _recordBobsMint();
+
+        PuppetTypes.RootSpendAttestation memory spend =
+            _spendAttestation(TXID_A, INDEX_A, outpointOne, HEIGHT_ONE, keccak256("FIXTURE-auth-same-height-fork"));
+        bytes[] memory sigs = _sigsFor(spend);
+        bytes32 recordedBlockHash = keccak256("FIXTURE-block-880000");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRootOwnershipRegistry.ConflictingBitcoinBlockAtHeight.selector,
+                HEIGHT_ONE,
+                recordedBlockHash,
+                spend.bitcoinBlockHash
+            )
+        );
+        registry.invalidateRoot(spend, sigs, proofA);
+        assertTrue(registry.isActive(rootKeyA), "conflicting fork cannot close the epoch");
+    }
+
     /// @notice Structurally empty spend attestations are refused before the oracle is called.
     /// @dev Rebuilt per case for the same memory-aliasing reason as the bind equivalent.
     function test_InvalidateRoot_RejectsEmptyFields() public {
@@ -1403,6 +1445,10 @@ contract RootOwnershipRegistryTest is Test {
         if (invalidateFirst) {
             PuppetTypes.RootSpendAttestation memory spend =
                 _spendAttestation(TXID_A, INDEX_A, outpointOne, h2, keccak256("FIXTURE-auth-fz-spend"));
+            PuppetTypes.RootState memory beforeSpend = registry.currentState(rootKeyA);
+            if (h2 == beforeSpend.verifiedBitcoinHeight) {
+                spend.bitcoinBlockHash = beforeSpend.lastBitcoinBlockHash;
+            }
             registry.invalidateRoot(spend, _sigsFor(spend), proofA);
 
             assertFalse(registry.isActive(rootKeyA), "inactive after spend");
@@ -1413,6 +1459,10 @@ contract RootOwnershipRegistryTest is Test {
         PuppetTypes.OwnershipAttestation memory a = _bindAttestation(
             TXID_A, INDEX_A, charlie, outpointTwo, scriptCharlie, h3, keccak256("FIXTURE-auth-fz-bind")
         );
+        PuppetTypes.RootState memory beforeBind = registry.currentState(rootKeyA);
+        if (h3 == beforeBind.verifiedBitcoinHeight) {
+            a.bitcoinBlockHash = beforeBind.lastBitcoinBlockHash;
+        }
         registry.bindRootOwner(a, _sigsFor(a), proofA);
 
         PuppetTypes.RootState memory s = registry.currentState(rootKeyA);

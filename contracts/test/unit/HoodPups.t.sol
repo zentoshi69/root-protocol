@@ -452,6 +452,31 @@ contract HoodPupsTest is Test {
         assertEq(nft.tokenURI(tokenId), string.concat(BASE_URI, "1"), "tokenURI works while paused");
     }
 
+    /// @dev Only the escrow's terminal BTC path may finish an obligation through the mint pause.
+    ///      The bypass does not weaken role authorization or Root uniqueness.
+    function test_TerminalMintRemainsLiveWhilePausedAndRoleGated() public {
+        vm.prank(guardian);
+        nft.pauseMinting();
+
+        PuppetTypes.RootId memory root = _root(99);
+        vm.prank(stranger);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, MINTER)
+        );
+        nft.mintRootedTerminal(alice, root);
+
+        vm.prank(minter);
+        uint256 tokenId = nft.mintRootedTerminal(alice, root);
+        assertEq(nft.ownerOf(tokenId), alice, "terminal recipient owns the token");
+        assertTrue(nft.rootMinted(PuppetHashing.rootKey(root)), "Root is permanently consumed");
+
+        vm.prank(minter);
+        vm.expectRevert(
+            abi.encodeWithSelector(IHoodPups.RootAlreadyMinted.selector, PuppetHashing.rootKey(root), tokenId)
+        );
+        nft.mintRootedTerminal(bob, root);
+    }
+
     /// @notice The guardian may pause and may never unpause; the timelock admin does the reverse.
     /// @dev The asymmetry is the whole design: a compromised guardian can only cost liveness.
     function test_GuardianCanPauseButNeverUnpause() public {

@@ -107,6 +107,25 @@ export class OrdClient {
    */
   async assertFresh(nodeHeight: number, maxLag = 2): Promise<number> {
     const { height } = await this.status();
+    if (!Number.isSafeInteger(nodeHeight) || nodeHeight < 0 || !Number.isSafeInteger(maxLag) || maxLag < 0) {
+      reject(RejectionCode.ORD_INDEX_INCONSISTENT, 'invalid Bitcoin node height or ord lag policy; abstaining', {
+        nodeHeight,
+        maxLag,
+      });
+    }
+    if (!Number.isSafeInteger(height) || height < 0) {
+      reject(RejectionCode.ORD_INDEX_INCONSISTENT, 'ord returned an invalid index height; abstaining', {
+        ordHeight: height,
+        nodeHeight,
+      });
+    }
+    if (height > nodeHeight) {
+      reject(
+        RejectionCode.ORD_INDEX_INCONSISTENT,
+        'ord is ahead of its Bitcoin Core node; the two data sources are inconsistent',
+        { ordHeight: height, nodeHeight },
+      );
+    }
     if (nodeHeight - height > maxLag) {
       reject(
         RejectionCode.ORD_INDEX_LAGGING,

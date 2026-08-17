@@ -240,6 +240,14 @@ describe('ownership attestation', () => {
     );
   });
 
+  it('rejects a message naming a different Bitcoin network', async () => {
+    const { ctx } = makeContext();
+    await expectRejection(
+      attestOwnership(ctx, request(buildMessage(makeFields({ bitcoinNetwork: 'mainnet' })))),
+      RejectionCode.OFFER_TERMS_MISMATCH,
+    );
+  });
+
   it('rejects a message naming a different escrow contract', async () => {
     const { ctx } = makeContext();
     await expectRejection(
@@ -322,16 +330,17 @@ describe('ownership attestation', () => {
     );
   });
 
-  it('rejects a payout mode that disagrees with the offer kind', async () => {
-    // Offer is PAID_EVM (kind 0) but the message claims a BTC payout.
+  it('rejects a forged payout mode before comparing it with the offer', async () => {
+    // The canonical-message package and on-chain oracle now enforce the same purpose/mode shape.
+    // Simulate a requester editing the already-built bytes: the attestor must classify them as
+    // non-canonical and never reach the signer.
     const { ctx } = makeContext();
-    const fields = makeFields({
-      payoutMode: 'BTC',
-      evmPayout: '0x0000000000000000000000000000000000000000',
-      btcPayoutScriptHash: `0x${'cc'.repeat(32)}`,
-      sellerSats: 50_000n,
-    });
-    await expectRejection(attestOwnership(ctx, request(buildMessage(fields))), RejectionCode.OFFER_TERMS_MISMATCH);
+    const forged = buildMessage(makeFields())
+      .replace('payout_mode=EVM', 'payout_mode=BTC')
+      .replace(`evm_payout=${EVM_PAYOUT}`, 'evm_payout=0x0000000000000000000000000000000000000000')
+      .replace(`btc_payout_script_hash=0x${'00'.repeat(32)}`, `btc_payout_script_hash=0x${'cc'.repeat(32)}`)
+      .replace('seller_sats=0', 'seller_sats=50000');
+    await expectRejection(attestOwnership(ctx, request(forged)), RejectionCode.MESSAGE_NOT_CANONICAL);
   });
 
   it('two attestors over identical facts produce the same digest', async () => {

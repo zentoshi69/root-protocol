@@ -41,13 +41,20 @@ SOLC_VERSION="0.8.28"
 EVM_VERSION="shanghai"
 OPTIMIZER_RUNS="800"
 
+sha256_file() {
+  python3 - "$1" <<'PY'
+import hashlib, pathlib, sys
+print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+}
+
 # storageLayout is not in the default artifact output, and adding the flag to an already-cached
 # build is a no-op — forge sees nothing to recompile and reuses artifacts that lack it. Building
 # into a DEDICATED out dir forces a fresh compile so the extra output actually lands, and leaves the
 # everyday build and the CI artifacts untouched.
 AUDIT_OUT="out-audit"
 echo "==> Building the workspace with storage layouts (dedicated out dir)"
-(cd "$CONTRACTS" && forge build --silent --extra-output storageLayout --out "$AUDIT_OUT" --cache-path cache-audit)
+(cd "$CONTRACTS" && forge build --offline --silent --extra-output storageLayout --out "$AUDIT_OUT" --cache-path cache-audit)
 
 rm -rf "$OUT/contracts"
 mkdir -p "$OUT/contracts"
@@ -80,7 +87,7 @@ evm_version = "$EVM_VERSION"
 optimizer = true
 optimizer_runs = $OPTIMIZER_RUNS
 TOML
-  if (cd "$SCRATCH" && forge build --silent 2>/dev/null); then
+  if (cd "$SCRATCH" && forge build --offline --silent 2>/dev/null); then
     STANDALONE="verified"
   else
     STANDALONE="FAILED"
@@ -104,8 +111,8 @@ pathlib.Path(out_dir, f"{name}.storage.json").write_text(json.dumps(layout, inde
 PYEOF
 
   # 4. Per-contract metadata, including the hash of the exact bytes shipped.
-  FLAT_SHA="$(sha256sum "$DIR/$NAME.flat.sol" | cut -d' ' -f1)"
-  SRC_SHA="$(sha256sum "$CONTRACTS/src/$NAME.sol" | cut -d' ' -f1)"
+  FLAT_SHA="$(sha256_file "$DIR/$NAME.flat.sol")"
+  SRC_SHA="$(sha256_file "$CONTRACTS/src/$NAME.sol")"
   LOC="$(grep -cve '^\s*$' "$CONTRACTS/src/$NAME.sol")"
   FLAT_LOC="$(grep -cve '^\s*$' "$DIR/$NAME.flat.sol")"
 

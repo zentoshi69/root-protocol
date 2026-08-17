@@ -5,6 +5,7 @@ contracts/broadcast/
 contracts/.gas-snapshot.tmp
 contracts/lcov.info
 contracts/coverage/
+deployments/31337.json
 
 # Node
 node_modules/

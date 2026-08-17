@@ -146,29 +146,47 @@ const MAX_UINT256 = 2n ** 256n - 1n;
 export function assertPayoutShape(fields: AuthorizationMessageFields): void {
   const { payoutMode, evmPayout, btcPayoutScriptHash, sellerSats, purpose } = fields;
 
-  if (payoutMode === 'EVM') {
+  // ROOT_BIND is the one non-paying authorization that deliberately carries an EVM address: the
+  // beneficiary being bound. Keep it separate from a paid EVM mint so the canonical-message
+  // package cannot produce a message the on-chain oracle rejects.
+  if (purpose === 'ROOT_BIND') {
+    if (payoutMode !== 'EVM') fail('PAYOUT_SHAPE', 'ROOT_BIND requires payout mode EVM');
+    if (evmPayout === ZERO_ADDRESS) fail('PAYOUT_SHAPE', 'ROOT_BIND requires a non-zero evm_payout beneficiary');
+    if (btcPayoutScriptHash !== ZERO_HASH || sellerSats !== 0n || fields.grossWei !== 0n || fields.sellerWei !== 0n) {
+      fail('PAYOUT_SHAPE', 'ROOT_BIND requires zero BTC and monetary fields');
+    }
+    return;
+  }
+
+  const expectedMode: PayoutModeName =
+    purpose === 'PAID_EVM_MINT' ? 'EVM' : purpose === 'PAID_BTC_MINT' ? 'BTC' : 'NONE';
+  if (payoutMode !== expectedMode) {
+    fail('PAYOUT_SHAPE', `${purpose} requires payout mode ${expectedMode}`);
+  }
+
+  if (expectedMode === 'EVM') {
     if (evmPayout === ZERO_ADDRESS) fail('PAYOUT_SHAPE', 'EVM payout mode requires a non-zero evm_payout');
     if (btcPayoutScriptHash !== ZERO_HASH) {
       fail('PAYOUT_SHAPE', 'EVM payout mode requires a zero btc_payout_script_hash');
     }
     if (sellerSats !== 0n) fail('PAYOUT_SHAPE', 'EVM payout mode requires seller_sats to be 0');
-  } else if (payoutMode === 'BTC') {
+    if (fields.sellerWei > fields.grossWei) fail('PAYOUT_SHAPE', 'seller_wei cannot exceed gross_wei');
+  } else if (expectedMode === 'BTC') {
     if (evmPayout !== ZERO_ADDRESS) fail('PAYOUT_SHAPE', 'BTC payout mode requires a zero evm_payout');
     if (btcPayoutScriptHash === ZERO_HASH) {
       fail('PAYOUT_SHAPE', 'BTC payout mode requires a non-zero btc_payout_script_hash');
     }
     if (sellerSats <= 0n) fail('PAYOUT_SHAPE', 'BTC payout mode requires seller_sats > 0');
+    if (fields.sellerWei > fields.grossWei) fail('PAYOUT_SHAPE', 'seller_wei cannot exceed gross_wei');
   } else {
-    if (evmPayout !== ZERO_ADDRESS || btcPayoutScriptHash !== ZERO_HASH || sellerSats !== 0n) {
-      fail('PAYOUT_SHAPE', 'NONE payout mode requires all payout fields to be zero');
-    }
-  }
-
-  // A self-cast moves no money at all. Allowing a non-zero amount here would create a message a
-  // human reads as "free" while the contract reads as a paid mint.
-  if (purpose === 'SELF_CAST') {
-    if (fields.grossWei !== 0n || fields.sellerWei !== 0n || sellerSats !== 0n || payoutMode !== 'NONE') {
-      fail('PAYOUT_SHAPE', 'SELF_CAST requires payout mode NONE and zero gross_wei, seller_wei and seller_sats');
+    if (
+      evmPayout !== ZERO_ADDRESS ||
+      btcPayoutScriptHash !== ZERO_HASH ||
+      sellerSats !== 0n ||
+      fields.grossWei !== 0n ||
+      fields.sellerWei !== 0n
+    ) {
+      fail('PAYOUT_SHAPE', `${purpose} requires payout mode NONE and zero payout and monetary fields`);
     }
   }
 }

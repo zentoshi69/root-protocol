@@ -405,6 +405,11 @@ interface IPayoutVault {
     /// @notice Emitted alongside `Credited` when the credit is a refund, so indexers can tell a
     ///         buyer being made whole apart from a seller being paid.
     event RefundCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
+    /// @notice Emitted alongside `Credited` when an existing cross-chain obligation is finalized.
+    /// @dev Terminal credits deliberately remain executable while ordinary liability creation is
+    ///      paused. Authorized callers may use them only after the protocol has already incurred
+    ///      an irreversible obligation, such as a solver payment or a bond resolution.
+    event TerminalCredited(address indexed beneficiary, uint256 amount, address indexed creditor);
     event RootCredited(bytes32 indexed rootKey, uint256 amount, address indexed creditor);
     event RootCreditReleased(bytes32 indexed rootKey, address indexed beneficiary, uint256 amount);
     event Withdrawn(address indexed beneficiary, address indexed recipient, uint256 amount);
@@ -436,11 +441,20 @@ interface IPayoutVault {
     ///      new one, so the credit pause must not reach it (protocol invariant I12).
     function creditRefund(address beneficiary) external payable;
 
+    /// @notice Credit an obligation that existed before the current transaction.
+    /// @dev Requires `CREDITOR_ROLE`. Deliberately NOT pausable so incident response cannot strand
+    ///      a solver after an irreversible Bitcoin payment or block terminal bond accounting.
+    function creditTerminal(address beneficiary) external payable;
+
     /// @notice Credit a Root's pending bucket with `msg.value`. Requires `CREDITOR_ROLE`.
     function creditRoot(bytes32 rootKey) external payable;
 
     /// @notice Credit several beneficiaries in one call. `sum(amounts)` must equal `msg.value`.
     function creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
+
+    /// @notice Batch form of `creditTerminal`; `sum(amounts)` must equal `msg.value`.
+    /// @dev Requires `CREDITOR_ROLE` and deliberately remains live while paused.
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts) external payable;
 
     /// @notice Move a Root's pending bucket to a newly verified beneficiary's claimable balance.
     /// @dev Pure bookkeeping: no ETH moves and `totalLiability` is unchanged.
@@ -544,6 +558,11 @@ library Panic {
 ///      independent verifier operators. This is an attested settlement system, not a
 ///      trustless bridge.
 library PuppetTypes {
+    /// @notice Protocol-wide ceiling for a bonded solver reservation.
+    /// @dev Both the escrow and solver coordinator reference this value so their acceptance
+    ///      windows cannot drift into a configuration where every reservation reverts.
+    uint64 internal constant MAX_BTC_RESERVATION_DURATION = 30 days;
+
     /*//////////////////////////////////////////////////////////////
                               ENUMERATIONS
     //////////////////////////////////////////////////////////////*/
@@ -4082,12 +4101,10 @@ abstract contract EIP712 is IERC5267 {
 ///      is an attested settlement system, not a trustless bridge. The original Bitcoin Puppet never
 ///      leaves Bitcoin and is never escrowed, wrapped or custodied here — this vault holds ETH only.
 ///
-///      PAUSING IS ONE-DIRECTIONAL BY DESIGN. `whenNotPaused` appears on the three credit functions
-///      and nowhere else. A pause can stop the protocol taking on NEW liabilities; it can never
-///      stop a user taking their money out. Any pause that could freeze a withdrawal would be an
-///      admin path to seize user funds with extra steps, so there is deliberately no such modifier
-///      on `withdraw`, `withdrawAll`, `withdrawTo` or `withdrawWithAuthorization`. This is asserted
-///      directly by `test_WithdrawalsWorkWhilePaused`.
+///      PAUSING IS ONE-DIRECTIONAL BY DESIGN. `whenNotPaused` appears on ordinary credit functions
+///      and nowhere else. A pause can stop the protocol taking on NEW liabilities; it cannot block
+///      refunds, terminal credits for obligations already incurred, or withdrawals. Any pause that
+///      could freeze one of those exits would be an admin path to seize user funds with extra steps.
 ///
 ///      NO ADMIN PATH REDUCES A USER'S BALANCE. `_claimable` is decreased in exactly one place —
 ///      `_debit`, reached only through the four withdrawal entry points, each of which either runs
@@ -4317,12 +4334,7 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
     ///      in the same call that created it.
     /// @param beneficiary Address to credit.
     function credit(address beneficiary) external payable onlyRole(CREDITOR_ROLE) whenNotPaused {
-        if (beneficiary == address(0)) revert ZeroAddress();
-        if (msg.value == 0) revert ZeroAmount();
-
-        _claimable[beneficiary] += msg.value;
-        _totalLiability += msg.value;
-
+        _credit(beneficiary, msg.value);
         emit Credited(beneficiary, msg.value, msg.sender);
     }
 
@@ -4344,14 +4356,21 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
     ///      more value than `credit` does.
     /// @param beneficiary The buyer being made whole. Must be non-zero.
     function creditRefund(address beneficiary) external payable onlyRole(CREDITOR_ROLE) {
-        if (beneficiary == address(0)) revert ZeroAddress();
-        if (msg.value == 0) revert ZeroAmount();
-
-        _claimable[beneficiary] += msg.value;
-        _totalLiability += msg.value;
-
+        _credit(beneficiary, msg.value);
         emit Credited(beneficiary, msg.value, msg.sender);
         emit RefundCredited(beneficiary, msg.value, msg.sender);
+    }
+
+    /// @inheritdoc IPayoutVault
+    /// @dev This is the accounting equivalent of `creditRefund`: the ETH backs an obligation that
+    ///      was already created outside this transaction. For BTC settlement, the solver may have
+    ///      irreversibly paid Bitcoin before an EVM pause is raised; for expiry, the bond already
+    ///      belongs to its deterministic recipients. Pausing either terminal write would turn the
+    ///      incident switch into a confiscation lever.
+    function creditTerminal(address beneficiary) external payable onlyRole(CREDITOR_ROLE) {
+        _credit(beneficiary, msg.value);
+        emit Credited(beneficiary, msg.value, msg.sender);
+        emit TerminalCredited(beneficiary, msg.value, msg.sender);
     }
 
     /// @inheritdoc IPayoutVault
@@ -4383,6 +4402,20 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
         onlyRole(CREDITOR_ROLE)
         whenNotPaused
     {
+        _creditBatch(beneficiaries, amounts, false);
+    }
+
+    /// @inheritdoc IPayoutVault
+    function creditTerminalBatch(address[] calldata beneficiaries, uint256[] calldata amounts)
+        external
+        payable
+        onlyRole(CREDITOR_ROLE)
+    {
+        _creditBatch(beneficiaries, amounts, true);
+    }
+
+    /// @dev Shared exact-conservation implementation for ordinary and terminal batches.
+    function _creditBatch(address[] calldata beneficiaries, uint256[] calldata amounts, bool terminal) private {
         uint256 length = beneficiaries.length;
         if (length != amounts.length) revert ArrayLengthMismatch(length, amounts.length);
 
@@ -4399,6 +4432,7 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
             _claimable[beneficiary] += amount;
 
             emit Credited(beneficiary, amount, msg.sender);
+            if (terminal) emit TerminalCredited(beneficiary, amount, msg.sender);
         }
 
         // Also catches the empty-array call, whose total is 0.
@@ -4406,6 +4440,15 @@ contract PayoutVault is IPayoutVault, AccessControl, Pausable, ReentrancyGuard, 
         if (total != msg.value) revert AmountMismatch(total, msg.value);
 
         _totalLiability += total;
+    }
+
+    /// @dev Shared single-beneficiary accounting. Events remain purpose-specific at the wrappers.
+    function _credit(address beneficiary, uint256 amount) private {
+        if (beneficiary == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
+
+        _claimable[beneficiary] += amount;
+        _totalLiability += amount;
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   assertAdapterValidated,
   Bip322JsAdapter,
+  BitcoinCoreClient,
   btcToSats,
   classifyScriptPubKey,
   isInfrastructureFailure,
   KNOWN_SCRIPT_TYPES,
+  OrdClient,
   RejectionCode,
   validateAdapter,
   VerificationRejection,
@@ -165,6 +167,88 @@ describe('btcToSats never goes through a float', () => {
   });
 });
 
+describe('Bitcoin Core mempool-spend lookup', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  function client() {
+    return new BitcoinCoreClient({ url: 'http://127.0.0.1:18443', username: 'u', password: 'p' });
+  }
+
+  it('uses one bounded gettxspendingprevout RPC and returns the spender', async () => {
+    const txid = 'a'.repeat(64);
+    const spendingtxid = 'b'.repeat(64);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({ result: [{ txid, vout: 2, spendingtxid }], error: null }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+
+    await expect(client().findMempoolSpend(txid, 2)).resolves.toBe(spendingtxid);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const request = JSON.parse(String(fetchMock.mock.calls[0]![1]?.body));
+    expect(request).toMatchObject({ method: 'gettxspendingprevout', params: [[{ txid, vout: 2 }]] });
+  });
+
+  it('returns null when Core reports the outpoint has no mempool spender', async () => {
+    const txid = 'c'.repeat(64);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ result: [{ txid, vout: 0 }], error: null }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await expect(client().findMempoolSpend(txid, 0)).resolves.toBeNull();
+  });
+
+  it('fails closed if Core answers for a different outpoint', async () => {
+    const txid = 'd'.repeat(64);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ result: [{ txid: 'e'.repeat(64), vout: 1 }], error: null }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await expectRejection(client().findMempoolSpend(txid, 1), RejectionCode.NODE_UNAVAILABLE);
+  });
+});
+
+describe('ord freshness boundary', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  function withHeight(height: unknown) {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ height }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    return new OrdClient({ baseUrl: 'http://127.0.0.1:8080' });
+  }
+
+  it('accepts an index at or slightly behind the node tip', async () => {
+    await expect(withHeight(199).assertFresh(200, 2)).resolves.toBe(199);
+  });
+
+  it('abstains if ord claims to be ahead of its own Bitcoin node', async () => {
+    await expectRejection(withHeight(201).assertFresh(200, 2), RejectionCode.ORD_INDEX_INCONSISTENT);
+  });
+
+  it('abstains on a malformed index height instead of coercing it', async () => {
+    await expectRejection(withHeight('200').assertFresh(200, 2), RejectionCode.ORD_INDEX_INCONSISTENT);
+  });
+
+  it('abstains on a negative index height', async () => {
+    await expectRejection(withHeight(-1).assertFresh(200, 2), RejectionCode.ORD_INDEX_INCONSISTENT);
+  });
+
+  it('abstains when the Bitcoin node height is malformed', async () => {
+    await expectRejection(withHeight(200).assertFresh(Number.NaN, 2), RejectionCode.ORD_INDEX_INCONSISTENT);
+  });
+});
+
 /*//////////////////////////////////////////////////////////////
                       THE VERIFICATION PIPELINE
 //////////////////////////////////////////////////////////////*/
@@ -255,6 +339,14 @@ describe('ownership verification', () => {
   it('rejects an inscription outside the manifest', async () => {
     const ctx = { ...makeContext(), isCollectionMember: () => false };
     await expectRejection(verifyOwnershipAuthorization(ctx, ownershipInput), RejectionCode.ROOT_NOT_IN_MANIFEST);
+  });
+
+  it('abstains when Bitcoin Core serves a different network than configured', async () => {
+    const ctx = { ...makeContext(), network: 'mainnet' as const };
+    await expectRejection(
+      verifyOwnershipAuthorization(ctx, ownershipInput),
+      RejectionCode.BITCOIN_NETWORK_MISMATCH,
+    );
   });
 
   it('rejects when the inscription has moved since the claim was made', async () => {
@@ -483,7 +575,9 @@ describe('rejection taxonomy', () => {
     // An operator that cannot verify must abstain, never defer to the others. A quorum of four
     // honest operators plus one that guesses is worse than four.
     expect(isInfrastructureFailure(RejectionCode.NODE_UNAVAILABLE)).toBe(true);
+    expect(isInfrastructureFailure(RejectionCode.BITCOIN_NETWORK_MISMATCH)).toBe(true);
     expect(isInfrastructureFailure(RejectionCode.ORD_INDEX_LAGGING)).toBe(true);
+    expect(isInfrastructureFailure(RejectionCode.ORD_INDEX_INCONSISTENT)).toBe(true);
     expect(isInfrastructureFailure(RejectionCode.BIP322_INVALID)).toBe(false);
     expect(isInfrastructureFailure(RejectionCode.PAYMENT_AMOUNT_MISMATCH)).toBe(false);
   });

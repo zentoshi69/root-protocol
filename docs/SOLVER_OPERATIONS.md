@@ -51,7 +51,7 @@ cast send $SOLVER "reserve(bytes32)" $OFFER_ID --value $BOND_WEI --rpc-url $RH_R
 Before reserving, verify **yourself**:
 
 - offer status is `BTC_APPROVED`
-- the offer's own expiry leaves room for the full confirmation policy
+- the offer is still live at reservation time
 - `sellerSats` and the approved `btcPayoutScriptHash` are what you intend to pay
 - the Root is not already minted
 - your bond meets `minimumBondWei`
@@ -136,7 +136,7 @@ contract is — check the contract's own invariant test before assuming it is yo
 | Payment reorged after settlement | You keep the ETH; the seller lost the BTC. See [`BITCOIN_REORG_RESPONSE.md`](./BITCOIN_REORG_RESPONSE.md) |
 | Expired before confirmation | Check `reservationDuration` vs confirmation policy **before** reserving |
 | Attestors unavailable | You paid BTC and cannot settle. Escalate; the reservation window is your deadline |
-| Offer expires mid-reservation | Verify the offer's own expiry leaves room before you reserve |
+| Offer expires mid-reservation | The snapshotted reservation remains live through its own expiry; settle before that reservation deadline |
 | Bond opportunity cost | Priced into your spread |
 
 The protocol deliberately does not insure any of these. A solver is a market maker taking a

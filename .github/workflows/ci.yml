@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   FOUNDRY_PROFILE: default
 
@@ -18,11 +21,13 @@ jobs:
     name: Solidity — format, build, test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: stable
+          persist-credentials: false
+
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.1
 
       - name: Format check
         working-directory: contracts
@@ -42,24 +47,30 @@ jobs:
 
       - name: Gas snapshot
         working-directory: contracts
-        run: forge snapshot --check || (echo "::warning::gas snapshot drifted; run 'forge snapshot' and commit" && exit 0)
+        run: forge snapshot --check
 
       - name: Contract sizes must fit EIP-170
         working-directory: contracts
-        run: forge build --sizes | tee sizes.txt && ! grep -qE '\| *(2[5-9]|[3-9][0-9])[0-9]{3} *\|' sizes.txt || true
+        # forge exits non-zero when deployed bytecode exceeds EIP-170. pipefail preserves that
+        # status through tee; the former trailing `|| true` made this check impossible to fail.
+        run: set -o pipefail; forge build --sizes | tee sizes.txt
 
   coverage:
     name: Solidity — coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: stable
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.1
       - name: Coverage
         working-directory: contracts
         run: forge coverage --report lcov --no-match-path 'test/invariant/*'
-      - uses: actions/upload-artifact@v4
+      - name: Enforce source coverage floor
+        run: node scripts/check-solidity-coverage.mjs contracts/lcov.info
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lcov
           path: contracts/lcov.info
@@ -68,30 +79,41 @@ jobs:
     name: Slither
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: stable
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
-      - run: pip install slither-analyzer
+      - run: pip install slither-analyzer==0.11.6
       - name: Slither
         working-directory: contracts
-        # Findings are surfaced, never silently suppressed. Triage lives in docs/SECURITY_REVIEW.md.
-        run: slither . --config-file slither.config.json || true
+        # High-severity findings fail. Lower-severity detector output remains visible and every
+        # current result category is dispositioned in docs/SECURITY_READINESS_2026-08-17.md.
+        run: slither . --config-file slither.config.json --fail-high
 
   typescript:
     name: TypeScript — typecheck, test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Full dependency audit
+        run: pnpm audit --audit-level=moderate
+      - name: Post-deploy verifier is executable
+        run: node --check scripts/verify-roles.mjs
+      - name: Production bundles compile
+        run: pnpm build
       - run: pnpm typecheck
       - run: pnpm test
 
@@ -103,12 +125,14 @@ jobs:
     # operators could sign five different digests for the same facts and never reach quorum — or
     # worse, agree on a digest that does not match what the contract computes.
     steps:
-      - uses: actions/checkout@v4
-      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: stable
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
@@ -130,11 +154,12 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Default ruleset plus a documented allowlist for vendored code and deliberately-public
@@ -186,16 +211,35 @@ jobs:
 
           echo "no key material, no mainnet broadcast artifacts"
 
+  regtest-image:
+    name: Regtest container provenance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compose configuration is valid
+        run: docker compose -f infra/regtest/docker-compose.yml config --quiet
+
+      - name: Build checksum-verified ord image
+        run: docker build --platform linux/amd64 --file infra/regtest/Dockerfile.ord --tag hoodpups/ord:ci infra/regtest
+
+      - name: Prove the expected ord binary runs
+        run: test "$(docker run --rm --platform linux/amd64 hoodpups/ord:ci --version)" = "ord 0.27.1"
+
   nightly-deep-fuzz:
     name: Deep stateful fuzzing
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
-      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: stable
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.1
       - name: Long invariant campaign
         working-directory: contracts
         run: FOUNDRY_PROFILE=deep forge test -vv

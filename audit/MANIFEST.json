@@ -1,12 +1,12 @@
 {
   "package": "hoodpups-audit-package",
-  "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+  "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
   "contractCount": 10,
-  "packageDigest": "780978e5b7154d225f6cde92114d06ede369eea45d42803dfe7261862e1d4b31",
+  "packageDigest": "6102c1ad546b1ab7f88d8387d78f1d9f0f58284d888d1cc09cd102220a5c7a59",
   "contracts": [
     {
       "contract": "BitcoinAttestorRegistry",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -16,19 +16,19 @@
       },
       "source": {
         "path": "contracts/src/BitcoinAttestorRegistry.sol",
-        "sha256": "353584e275d96a9b3ea73bcc4aa0f9b3493692451de35eb6d240efc19cdd210a",
-        "nonBlankLines": 301
+        "sha256": "9d65793f8343daaa09b308d3128ea049c63e83df27596712be2b4613b82c539d",
+        "nonBlankLines": 299
       },
       "flattened": {
         "path": "audit/contracts/BitcoinAttestorRegistry/BitcoinAttestorRegistry.flat.sol",
-        "sha256": "0bff02c1f066e03898eb4a89434d81621ec0072d467e33127ce8e28db3399a32",
-        "nonBlankLines": 1004,
+        "sha256": "e21a219e821ba25a0374a94740ccb632c3c08855995a4de2ef0e9d4e2be11988",
+        "nonBlankLines": 1002,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "BitcoinOwnershipOracle",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -38,19 +38,19 @@
       },
       "source": {
         "path": "contracts/src/BitcoinOwnershipOracle.sol",
-        "sha256": "9f5f0056ccdabb4335271bb7a3e80594b42b81a2b14203c094fc9e9a58ecc2cf",
-        "nonBlankLines": 670
+        "sha256": "92703f1706ccff4be9e9350c3e050a125b52ed107f92892d97d80ad165489137",
+        "nonBlankLines": 684
       },
       "flattened": {
         "path": "audit/contracts/BitcoinOwnershipOracle/BitcoinOwnershipOracle.flat.sol",
-        "sha256": "b834914b4824150f7bd7439f7a0539c2ee633b6a204694ae11ec5ea90265292f",
-        "nonBlankLines": 4292,
+        "sha256": "2d814fbd2f5d32405dbe6e972ef625d7f1d5c31179e35c417de5ae8241fc6339",
+        "nonBlankLines": 4310,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "BtcSolverSettlement",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -60,19 +60,19 @@
       },
       "source": {
         "path": "contracts/src/BtcSolverSettlement.sol",
-        "sha256": "baa6dde3664cee601e186710b10456da638377dad3c1eb5e27108713982708ed",
-        "nonBlankLines": 696
+        "sha256": "84796306d2dd634dc34dc6e11a00c18502ebba7a22e7abf9414915e15b41be2f",
+        "nonBlankLines": 694
       },
       "flattened": {
         "path": "audit/contracts/BtcSolverSettlement/BtcSolverSettlement.flat.sol",
-        "sha256": "118cd02a5056545b6e1d91d71c9184d61777b6e879568fbbd9dbd623097fd104",
-        "nonBlankLines": 1812,
+        "sha256": "d51167292602284ef39de8915d9d9721d16c1489f2cda2c3a573ad8c3f8ce443",
+        "nonBlankLines": 1831,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "FeeRouter",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -82,19 +82,19 @@
       },
       "source": {
         "path": "contracts/src/FeeRouter.sol",
-        "sha256": "79851d095215dede08735319af9a4239c81894087f446ca0d42bad8ccd70cc37",
-        "nonBlankLines": 497
+        "sha256": "3329b55e99bf732c562c360b829d0c5ee885e82942244e5fe5b5b5edeb4e683f",
+        "nonBlankLines": 508
       },
       "flattened": {
         "path": "audit/contracts/FeeRouter/FeeRouter.flat.sol",
-        "sha256": "c75417ad32a08e3fa7c5e8e42004a332a7643c65e3db3d339952d31c1b54de54",
-        "nonBlankLines": 1356,
+        "sha256": "a78472a6a478524a839f8c570d1248023bd6d9891c65cf99299277b62f888fa0",
+        "nonBlankLines": 1384,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "HoodPupOfferEscrow",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -104,19 +104,19 @@
       },
       "source": {
         "path": "contracts/src/HoodPupOfferEscrow.sol",
-        "sha256": "d9305f4a06d3ea8ff4051717c2ab71cf71c01818cfae6499633a586a7ed185be",
-        "nonBlankLines": 959
+        "sha256": "69315c380515f884ad302969e59f12fee84a9dc47f273896f539a2634aa41a4f",
+        "nonBlankLines": 989
       },
       "flattened": {
         "path": "audit/contracts/HoodPupOfferEscrow/HoodPupOfferEscrow.flat.sol",
-        "sha256": "99ac3216143a89b40cc1cdc427739008f6c570f1c1bc598ea8d98ad0497c36c2",
-        "nonBlankLines": 2453,
+        "sha256": "c43cae74b4760064840f803f4f4545d596dc9bda5e3f1478e6d6e53718a015bc",
+        "nonBlankLines": 2510,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "HoodPups",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -126,19 +126,19 @@
       },
       "source": {
         "path": "contracts/src/HoodPups.sol",
-        "sha256": "a4c9e29e5307f5969ed8cff2cfcfebfb31a27699f59e8742a26665f4c8aa9a25",
-        "nonBlankLines": 477
+        "sha256": "1d30909aa220d9b239c22eecff7b0adb2c82a65d45d2ee31e0ed4154e181156e",
+        "nonBlankLines": 493
       },
       "flattened": {
         "path": "audit/contracts/HoodPups/HoodPups.flat.sol",
-        "sha256": "bbfae65d823d4b703f4d9e90e8dd9a4104ae42fefb754538f200d71650fbd334",
-        "nonBlankLines": 4065,
+        "sha256": "21aaac654920a5c8902527e5f7695e3a59d4348e422d874dd1bb592131344eb7",
+        "nonBlankLines": 4090,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "PayoutVault",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -148,19 +148,19 @@
       },
       "source": {
         "path": "contracts/src/PayoutVault.sol",
-        "sha256": "56fd71ae53fe6104680211aa9e3922f57e85f2c1473c269f689f5541e7ff02ab",
-        "nonBlankLines": 528
+        "sha256": "118e72c2b5bac2dc84e058b3230c9a780ad5b5a735fb323e73f5c66778bd3933",
+        "nonBlankLines": 551
       },
       "flattened": {
         "path": "audit/contracts/PayoutVault/PayoutVault.flat.sol",
-        "sha256": "7966255100c46fc79af37644f7a14d0f35063fe04929163510e3b7d21bd2ad2e",
-        "nonBlankLines": 4200,
+        "sha256": "8427a0dc5e54a2efd073bea283c9dd0f664af397104dbd48cf87003738bf3b63",
+        "nonBlankLines": 4239,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "PuppetCollectionRegistry",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -175,14 +175,14 @@
       },
       "flattened": {
         "path": "audit/contracts/PuppetCollectionRegistry/PuppetCollectionRegistry.flat.sol",
-        "sha256": "3998c3453761edda8adfd8563e94bcd2b20a9d84954a70fae7eaf08a6d0b7215",
-        "nonBlankLines": 1210,
+        "sha256": "05b825b225202f06bef1834bb3272c2066d76a6c98ec4c78133d80ab35504c21",
+        "nonBlankLines": 1214,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "RootOwnershipRegistry",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -192,19 +192,19 @@
       },
       "source": {
         "path": "contracts/src/RootOwnershipRegistry.sol",
-        "sha256": "2050dfcd63fd22de0d49d45cc026f327b197116be50d517f3a60726dd8352d0f",
-        "nonBlankLines": 565
+        "sha256": "74c66fe4683f896b85cc4e303124288904b424770c7fb91bc32e58272a9f2353",
+        "nonBlankLines": 585
       },
       "flattened": {
         "path": "audit/contracts/RootOwnershipRegistry/RootOwnershipRegistry.flat.sol",
-        "sha256": "7d3e1a96b7bcebdbfe4e207f2eecea691d44594e3a70be99c457ce97cd90ad7a",
-        "nonBlankLines": 1795,
+        "sha256": "00c130b38cd85c841aa124860e3f023185e83a14599f908b1a901797369af17f",
+        "nonBlankLines": 1832,
         "standaloneCompile": "verified"
       }
     },
     {
       "contract": "TourEngine",
-      "commit": "10e4ce8b0c222196c6e9a3d5572c74bcb61149fb",
+      "commit": "dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b",
       "compiler": {
         "solc": "0.8.28",
         "evmVersion": "shanghai",
@@ -219,8 +219,8 @@
       },
       "flattened": {
         "path": "audit/contracts/TourEngine/TourEngine.flat.sol",
-        "sha256": "44b9b463574ff6fd5525f17535a55a4982dc449f66f5f3d26518d1e4e65f51f3",
-        "nonBlankLines": 1517,
+        "sha256": "1de71258d9f48bd43e938c61b8eddca9a9de311978e8acc97ae259ce31878a56",
+        "nonBlankLines": 1526,
         "standaloneCompile": "verified"
       }
     }

@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Source | `contracts/src/HoodPups.sol` · 477 non-blank lines |
-| Flattened | `HoodPups.flat.sol` · 4065 non-blank lines |
+| Source | `contracts/src/HoodPups.sol` · 493 non-blank lines |
+| Flattened | `HoodPups.flat.sol` · 4090 non-blank lines |
 | Standalone compile | **verified** |
-| sha256 (flattened) | `bbfae65d823d4b703f4d9e90e8dd9a4104ae42fefb754538f200d71650fbd334` |
-| Commit | `10e4ce8b0c222196c6e9a3d5572c74bcb61149fb` |
+| sha256 (flattened) | `21aaac654920a5c8902527e5f7695e3a59d4348e422d874dd1bb592131344eb7` |
+| Commit | `dde0ec7c8ed5f2f1dbadb9c099a08a8d702d912b` |
 | Compiler | solc 0.8.28, evm shanghai, optimizer on (800 runs), via-IR off |
 
 ## What it does
@@ -25,7 +25,7 @@ Timelock admin for metadata only. No burn, no admin remap, no root reassignment.
 2. rootMinted is permanent and cannot be cleared by anyone, including the deployer
 3. Token ids start at 1, so tokenOfRoot() == 0 unambiguously means not minted
 4. ERC-4907 user state clears on a real owner change
-5. mintingPaused never affects transfers
+5. mintingPaused never affects transfers or the role-gated terminal BTC mint
 
 ## Where to look first
 
@@ -42,10 +42,8 @@ Timelock admin for metadata only. No burn, no admin remap, no root reassignment.
   the useful question is whether the blast radius is genuinely bounded as claimed.
 - Core contracts are **non-upgradeable**. No proxy, no initializer, no delegatecall. There is no
   upgrade key to compromise, and equally no way to patch a finding in place.
-- Two High-severity defects were already found and fixed internally, both by the integration
-  suite rather than by unit tests. Both are written up in `docs/SECURITY_REVIEW.md`; the more
-  instructive one is H-1, where every contract was individually correct and the violation existed
-  only in the composition.
+- The findings from the prior whole-protocol review and their regression coverage are mapped in
+  `docs/AUDIT_REMEDIATION.md`. Cross-contract seams remain the first place to challenge.
 
 ## Files in this bundle
 

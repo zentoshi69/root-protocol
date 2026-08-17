@@ -231,6 +231,24 @@ contract HoodPups is IHoodPups, ERC721, AccessControl, ReentrancyGuard {
         returns (uint256 tokenId)
     {
         if (_mintingPaused) revert MintingPaused();
+        return _mintRooted(recipient, root);
+    }
+
+    /// @inheritdoc IHoodPups
+    /// @dev The only production holder of `MINTER_ROLE` is the immutable offer escrow, which calls
+    ///      this entry point solely to finish a BTC reservation whose solver may already have paid
+    ///      irreversible Bitcoin. Ordinary settlement continues through `mintRooted` and remains
+    ///      blocked by the incident pause.
+    function mintRootedTerminal(address recipient, PuppetTypes.RootId calldata root)
+        external
+        onlyRole(MINTER_ROLE)
+        nonReentrant
+        returns (uint256 tokenId)
+    {
+        return _mintRooted(recipient, root);
+    }
+
+    function _mintRooted(address recipient, PuppetTypes.RootId calldata root) private returns (uint256 tokenId) {
         if (recipient == address(0)) revert ZeroAddress();
         if (root.inscriptionTxid == bytes32(0)) revert ZeroRootTxid();
 

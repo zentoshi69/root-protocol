@@ -320,6 +320,42 @@
   },
   {
     "type": "function",
+    "name": "mintRootedTerminal",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "root",
+        "type": "tuple",
+        "internalType": "struct PuppetTypes.RootId",
+        "components": [
+          {
+            "name": "inscriptionTxid",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "inscriptionIndex",
+            "type": "uint32",
+            "internalType": "uint32"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "mintingPaused",
     "inputs": [],
     "outputs": [

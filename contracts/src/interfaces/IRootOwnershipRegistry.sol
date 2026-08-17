@@ -18,6 +18,7 @@ interface IRootOwnershipRegistry {
     error RootMismatch(bytes32 expected, bytes32 provided);
     error OutpointMismatch(bytes32 expected, bytes32 provided);
     error StaleBitcoinHeight(uint64 provided, uint64 current);
+    error ConflictingBitcoinBlockAtHeight(uint64 height, bytes32 recordedBlockHash, bytes32 providedBlockHash);
     error UnchangedOutpoint(bytes32 outpointHash);
     error InvalidBeneficiary();
     error UnsupportedPurpose(uint8 purpose);

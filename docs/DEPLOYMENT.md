@@ -64,25 +64,41 @@ Least privilege. Every grant below is necessary; nothing beyond this list should
 | `TOUR_ENGINE_ROLE` | HoodPups | TourEngine | set the ERC-4907 user |
 | `BTC_SETTLEMENT_ROLE` | Escrow | BtcSolverSettlement | reserve / clear / finalize BTC offers |
 | `PAUSER_ROLE` | all pausable | Guardian multisig | emergency pause only |
-| `DEFAULT_ADMIN_ROLE` | all | **TimelockController** | everything else |
+| `ATTESTOR_ADMIN_ROLE` | BitcoinAttestorRegistry | **TimelockController** | rotate the fixed five-member set and policy |
+| `EXCESS_SWEEPER_ROLE` | PayoutVault | **TimelockController** | schedule/cancel excess-only recovery |
+| `TREASURY_ADMIN_ROLE` | FeeRouter | **TimelockController** | update future treasury destinations |
+| `METADATA_ADMIN_ROLE` | HoodPups | **TimelockController** | update/freeze metadata |
+| `CONFIG_ADMIN_ROLE` | BtcSolverSettlement | **TimelockController** | update future solver economics |
+| `TOUR_ADMIN_ROLE` | TourEngine | **TimelockController** | update future seasons and duration bounds |
+| `DEFAULT_ADMIN_ROLE` | all nine AccessControl contracts | **TimelockController** | grant/revoke roles and unpause |
 
 Note what is absent: no EOA holds anything, and the guardian can pause but never unpause.
+
+`BTC_SETTLEMENT_ROLE` is a one-time binding, not a rotatable operator key. The first grant records
+the deployed `BtcSolverSettlement` as the escrow's sole coordinator; the escrow rejects later
+grants, revocation and renunciation so no active reservation can be stranded between two lifecycle
+owners. Replacing that coordinator requires deploying a new escrow/solver pair after the old pair
+has no active offers. `DeployLib.verifyRoles` checks both the role and the recorded coordinator.
 
 ## Handover — the step that actually matters
 
 ```
-1. Grant DEFAULT_ADMIN_ROLE to the TimelockController on every contract
-2. Grant PAUSER_ROLE to the guardian multisig
-3. Revoke DEFAULT_ADMIN_ROLE from the deployer on every contract
-4. Verify — and fail the deploy if anything remains
+1. Reject zero, colliding, or EOA controller addresses
+2. Grant DEFAULT_ADMIN_ROLE on all nine AccessControl contracts to TimelockController
+3. Grant all six configuration/value-recovery roles to TimelockController
+4. Grant PAUSER_ROLE on all seven pausable contracts to the guardian multisig
+5. Renounce every constructor-granted deployer operational role
+6. Renounce deployer DEFAULT_ADMIN_ROLE last
+7. Replay RoleGranted/RoleRevoked events and compare exact holder sets with this matrix
 ```
 
 Order is load-bearing. Revoking before granting bricks administration permanently, because there is
 no recovery path. That absence is the point: a recovery path is a backdoor.
 
 ```bash
-node scripts/verify-roles.mjs --chain $CHAIN_ID
-# exits non-zero if any EOA holds any role, or the deployer retains privilege
+node scripts/verify-roles.mjs --chain "$CHAIN_ID" --rpc "$RPC_URL"
+# exits non-zero for a chain mismatch, missing controller/contract code, a missing intended grant,
+# an unexpected known-role holder, an unknown role hash, or any replay/hasRole disagreement
 ```
 
 ## Running it
@@ -99,8 +115,11 @@ forge script script/Deploy.s.sol --rpc-url $RH_TESTNET_RPC_URL --broadcast --ver
 forge script script/Deploy.s.sol --rpc-url $RH_MAINNET_RPC_URL
 ```
 
-Output lands in `deployments/<chainId>.json` with addresses, constructor arguments, the deployment
-block, and the exact commit hash — everything needed to reproduce and verify the bytecode.
+Set `DEPLOY_COMMIT=$(git rev-parse HEAD)` before deployment. Output lands in
+`deployments/<chainId>.json` with the contract/controller addresses, the replay start block, chain
+id and exact commit. Foundry's broadcast receipt retains the transactions and constructor inputs.
+The role verifier refuses a record without `deploymentBlock`; checking only current `hasRole`
+values would not prove that the RPC returned a complete grant history.
 
 ## Post-deploy verification
 
@@ -127,7 +146,8 @@ block, and the exact commit hash — everything needed to reproduce and verify t
 [ ] Every high and critical finding fixed, with regression tests
 [ ] Five genuinely independent verifier operators live, on independent infrastructure
 [ ] Multisig and timelock live; deployer privilege revoked and verified
-[ ] All 17 protocol invariants passing under deep stateful fuzzing
+[ ] All I1–I17 protocol invariants (currently 62 executable `invariant_*` properties) passing
+    under deep stateful fuzzing
 [ ] BIP-322 verification passing official and wallet-specific vectors
 [ ] Bitcoin regtest end-to-end flow passing
 [ ] Robinhood testnet burn-in complete
