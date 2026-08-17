@@ -1,7 +1,8 @@
 # ord does not publish a public container for 0.27.1. Build the test-only image from the official
 # release artifact, verify the SHA-256 recorded by GitHub Releases, and pin the base by digest. The
-# upstream Linux artifact is x86_64-only, so docker-compose.yml declares linux/amd64 explicitly.
-FROM debian:bookworm-slim@sha256:362e64223cc0da95422b3b13c045186fc0a81250e765d31c025fbddf257f6143 AS fetcher
+# upstream Linux artifact is x86_64-only and requires glibc 2.39, so docker-compose.yml declares
+# linux/amd64 explicitly and the runtime uses immutable-pinned Ubuntu 24.04.
+FROM ubuntu:24.04@sha256:561618e2c15bf2397621dd04f96926663a3b5616c189cf7e38db7e82f5c538ea AS fetcher
 
 ARG ORD_VERSION=0.27.1
 ARG ORD_SHA256=3e3631f8f170e31c813b3bea53440d7f1e1d0d82dcde944011a03166e057e037
@@ -16,10 +17,10 @@ RUN apt-get update \
     && tar --extract --gzip --file /tmp/ord.tar.gz --directory /tmp \
     && install --mode=0755 "/tmp/ord-${ORD_VERSION}/ord" /usr/local/bin/ord
 
-FROM debian:bookworm-slim@sha256:362e64223cc0da95422b3b13c045186fc0a81250e765d31c025fbddf257f6143
+FROM ubuntu:24.04@sha256:561618e2c15bf2397621dd04f96926663a3b5616c189cf7e38db7e82f5c538ea
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates libssl3 wget \
+    && apt-get install --yes --no-install-recommends ca-certificates libssl3t64 wget \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --create-home --home-dir /home/ord ord
 
