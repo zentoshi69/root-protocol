@@ -99,7 +99,7 @@ services/         bitcoin-verifier/ · attestor/ · relayer/ · btc-solver/
 packages/         protocol-sdk/ · canonical-message/ · generated-abis/
 apps/web/         buyer, holder, payout, root and tour flows
 data/             manifest example, test fixtures, cross-language golden vectors
-infra/regtest/    bitcoind + ord compose and the end-to-end harness
+infra/regtest/    bitcoind + ord compose; executable E2E harness still required
 docs/             architecture, trust assumptions, threat model, runbooks
 ```
 
@@ -120,6 +120,7 @@ docs/             architecture, trust assumptions, threat model, runbooks
 | [`KEY_ROTATION.md`](./docs/KEY_ROTATION.md) | Attestor, relayer, solver and admin keys |
 | [`PAUSE_AND_RECOVERY.md`](./docs/PAUSE_AND_RECOVERY.md) | Pausing never blocks a refund |
 | [`AUDIT_REMEDIATION.md`](./docs/AUDIT_REMEDIATION.md) | Finding-by-finding remediation map and residual risks |
+| [`SECURITY_READINESS_2026-08-17.md`](./docs/SECURITY_READINESS_2026-08-17.md) | Current forensic pass, evidence and public-launch verdict |
 
 ## Security posture
 
@@ -138,11 +139,17 @@ a vulnerability.
 
 ## Status
 
-Pre-audit. **No mainnet deployment**, and none until every launch gate in
+Audit-remediated source, still awaiting independent external re-review. **No mainnet deployment**,
+and none until every launch gate in
 [`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) is green — including an external audit, five genuinely
-independent operators, and an independently reproduced manifest.
+independent operators, an independently reproduced manifest, and the currently missing executable
+Bitcoin regtest end-to-end harness.
 
 Native BTC settlement is feature-flagged **off** pending operational and legal review.
+
+The off-chain service directories are tested domain modules, not production server/worker
+deployments. Production attestor ingress, KMS/HSM signing, persistence, relayer/solver workers and
+monitoring remain launch gates.
 
 ## What v1 deliberately does not have
 

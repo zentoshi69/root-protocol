@@ -9,7 +9,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "pnpm -r --filter \"./packages/**\" --filter \"./services/**\" run build",
+    "build": "pnpm -r --filter \"./packages/**\" --filter \"./services/**\" --filter \"./apps/**\" run build",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
@@ -22,12 +22,18 @@
     "contracts:invariant": "cd contracts && forge test --match-path 'test/invariant/*'",
     "contracts:deep": "cd contracts && FOUNDRY_PROFILE=deep forge test",
     "abis": "cd contracts && forge build && node ../scripts/export-abis.mjs",
-    "ci": "pnpm contracts:fmt:check && pnpm contracts:build && pnpm contracts:test && pnpm typecheck && pnpm test && pnpm vectors"
+    "ci": "pnpm contracts:fmt:check && pnpm contracts:build && pnpm contracts:test && pnpm build && pnpm typecheck && pnpm test && pnpm vectors"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws": "8.21.3"
+    }
   },
   "devDependencies": {
     "@types/node": "22.10.2",
     "tsx": "4.19.2",
     "typescript": "5.7.2",
+    "viem": "2.21.55",
     "vitest": "2.1.8"
   }
 }

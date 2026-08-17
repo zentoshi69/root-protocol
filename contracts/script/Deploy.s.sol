@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
@@ -121,6 +122,7 @@ struct DeployParams {
 ///      end-to-end test rather than only by a mainnet dry run.
 library DeployLib {
     error DeployerRetainsPrivilege(address contractAddress, address deployer);
+    error InvalidGovernanceHandover(address timelock, address guardian, address deployer);
     error RoleMissing(address contractAddress, bytes32 role, address holder);
     error PurposeMissing(address consumer, uint8 purpose);
     error UnexpectedPurposeGranted(address consumer, uint8 purpose);
@@ -406,6 +408,14 @@ library DeployLib {
     function transferAdminToTimelock(Deployment memory d, address timelock, address guardian, address deployer)
         internal
     {
+        if (
+            timelock == address(0) || guardian == address(0) || deployer == address(0) || timelock == guardian
+                || timelock == deployer || guardian == deployer || timelock.code.length == 0
+                || guardian.code.length == 0
+        ) {
+            revert InvalidGovernanceHandover(timelock, guardian, deployer);
+        }
+
         bytes32 admin = 0x00;
 
         d.attestorRegistry.grantRole(admin, timelock);
@@ -418,6 +428,16 @@ library DeployLib {
         d.solver.grantRole(admin, timelock);
         d.tourEngine.grantRole(admin, timelock);
 
+        // Every parameter-changing and value-recovery role belongs to the timelock. Moving only
+        // DEFAULT_ADMIN_ROLE would leave the deployment EOA able to replace attestors, redirect
+        // treasuries, change solver economics, mutate metadata or sweep vault excess.
+        d.attestorRegistry.grantRole(d.attestorRegistry.ATTESTOR_ADMIN_ROLE(), timelock);
+        d.payoutVault.grantRole(d.payoutVault.EXCESS_SWEEPER_ROLE(), timelock);
+        d.feeRouter.grantRole(d.feeRouter.TREASURY_ADMIN_ROLE(), timelock);
+        d.hoodPups.grantRole(d.hoodPups.METADATA_ADMIN_ROLE(), timelock);
+        d.solver.grantRole(d.solver.CONFIG_ADMIN_ROLE(), timelock);
+        d.tourEngine.grantRole(d.tourEngine.TOUR_ADMIN_ROLE(), timelock);
+
         // The guardian may pause and nothing else. A compromised guardian should cost liveness,
         // never parameters — and it deliberately cannot unpause itself.
         d.oracle.grantRole(d.oracle.PAUSER_ROLE(), guardian);
@@ -427,6 +447,23 @@ library DeployLib {
         d.escrow.grantRole(d.escrow.PAUSER_ROLE(), guardian);
         d.solver.grantRole(d.solver.PAUSER_ROLE(), guardian);
         d.tourEngine.grantRole(d.tourEngine.PAUSER_ROLE(), guardian);
+
+        // Constructors grant the deployment caller every initial operational role. Renouncing only
+        // DEFAULT_ADMIN_ROLE is not a complete handover: those roles remain usable after admin is
+        // gone. Remove every constructor-granted capability before dropping the final admin role.
+        d.attestorRegistry.renounceRole(d.attestorRegistry.ATTESTOR_ADMIN_ROLE(), deployer);
+        d.oracle.renounceRole(d.oracle.PAUSER_ROLE(), deployer);
+        d.payoutVault.renounceRole(d.payoutVault.EXCESS_SWEEPER_ROLE(), deployer);
+        d.payoutVault.renounceRole(d.payoutVault.PAUSER_ROLE(), deployer);
+        d.rootRegistry.renounceRole(d.rootRegistry.PAUSER_ROLE(), deployer);
+        d.feeRouter.renounceRole(d.feeRouter.TREASURY_ADMIN_ROLE(), deployer);
+        d.hoodPups.renounceRole(d.hoodPups.METADATA_ADMIN_ROLE(), deployer);
+        d.hoodPups.renounceRole(d.hoodPups.PAUSER_ROLE(), deployer);
+        d.escrow.renounceRole(d.escrow.PAUSER_ROLE(), deployer);
+        d.solver.renounceRole(d.solver.CONFIG_ADMIN_ROLE(), deployer);
+        d.solver.renounceRole(d.solver.PAUSER_ROLE(), deployer);
+        d.tourEngine.renounceRole(d.tourEngine.TOUR_ADMIN_ROLE(), deployer);
+        d.tourEngine.renounceRole(d.tourEngine.PAUSER_ROLE(), deployer);
 
         d.attestorRegistry.renounceRole(admin, deployer);
         d.oracle.renounceRole(admin, deployer);
@@ -439,24 +476,39 @@ library DeployLib {
         d.tourEngine.renounceRole(admin, deployer);
     }
 
-    /// @notice Fail if the deployer kept admin anywhere.
-    /// @dev The single most expensive deployment mistake available: an EOA retaining
-    ///      `DEFAULT_ADMIN_ROLE` on a contract that can never be upgraded to fix it.
+    /// @notice Fail if the deployer kept any constructor-granted privilege anywhere.
+    /// @dev Checking only `DEFAULT_ADMIN_ROLE` is insufficient because configuration, metadata,
+    ///      pausing and excess-sweep roles are independently usable after admin is relinquished.
     function assertDeployerRevoked(Deployment memory d, address deployer) internal view {
         bytes32 admin = 0x00;
-        if (d.attestorRegistry.hasRole(admin, deployer)) {
-            revert DeployerRetainsPrivilege(address(d.attestorRegistry), deployer);
-        }
-        if (d.oracle.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.oracle), deployer);
-        if (d.payoutVault.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.payoutVault), deployer);
-        if (d.rootRegistry.hasRole(admin, deployer)) {
-            revert DeployerRetainsPrivilege(address(d.rootRegistry), deployer);
-        }
-        if (d.feeRouter.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.feeRouter), deployer);
-        if (d.hoodPups.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.hoodPups), deployer);
-        if (d.escrow.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.escrow), deployer);
-        if (d.solver.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.solver), deployer);
-        if (d.tourEngine.hasRole(admin, deployer)) revert DeployerRetainsPrivilege(address(d.tourEngine), deployer);
+        _requireRevoked(address(d.attestorRegistry), d.attestorRegistry, admin, deployer);
+        _requireRevoked(
+            address(d.attestorRegistry), d.attestorRegistry, d.attestorRegistry.ATTESTOR_ADMIN_ROLE(), deployer
+        );
+        _requireRevoked(address(d.oracle), d.oracle, admin, deployer);
+        _requireRevoked(address(d.oracle), d.oracle, d.oracle.PAUSER_ROLE(), deployer);
+        _requireRevoked(address(d.payoutVault), d.payoutVault, admin, deployer);
+        _requireRevoked(address(d.payoutVault), d.payoutVault, d.payoutVault.EXCESS_SWEEPER_ROLE(), deployer);
+        _requireRevoked(address(d.payoutVault), d.payoutVault, d.payoutVault.PAUSER_ROLE(), deployer);
+        _requireRevoked(address(d.rootRegistry), d.rootRegistry, admin, deployer);
+        _requireRevoked(address(d.rootRegistry), d.rootRegistry, d.rootRegistry.PAUSER_ROLE(), deployer);
+        _requireRevoked(address(d.feeRouter), d.feeRouter, admin, deployer);
+        _requireRevoked(address(d.feeRouter), d.feeRouter, d.feeRouter.TREASURY_ADMIN_ROLE(), deployer);
+        _requireRevoked(address(d.hoodPups), d.hoodPups, admin, deployer);
+        _requireRevoked(address(d.hoodPups), d.hoodPups, d.hoodPups.METADATA_ADMIN_ROLE(), deployer);
+        _requireRevoked(address(d.hoodPups), d.hoodPups, d.hoodPups.PAUSER_ROLE(), deployer);
+        _requireRevoked(address(d.escrow), d.escrow, admin, deployer);
+        _requireRevoked(address(d.escrow), d.escrow, d.escrow.PAUSER_ROLE(), deployer);
+        _requireRevoked(address(d.solver), d.solver, admin, deployer);
+        _requireRevoked(address(d.solver), d.solver, d.solver.CONFIG_ADMIN_ROLE(), deployer);
+        _requireRevoked(address(d.solver), d.solver, d.solver.PAUSER_ROLE(), deployer);
+        _requireRevoked(address(d.tourEngine), d.tourEngine, admin, deployer);
+        _requireRevoked(address(d.tourEngine), d.tourEngine, d.tourEngine.TOUR_ADMIN_ROLE(), deployer);
+        _requireRevoked(address(d.tourEngine), d.tourEngine, d.tourEngine.PAUSER_ROLE(), deployer);
+    }
+
+    function _requireRevoked(address target, IAccessControl access, bytes32 role, address deployer) private view {
+        if (access.hasRole(role, deployer)) revert DeployerRetainsPrivilege(target, deployer);
     }
 
     function _require(address target, bytes32 role, address holder, bool ok) private pure {
@@ -487,13 +539,14 @@ contract Deploy is Script {
         // function exceeds the EVM's limit, and splitting the reads is a smaller price than turning
         // on via-IR for the whole project to accommodate one script.
         DeployParams memory p = _readParams();
+        address timelock = vm.envAddress("TIMELOCK_ADDRESS");
+        address guardian = vm.envAddress("GUARDIAN_ADDRESS");
+        uint256 deploymentBlock = block.number;
 
         vm.startBroadcast();
         Deployment memory d = DeployLib.deployAll(p, cfg);
         DeployLib.grantRoles(d);
-        DeployLib.transferAdminToTimelock(
-            d, vm.envAddress("TIMELOCK_ADDRESS"), vm.envAddress("GUARDIAN_ADDRESS"), p.admin
-        );
+        DeployLib.transferAdminToTimelock(d, timelock, guardian, p.admin);
         vm.stopBroadcast();
 
         // Verified after the broadcast, so a misconfigured role matrix fails the run rather than
@@ -501,6 +554,7 @@ contract Deploy is Script {
         DeployLib.verifyRoles(d);
         DeployLib.assertDeployerRevoked(d, p.admin);
 
+        _writeDeployment(d, chainId, deploymentBlock, timelock, guardian, p.admin);
         _report(d, cfg, chainId);
     }
 
@@ -521,6 +575,45 @@ contract Deploy is Script {
         p.protocolTreasury = vm.envAddress("PROTOCOL_TREASURY");
         p.baseURI = vm.envOr("BASE_URI", string(""));
         p.contractURI = vm.envOr("CONTRACT_URI", string(""));
+    }
+
+    /// @notice Persist the minimum independently-verifiable deployment record consumed by
+    ///         `scripts/verify-roles.mjs`. DEPLOY_COMMIT is mandatory so bytecode can be rebuilt
+    ///         from the exact source revision rather than whichever checkout happens to be local.
+    function _writeDeployment(
+        Deployment memory d,
+        uint256 chainId,
+        uint256 deploymentBlock,
+        address timelock,
+        address guardian,
+        address deployer
+    ) private {
+        string memory contractsJson = "contracts";
+        vm.serializeAddress(contractsJson, "PuppetCollectionRegistry", address(d.collectionRegistry));
+        vm.serializeAddress(contractsJson, "BitcoinAttestorRegistry", address(d.attestorRegistry));
+        vm.serializeAddress(contractsJson, "BitcoinOwnershipOracle", address(d.oracle));
+        vm.serializeAddress(contractsJson, "PayoutVault", address(d.payoutVault));
+        vm.serializeAddress(contractsJson, "RootOwnershipRegistry", address(d.rootRegistry));
+        vm.serializeAddress(contractsJson, "FeeRouter", address(d.feeRouter));
+        vm.serializeAddress(contractsJson, "HoodPups", address(d.hoodPups));
+        vm.serializeAddress(contractsJson, "HoodPupOfferEscrow", address(d.escrow));
+        vm.serializeAddress(contractsJson, "BtcSolverSettlement", address(d.solver));
+        string memory serializedContracts = vm.serializeAddress(contractsJson, "TourEngine", address(d.tourEngine));
+
+        string memory deploymentJson = "deployment";
+        vm.serializeUint(deploymentJson, "chainId", chainId);
+        vm.serializeUint(deploymentJson, "deploymentBlock", deploymentBlock);
+        vm.serializeString(deploymentJson, "commit", vm.envString("DEPLOY_COMMIT"));
+        vm.serializeAddress(deploymentJson, "timelock", timelock);
+        vm.serializeAddress(deploymentJson, "guardian", guardian);
+        vm.serializeAddress(deploymentJson, "deployer", deployer);
+        string memory serialized = vm.serializeString(deploymentJson, "contracts", serializedContracts);
+
+        string memory deploymentDirectory = string.concat(vm.projectRoot(), "/../deployments");
+        vm.createDir(deploymentDirectory, true);
+        string memory path = string.concat(deploymentDirectory, "/", vm.toString(chainId), ".json");
+        vm.writeJson(serialized, path);
+        console2.log("deployment record        ", path);
     }
 
     function _report(Deployment memory d, DeployConfig.Config memory cfg, uint256 chainId) private pure {

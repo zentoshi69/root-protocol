@@ -23,7 +23,7 @@ import {
   type Hex,
 } from './facts.js';
 import { verifyOwnershipSignature, type Bip322Adapter, type Bip322Variant } from './bip322.js';
-import { BitcoinCoreClient, btcToSats } from './bitcoinCore.js';
+import { BitcoinCoreClient, btcToSats, type ChainInfo } from './bitcoinCore.js';
 import { OrdClient } from './ord.js';
 import { reject, RejectionCode } from './errors.js';
 
@@ -50,6 +50,45 @@ export interface VerifierContext {
   network: 'mainnet' | 'testnet' | 'signet' | 'regtest';
   /** Membership oracle, backed by the operator's own copy of the manifest. */
   isCollectionMember(rootKey: Hex): boolean;
+}
+
+const CORE_CHAIN_BY_NETWORK: Record<VerifierContext['network'], ChainInfo['chain']> = {
+  mainnet: 'main',
+  testnet: 'test',
+  signet: 'signet',
+  regtest: 'regtest',
+};
+
+/**
+ * Read and validate the node identity before trusting any Bitcoin fact.
+ *
+ * Address prefixes do not prove which chain the RPC is serving. Without this check, an operator
+ * configured for mainnet could accidentally attest a regtest transaction to a production EVM
+ * deployment. The block fields are runtime-validated here as well because JSON-RPC types are not
+ * enforced by TypeScript at the process boundary.
+ */
+async function verifiedChainInfo(ctx: VerifierContext): Promise<ChainInfo> {
+  const chainInfo = await ctx.bitcoin.getBlockchainInfo();
+  const expectedChain = CORE_CHAIN_BY_NETWORK[ctx.network];
+  if (chainInfo.chain !== expectedChain) {
+    reject(
+      RejectionCode.BITCOIN_NETWORK_MISMATCH,
+      `Bitcoin Core reports ${String(chainInfo.chain)}, but this verifier is configured for ${ctx.network}`,
+      { expectedChain, observedChain: chainInfo.chain, configuredNetwork: ctx.network },
+    );
+  }
+  if (
+    !Number.isSafeInteger(chainInfo.blocks) ||
+    chainInfo.blocks < 0 ||
+    typeof chainInfo.bestblockhash !== 'string' ||
+    !/^[0-9a-f]{64}$/iu.test(chainInfo.bestblockhash)
+  ) {
+    reject(RejectionCode.NODE_UNAVAILABLE, 'Bitcoin Core returned malformed chain-tip data; abstaining', {
+      blocks: chainInfo.blocks,
+      bestblockhash: chainInfo.bestblockhash,
+    });
+  }
+  return chainInfo;
 }
 
 /** Everything an attestor needs, and nothing it should infer. */
@@ -147,7 +186,7 @@ export async function verifyOwnershipAuthorization(
   }
 
   // 3. Chain tip, and ord freshness. A lagging index abstains rather than answering from stale data.
-  const chainInfo = await ctx.bitcoin.getBlockchainInfo();
+  const chainInfo = await verifiedChainInfo(ctx);
   const ordIndexHeight = await ctx.ord.assertFresh(chainInfo.blocks, ctx.policy.maxOrdLag);
 
   // 4. Where does ord say the inscription actually is?
@@ -285,7 +324,7 @@ export async function verifyBitcoinPayment(
   input: PaymentVerificationInput,
 ): Promise<VerifiedPaymentFact> {
   const txid = input.bitcoinTxid.replace(/^0x/, '').toLowerCase();
-  const chainInfo = await ctx.bitcoin.getBlockchainInfo();
+  const chainInfo = await verifiedChainInfo(ctx);
 
   const tx = await ctx.bitcoin.getRawTransaction(txid);
   if (!tx) {
@@ -382,7 +421,7 @@ export async function verifyRootSpend(
     reject(RejectionCode.ROOT_NOT_IN_MANIFEST, 'this inscription is not in the protocol manifest', { rootKey: key });
   }
 
-  const chainInfo = await ctx.bitcoin.getBlockchainInfo();
+  const chainInfo = await verifiedChainInfo(ctx);
   const spendTxid = input.spendingTxid.replace(/^0x/, '').toLowerCase();
   const spendTx = await ctx.bitcoin.getRawTransaction(spendTxid);
   if (!spendTx) {

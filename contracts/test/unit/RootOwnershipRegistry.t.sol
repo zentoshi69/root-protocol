@@ -1445,6 +1445,10 @@ contract RootOwnershipRegistryTest is Test {
         if (invalidateFirst) {
             PuppetTypes.RootSpendAttestation memory spend =
                 _spendAttestation(TXID_A, INDEX_A, outpointOne, h2, keccak256("FIXTURE-auth-fz-spend"));
+            PuppetTypes.RootState memory beforeSpend = registry.currentState(rootKeyA);
+            if (h2 == beforeSpend.verifiedBitcoinHeight) {
+                spend.bitcoinBlockHash = beforeSpend.lastBitcoinBlockHash;
+            }
             registry.invalidateRoot(spend, _sigsFor(spend), proofA);
 
             assertFalse(registry.isActive(rootKeyA), "inactive after spend");
@@ -1455,6 +1459,10 @@ contract RootOwnershipRegistryTest is Test {
         PuppetTypes.OwnershipAttestation memory a = _bindAttestation(
             TXID_A, INDEX_A, charlie, outpointTwo, scriptCharlie, h3, keccak256("FIXTURE-auth-fz-bind")
         );
+        PuppetTypes.RootState memory beforeBind = registry.currentState(rootKeyA);
+        if (h3 == beforeBind.verifiedBitcoinHeight) {
+            a.bitcoinBlockHash = beforeBind.lastBitcoinBlockHash;
+        }
         registry.bindRootOwner(a, _sigsFor(a), proofA);
 
         PuppetTypes.RootState memory s = registry.currentState(rootKeyA);

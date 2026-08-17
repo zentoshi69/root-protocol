@@ -281,9 +281,15 @@ withdraws. The vault's core invariant is `address(this).balance >= totalLiabilit
 block new credits; it can never block a withdrawal. No admin function can reduce a user's claimable
 balance — there is no such code path, and a test asserts it.
 
-## 9. Off-chain services
+## 9. Off-chain modules
 
-Four independently deployable services, described fully in
+> **Implementation status:** these are tested domain modules, not independently deployable
+> production services yet. The repository does not contain the operator-facing server/worker
+> entrypoints, persistence, authenticated and rate-limited ingress, or production KMS/HSM signer.
+> Those are public-launch gates; the intended service boundaries below must not be mistaken for
+> deployed operational evidence.
+
+Four intended services, described fully in
 [`build-kit/12_OFFCHAIN_SERVICES.md`](./build-kit/12_OFFCHAIN_SERVICES.md):
 
 - **`bitcoin-verifier`** — talks to the operator's *own* Bitcoin Core and `ord`. Parses canonical
@@ -323,7 +329,7 @@ services/           bitcoin-verifier/ · attestor/ · relayer/ · btc-solver/
 packages/           protocol-sdk/ · canonical-message/ · generated-abis/
 apps/web/           buyer, holder, payout, root and tour flows
 data/               manifest example + test fixtures + cross-language golden vectors
-infra/regtest/      bitcoind + ord docker compose and E2E harness
+infra/regtest/      bitcoind + ord compose; executable E2E harness still required
 docs/               this file and its siblings
 deployments/        <chainId>.json, written by the deploy scripts
 ```

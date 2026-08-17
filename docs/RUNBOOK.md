@@ -4,6 +4,11 @@ Day-to-day operation of the HoodPups Rooted Settlement Protocol. For emergencies
 [`INCIDENT_RESPONSE.md`](./INCIDENT_RESPONSE.md); for pausing see
 [`PAUSE_AND_RECOVERY.md`](./PAUSE_AND_RECOVERY.md).
 
+> **Pre-production template:** the repository currently contains off-chain domain modules, not the
+> deployable attestor/relayer/solver processes or the example endpoints used below. This runbook
+> becomes executable only after those services, production key custody, persistence, monitoring
+> and operator infrastructure are implemented and independently tested.
+
 ## System inventory
 
 | Component | Count | Who runs it | Failure mode |
@@ -33,7 +38,7 @@ cast call $PAYOUT_VAULT "totalLiability()(uint256)" --rpc-url $RH_RPC
 cast balance $PAYOUT_VAULT --rpc-url $RH_RPC
 
 # 4. Nobody holds admin except the timelock
-node scripts/verify-roles.mjs --chain $CHAIN_ID
+node scripts/verify-roles.mjs --chain "$CHAIN_ID" --rpc "$RH_RPC"
 ```
 
 ### Alert thresholds

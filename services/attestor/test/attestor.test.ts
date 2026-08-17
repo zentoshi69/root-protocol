@@ -240,6 +240,14 @@ describe('ownership attestation', () => {
     );
   });
 
+  it('rejects a message naming a different Bitcoin network', async () => {
+    const { ctx } = makeContext();
+    await expectRejection(
+      attestOwnership(ctx, request(buildMessage(makeFields({ bitcoinNetwork: 'mainnet' })))),
+      RejectionCode.OFFER_TERMS_MISMATCH,
+    );
+  });
+
   it('rejects a message naming a different escrow contract', async () => {
     const { ctx } = makeContext();
     await expectRejection(
