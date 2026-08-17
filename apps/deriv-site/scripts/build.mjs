@@ -644,8 +644,34 @@ main section[data-screen-label] > div > div[style*="border:1px"]:hover {
   [data-screen-label="Mobile designs"] > div:nth-child(3) > div > div:last-child {
     transform-origin: top left;
   }
+  [data-screen-label="Protocol — transparency"] main {
+    max-width: 100% !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  [data-screen-label="Protocol — transparency"] main > div[style*="repeat(4"] {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+  [data-screen-label="Protocol — transparency"] main > section > div[style*="1fr 1fr"],
+  [data-screen-label="Protocol — transparency"] main > section[style*="1fr 1fr"] {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  [data-screen-label="Protocol — transparency"] main [style*="justify-content:space-between"] {
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  [data-screen-label="Protocol — transparency"] main [style*="font-family:'Silkscreen'"] {
+    overflow-wrap: anywhere;
+  }
+  [data-screen-label="Protocol — transparency"] footer > div {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
 }
 @media (max-width: 380px) {
+  [data-screen-label="Protocol — transparency"] main > div[style*="repeat(4"] {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
   [data-screen-label="Mobile designs"] > div:nth-child(3) > div > div:last-child {
     zoom: .815;
   }
