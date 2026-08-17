@@ -2,7 +2,7 @@
 # release artifact, verify the SHA-256 recorded by GitHub Releases, and pin the base by digest. The
 # upstream Linux artifact is x86_64-only and requires glibc 2.39, so docker-compose.yml declares
 # linux/amd64 explicitly and the runtime uses immutable-pinned Ubuntu 24.04.
-FROM ubuntu:24.04@sha256:561618e2c15bf2397621dd04f96926663a3b5616c189cf7e38db7e82f5c538ea AS fetcher
+FROM ubuntu:26.04@sha256:678c6550cc43645e08669028bc177f50be4e7c5b8cca677067b1914d4afc7a03 AS fetcher
 
 ARG ORD_VERSION=0.27.1
 ARG ORD_SHA256=3e3631f8f170e31c813b3bea53440d7f1e1d0d82dcde944011a03166e057e037
@@ -17,7 +17,7 @@ RUN apt-get update \
     && tar --extract --gzip --file /tmp/ord.tar.gz --directory /tmp \
     && install --mode=0755 "/tmp/ord-${ORD_VERSION}/ord" /usr/local/bin/ord
 
-FROM ubuntu:24.04@sha256:561618e2c15bf2397621dd04f96926663a3b5616c189cf7e38db7e82f5c538ea
+FROM ubuntu:26.04@sha256:678c6550cc43645e08669028bc177f50be4e7c5b8cca677067b1914d4afc7a03
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends ca-certificates libssl3t64 wget \
