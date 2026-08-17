@@ -19,7 +19,7 @@
     "@hoodpups/canonical-message": "workspace:*",
     "@hoodpups/protocol-sdk": "workspace:*",
     "bip322-js": "3.0.0",
-    "viem": "2.21.55"
+    "viem": "2.55.15"
   },
   "devDependencies": {
     "typescript": "5.7.2",
