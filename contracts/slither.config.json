@@ -10,6 +10,5 @@
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "openzeppelin-contracts/=lib/openzeppelin-contracts/"
   ],
-  "detectors_to_exclude": "naming-convention,solc-version",
-  "_comment": "naming-convention is excluded because the protocol deliberately uses SCREAMING_CASE for immutable basis-point constants and EIP-712 typehashes, which Slither flags but which match the EIP and improve auditability. solc-version is excluded because the compiler is exact-pinned to 0.8.28 in foundry.toml rather than floated. NOTHING ELSE is excluded: every other finding must be triaged with a written reason in docs/SECURITY_REVIEW.md, never silently suppressed."
+  "detectors_to_exclude": "naming-convention,solc-version"
 }

@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  ws: 8.21.3
+
 importers:
 
   .:
@@ -17,6 +20,9 @@ importers:
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      viem:
+        specifier: 2.21.55
+        version: 2.21.55(typescript@5.7.2)
       vitest:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)(jsdom@25.0.1)
@@ -1207,7 +1213,7 @@ packages:
   isows@1.0.6:
     resolution: {integrity: sha512-lPHCayd40oW98/I0uvgaHKWCSvkzY27LjWLbtzOm64yQ+G3Q5npjjbdppU65iZXkK1Zt+kH9pfegli0AYfwYYw==}
     peerDependencies:
-      ws: '*'
+      ws: 8.21.3
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -1607,8 +1613,8 @@ packages:
   wif@2.0.6:
     resolution: {integrity: sha512-HIanZn1zmduSF+BQhkE+YXIbEiH0xPr1012QbFEGB0xsKqJii0/SqJjyn8dFv6y36kOznMgMB+LGcbZTJ1xACQ==}
 
-  ws@8.18.0:
-    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -2596,9 +2602,9 @@ snapshots:
 
   isarray@2.0.5: {}
 
-  isows@1.0.6(ws@8.18.0):
+  isows@1.0.6(ws@8.21.3):
     dependencies:
-      ws: 8.18.0
+      ws: 8.21.3
 
   js-tokens@4.0.0: {}
 
@@ -2623,7 +2629,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.18.0
+      ws: 8.21.3
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -2927,10 +2933,10 @@ snapshots:
       '@scure/bip32': 1.6.0
       '@scure/bip39': 1.5.0
       abitype: 1.0.7(typescript@5.7.2)
-      isows: 1.0.6(ws@8.18.0)
+      isows: 1.0.6(ws@8.21.3)
       ox: 0.1.2(typescript@5.7.2)
       webauthn-p256: 0.0.10
-      ws: 8.18.0
+      ws: 8.21.3
     optionalDependencies:
       typescript: 5.7.2
     transitivePeerDependencies:
@@ -3042,7 +3048,7 @@ snapshots:
     dependencies:
       bs58check: 2.1.2
 
-  ws@8.18.0: {}
+  ws@8.21.3: {}
 
   xml-name-validator@5.0.0: {}
 

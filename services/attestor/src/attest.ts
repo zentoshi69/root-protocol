@@ -112,6 +112,12 @@ export async function attestOwnership(
       ourChainId: ctx.chainId,
     });
   }
+  if (fields.bitcoinNetwork !== ctx.verifier.network) {
+    reject(RejectionCode.OFFER_TERMS_MISMATCH, 'the message names a different Bitcoin network', {
+      messageNetwork: fields.bitcoinNetwork,
+      ourNetwork: ctx.verifier.network,
+    });
+  }
   if (fields.verifyingContract.toLowerCase() !== ctx.escrowAddress.toLowerCase()) {
     reject(RejectionCode.OFFER_TERMS_MISMATCH, 'the message names a different escrow contract', {
       messageContract: fields.verifyingContract,

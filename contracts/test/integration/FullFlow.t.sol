@@ -99,13 +99,74 @@ contract FullFlowTest is Test {
     }
 
     function test_AdminHandoverRevokesTheDeployerEverywhere() public {
-        DeployLib.transferAdminToTimelock(d, TIMELOCK, GUARDIAN, address(this));
-        // The expensive mistake: an EOA keeping admin on a contract that can never be upgraded.
+        // Production controllers must be contracts. These two already-deployed immutable contracts
+        // are inert stand-ins for a TimelockController and guardian multisig in this wiring test.
+        address timelock = address(d.collectionRegistry);
+        address guardian = address(attestors);
+        DeployLib.transferAdminToTimelock(d, timelock, guardian, address(this));
+        // The expensive mistake: an EOA keeping any usable role on a contract that can never be
+        // upgraded. The library assertion covers every constructor-granted role, not just admin.
         DeployLib.assertDeployerRevoked(d, address(this));
-        assertTrue(d.escrow.hasRole(0x00, TIMELOCK));
+
+        assertTrue(d.attestorRegistry.hasRole(0x00, timelock));
+        assertTrue(d.attestorRegistry.hasRole(d.attestorRegistry.ATTESTOR_ADMIN_ROLE(), timelock));
+        assertTrue(d.oracle.hasRole(0x00, timelock));
+        assertTrue(d.payoutVault.hasRole(0x00, timelock));
+        assertTrue(d.payoutVault.hasRole(d.payoutVault.EXCESS_SWEEPER_ROLE(), timelock));
+        assertTrue(d.rootRegistry.hasRole(0x00, timelock));
+        assertTrue(d.feeRouter.hasRole(0x00, timelock));
+        assertTrue(d.feeRouter.hasRole(d.feeRouter.TREASURY_ADMIN_ROLE(), timelock));
+        assertTrue(d.hoodPups.hasRole(0x00, timelock));
+        assertTrue(d.hoodPups.hasRole(d.hoodPups.METADATA_ADMIN_ROLE(), timelock));
+        assertTrue(d.escrow.hasRole(0x00, timelock));
+        assertTrue(d.solver.hasRole(0x00, timelock));
+        assertTrue(d.solver.hasRole(d.solver.CONFIG_ADMIN_ROLE(), timelock));
+        assertTrue(d.tourEngine.hasRole(0x00, timelock));
+        assertTrue(d.tourEngine.hasRole(d.tourEngine.TOUR_ADMIN_ROLE(), timelock));
+
         // The guardian may pause and nothing else — a compromised guardian costs liveness only.
-        assertTrue(d.escrow.hasRole(d.escrow.PAUSER_ROLE(), GUARDIAN));
-        assertFalse(d.escrow.hasRole(0x00, GUARDIAN));
+        assertTrue(d.oracle.hasRole(d.oracle.PAUSER_ROLE(), guardian));
+        assertTrue(d.payoutVault.hasRole(d.payoutVault.PAUSER_ROLE(), guardian));
+        assertTrue(d.rootRegistry.hasRole(d.rootRegistry.PAUSER_ROLE(), guardian));
+        assertTrue(d.hoodPups.hasRole(d.hoodPups.PAUSER_ROLE(), guardian));
+        assertTrue(d.escrow.hasRole(d.escrow.PAUSER_ROLE(), guardian));
+        assertTrue(d.solver.hasRole(d.solver.PAUSER_ROLE(), guardian));
+        assertTrue(d.tourEngine.hasRole(d.tourEngine.PAUSER_ROLE(), guardian));
+        assertFalse(d.escrow.hasRole(0x00, guardian));
+        assertFalse(d.attestorRegistry.hasRole(d.attestorRegistry.ATTESTOR_ADMIN_ROLE(), guardian));
+        assertFalse(d.payoutVault.hasRole(d.payoutVault.EXCESS_SWEEPER_ROLE(), guardian));
+        assertFalse(d.feeRouter.hasRole(d.feeRouter.TREASURY_ADMIN_ROLE(), guardian));
+        assertFalse(d.hoodPups.hasRole(d.hoodPups.METADATA_ADMIN_ROLE(), guardian));
+        assertFalse(d.solver.hasRole(d.solver.CONFIG_ADMIN_ROLE(), guardian));
+        assertFalse(d.tourEngine.hasRole(d.tourEngine.TOUR_ADMIN_ROLE(), guardian));
+    }
+
+    function test_AdminHandoverRejectsEoaControllers() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployLib.InvalidGovernanceHandover.selector, TIMELOCK, GUARDIAN, address(this))
+        );
+        this.exposedTransfer(TIMELOCK, GUARDIAN, address(this));
+    }
+
+    function test_AdminHandoverRejectsControllerCollisions() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployLib.InvalidGovernanceHandover.selector, TIMELOCK, TIMELOCK, address(this))
+        );
+        this.exposedTransfer(TIMELOCK, TIMELOCK, address(this));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployLib.InvalidGovernanceHandover.selector, address(this), GUARDIAN, address(this))
+        );
+        this.exposedTransfer(address(this), GUARDIAN, address(this));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployLib.InvalidGovernanceHandover.selector, TIMELOCK, address(this), address(this))
+        );
+        this.exposedTransfer(TIMELOCK, address(this), address(this));
+    }
+
+    function exposedTransfer(address timelock, address guardian, address deployer) external {
+        DeployLib.transferAdminToTimelock(d, timelock, guardian, deployer);
     }
 
     function test_DeploymentRefusesAnUnknownChain() public {

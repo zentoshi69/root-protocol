@@ -40,6 +40,12 @@ export interface RawTransaction {
   vin: Array<{ txid?: string; vout?: number }>;
 }
 
+export interface TxSpendingPrevout {
+  txid: string;
+  vout: number;
+  spendingtxid?: string;
+}
+
 /**
  * Convert Bitcoin Core's BTC-denominated `value` into satoshis without going through a float.
  *
@@ -121,29 +127,24 @@ export class BitcoinCoreClient {
     return this.rpc<RawTransaction | null>('getrawtransaction', [txid, true]);
   }
 
-  getRawMempool(): Promise<string[]> {
-    return this.rpc<string[]>('getrawmempool');
-  }
-
-  getMempoolEntry(txid: string): Promise<unknown | null> {
-    return this.rpc<unknown | null>('getmempoolentry', [txid]);
-  }
-
   /**
    * Detect an unconfirmed transaction spending `txid:vout`.
    *
-   * Bitcoin Core has no direct "what spends this outpoint" index, so this scans the mempool. On a
-   * busy node that is expensive; `gettxout` with `includeMempool` already catches the common case,
-   * and this exists as the explicit defence-in-depth check the attestor policy requires.
+   * Bitcoin Core 24 exposes `gettxspendingprevout`, which performs this lookup inside the node.
+   * Do not rebuild it by fetching every mempool transaction: a hostile or simply busy mempool
+   * would turn one ownership check into thousands of sequential RPC calls and make honest
+   * attestors easy to exhaust precisely when the network is under load.
    */
   async findMempoolSpend(txid: string, vout: number): Promise<string | null> {
-    const mempool = await this.getRawMempool();
-    for (const candidate of mempool) {
-      const tx = await this.getRawTransaction(candidate);
-      if (!tx) continue;
-      if (tx.vin.some((input) => input.txid === txid && input.vout === vout)) return candidate;
+    const result = await this.rpc<TxSpendingPrevout[]>('gettxspendingprevout', [[{ txid, vout }]]);
+    const checked = result[0];
+    if (!checked || checked.txid !== txid || checked.vout !== vout) {
+      reject(RejectionCode.NODE_UNAVAILABLE, 'Bitcoin Core returned a mismatched gettxspendingprevout result', {
+        requested: { txid, vout },
+        received: checked ?? null,
+      });
     }
-    return null;
+    return checked.spendingtxid ?? null;
   }
 
   /** Confirmations for a transaction, or 0 if unconfirmed, or null if unknown to this node. */

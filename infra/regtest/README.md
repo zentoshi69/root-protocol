@@ -1,7 +1,11 @@
 # Bitcoin regtest harness
 
-End-to-end testing of the full protocol against a real `bitcoind` and a real `ord` index, with no
-real value anywhere in the loop.
+> **Status: specification only — the executable `@hoodpups/regtest-harness` package is not yet
+> implemented.** The nightly workflow fails explicitly until that package exists. This is a hard
+> public-launch gate, not a passing test.
+
+This document specifies end-to-end testing of the full protocol against a real `bitcoind` and a
+real `ord` index, with no real value anywhere in the loop.
 
 ## Why a real ord index rather than a mock
 
@@ -10,14 +14,16 @@ Bitcoin and the EVM: txid byte order, satpoint resolution, `scriptPubKey` extrac
 binding to the right script. A mocked `ord` reproduces the *assumptions* of whoever wrote the mock,
 which is exactly the thing under test.
 
-So the harness inscribes for real, moves inscriptions for real, and makes the verifier resolve them
-through a real index.
+The completed harness must inscribe for real, move inscriptions for real, and make the verifier
+resolve them through a real index.
 
 ## Prerequisites
 
-Docker with Compose v2, and Foundry on the host.
+Docker with Compose v2, and Foundry on the host. The published ord Linux release is x86_64-only;
+Apple Silicon and other ARM hosts therefore need Docker's `linux/amd64` emulation for this test
+stack. The Compose file declares that platform explicitly.
 
-## Running
+## Running after the harness is implemented
 
 ```bash
 docker compose -f infra/regtest/docker-compose.yml up -d --wait

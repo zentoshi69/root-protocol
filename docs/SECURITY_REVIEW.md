@@ -3,7 +3,8 @@
 > This document is the pre-audit snapshot from commit `8a52832`. It is retained as review history;
 > its test counts and finding set are not the current release record. The later external
 > whole-protocol findings and their source/test mapping are tracked in
-> [`AUDIT_REMEDIATION.md`](./AUDIT_REMEDIATION.md).
+> [`AUDIT_REMEDIATION.md`](./AUDIT_REMEDIATION.md). The current release verdict, residual risks and
+> reproducible evidence are in [`SECURITY_READINESS_2026-08-17.md`](./SECURITY_READINESS_2026-08-17.md).
 
 **Scope:** the ten Robinhood Chain contracts, the deployment path, the canonical message format, the
 protocol SDK, and the four off-chain services, at commit `8a52832`.
@@ -156,22 +157,24 @@ its Merkle root reproduced by at least two implementations before mainnet.
 3. Bitcoin reorg deeper than the configured confirmation policy.
 4. BIP-322 library defects for script types outside the tested set.
 5. Operator independence is a social and operational property that code cannot enforce.
-6. Bitcoin regtest and Robinhood testnet end-to-end flows are **authored but not executed** in this
-   environment — no Docker daemon, no RPC endpoint, no funded keys. Both are launch gates.
+6. The Bitcoin regtest end-to-end flow is specified but its executable harness is **not yet
+   implemented**. The Robinhood testnet flow has not been executed. Both are launch gates; the
+   nightly workflow now fails closed when the regtest package is absent instead of implying a pass.
 
 ## Recommendation
 
 **NO-GO for mainnet**, unconditionally, and not because of anything found here.
 
-The blocking items are structural and known: no external audit, no independently reproduced
-manifest, no five live independent operators, no multisig or timelock deployed, and two end-to-end
-flows that this environment could not run. Every one of those is already a launch gate in
+The blocking items are structural and known: no independent external re-review, no independently
+reproduced manifest, no five live independent operators, no multisig or timelock deployed, a
+missing executable Bitcoin regtest harness, and no Robinhood testnet burn-in. Every one of those is
+a launch gate in
 [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 **GO for testnet deployment and burn-in**, once an RPC endpoint and funded test keys exist.
 
-The most valuable next step is not more contract review. It is executing the two E2E flows that
-were authored but never run — because the two defects this review found were both invisible to 823
+The most valuable next step is implementing and executing the Bitcoin regtest harness, then running
+the Robinhood testnet flow — because the two defects this review found were both invisible to 823
 passing unit tests and both surfaced the moment components were exercised together. That pattern is
 unlikely to have exhausted itself at the Solidity boundary; the Bitcoin seam is where it will show
 up next.

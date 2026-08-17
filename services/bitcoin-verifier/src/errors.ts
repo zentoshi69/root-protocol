@@ -55,8 +55,10 @@ export const RejectionCode = {
 
   // Infrastructure — honest "I don't know" answers
   NODE_UNAVAILABLE: 'NODE_UNAVAILABLE',
+  BITCOIN_NETWORK_MISMATCH: 'BITCOIN_NETWORK_MISMATCH',
   ORD_UNAVAILABLE: 'ORD_UNAVAILABLE',
   ORD_INDEX_LAGGING: 'ORD_INDEX_LAGGING',
+  ORD_INDEX_INCONSISTENT: 'ORD_INDEX_INCONSISTENT',
   CHAIN_RPC_UNAVAILABLE: 'CHAIN_RPC_UNAVAILABLE',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
@@ -72,8 +74,10 @@ export type RejectionCodeValue = (typeof RejectionCode)[keyof typeof RejectionCo
  */
 export const INFRASTRUCTURE_CODES: readonly RejectionCodeValue[] = [
   RejectionCode.NODE_UNAVAILABLE,
+  RejectionCode.BITCOIN_NETWORK_MISMATCH,
   RejectionCode.ORD_UNAVAILABLE,
   RejectionCode.ORD_INDEX_LAGGING,
+  RejectionCode.ORD_INDEX_INCONSISTENT,
   RejectionCode.CHAIN_RPC_UNAVAILABLE,
   RejectionCode.INTERNAL_ERROR,
 ];

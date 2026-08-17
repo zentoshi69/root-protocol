@@ -13,8 +13,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "start": "tsx src/server.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@hoodpups/bitcoin-verifier": "workspace:*",
