@@ -21,12 +21,12 @@ const ORIGIN = 'https://deriv.wtf';
 
 const pages = [
   {
-    source: 'Landing.dc.html',
+    source: 'Protocol.dc.html',
     route: '/',
     output: 'index.html',
-    title: 'Derivatives approved by OG holders - DERIV.WTF',
+    title: 'Whitepaper - DERIV.WTF',
     description:
-      'DERIV.WTF lets OG collection holders approve derivative mints one matched ID and one signature at a time. Explore the pre-audit Root Protocol demonstration.',
+      'Read the DERIV.WTF whitepaper: trust model, verifier assumptions, settlement states, and pre-audit limitations.',
   },
   {
     source: 'Root Space.dc.html',
@@ -56,9 +56,9 @@ const pages = [
     source: 'Protocol.dc.html',
     route: '/protocol/',
     output: 'protocol/index.html',
-    title: 'Protocol Transparency — DERIV.WTF',
+    title: 'Whitepaper - DERIV.WTF',
     description:
-      'Read the Root Protocol trust model, verifier assumptions, settlement states, and pre-audit limitations.',
+      'Read the DERIV.WTF whitepaper: trust model, verifier assumptions, settlement states, and pre-audit limitations.',
   },
   {
     source: 'Mobile.dc.html',

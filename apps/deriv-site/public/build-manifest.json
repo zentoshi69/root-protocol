@@ -1,35 +1,35 @@
 {
-  "buildId": "20260816T221746Z",
+  "buildId": "20260817T042928Z",
   "pages": {
     "/": {
       "file": "index.html",
-      "bytes": 619384,
-      "sha256": "f6bc2567c9e438225a6994c4a8e0e53e63a3c93ed857a6266a97b6a64fc501ab"
+      "bytes": 286966,
+      "sha256": "60ee5290afdda4546b2c82b3ce10b89a76e5882c7f8736c7817b247fb698447a"
     },
     "/root-space/": {
       "file": "root-space/index.html",
       "bytes": 437703,
-      "sha256": "fa25ae96e6edc4429af4be0d4529e43f162310c5920ad0b592f7b84b600c9133"
+      "sha256": "3a4f10251ad168bac8406992d7176a013c0a7b9d9af498b637b0f627ebe0c940"
     },
     "/mint/": {
       "file": "mint/index.html",
       "bytes": 298409,
-      "sha256": "0871aba089e9ce1c3deda856f7513db298d95aa5941a4b262f2e8121cff4c6a3"
+      "sha256": "43821fd6557a56587f61a7e9f88ccab41d94e9028a6650f88c447564836dfb19"
     },
     "/holders/": {
       "file": "holders/index.html",
       "bytes": 302547,
-      "sha256": "c32a4bded3ed495bedd405574201333914aceaa241a40cc2067df4be4ae95177"
+      "sha256": "f1abf932680728c28a3854d0128d46acf8d3b5e1693f7cd5ec8095ec037efb34"
     },
     "/protocol/": {
       "file": "protocol/index.html",
-      "bytes": 287016,
-      "sha256": "e7b14cb8611fc37487dc7154c8097fde26d029fc481eff89a29bad460fb9bf01"
+      "bytes": 287002,
+      "sha256": "1e59dc1ae459876c7bf3a58ea8739ae712badc6afced701481fb014ce477c43f"
     },
     "/mobile/": {
       "file": "mobile/index.html",
       "bytes": 1182178,
-      "sha256": "fae088d91de8a37437d60090e5dc5617ac01fc6ff4904a7fd44440f8616a3425"
+      "sha256": "90f1b72c08b658786d66db189c73b3753e832b87f41e567157a73f8f828d3385"
     }
   }
 }

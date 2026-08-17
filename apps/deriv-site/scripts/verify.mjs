@@ -55,15 +55,13 @@ const mobileTemplate = embeddedTemplate(
 
 if (landingTemplate !== null) {
   const landingChecks = [
-    ['generic derivatives headline', landingTemplate.includes('Derivatives</span> are approved by <span style="color:#DE8C4F">OG holders.</span>')],
-    ['generic hero explanation', landingTemplate.includes('DERIV.WTF is where derivative collections earn approval from the holders of their OG collections.')],
-    ['live mint card remains specific', landingTemplate.includes('LIVE MINT NOW') && landingTemplate.includes('HoodPups</span> <span class="ux-approved-by">')],
-    ['approval relationship card', landingTemplate.includes('class="ux-approval-card"')],
-    ['clear primary action', landingTemplate.includes('EXPLORE THE APPROVAL MAP')],
-    ['accessible approval map', landingTemplate.includes('aria-label="Live one-to-one map of OG holder approvals')],
-    ['no raw dynamic image URL', !landingTemplate.includes('src="{{ hatSrc }}"')],
+    ['whitepaper title', landingTemplate.includes('Whitepaper - DERIV.WTF')],
+    ['whitepaper hero', landingTemplate.includes('The machine, with the covers off.')],
+    ['trust model copy', landingTemplate.includes('An attested settlement system, not a custody system.')],
+    ['verifier quorum copy', landingTemplate.includes('INDEPENDENT VERIFIERS MUST AGREE')],
+    ['old marketing hero removed', !landingTemplate.includes('Derivatives</span> are approved by <span style="color:#DE8C4F">OG holders.</span>')],
+    ['old landing card removed', !landingTemplate.includes('class="ux-approval-card"')],
     ['old founder-first headline removed', !landingTemplate.includes("Founders don't choose the supply")],
-    ['old puppet-first headline removed', !landingTemplate.includes('HoodPups</span> are approved by <span style="color:#DE8C4F">Bitcoin Puppets.</span>')],
   ];
   for (const [label, ok] of landingChecks) if (!ok) failures.push(`index.html: ${label}`);
 }
