@@ -60,6 +60,7 @@ verification, economic review, legal opinion or production-operations certificat
 | R-13 | Medium | An `ord` index height ahead of its own Bitcoin Core node—an impossible/inconsistent state—passed the freshness check because only positive lag was rejected. Runtime-invalid height types could also be coerced. | Added the stable `ORD_INDEX_INCONSISTENT` infrastructure code; malformed, negative or ahead-of-node heights now force abstention. Five regression tests cover valid lag, ahead-of-node, malformed/negative ord heights and an invalid node height. |
 | R-14 | High | The verifier accepted `getblockchaininfo` without proving that Bitcoin Core served the configured network, and the attestor did not bind the signed message's Bitcoin network to its verifier configuration. A mainnet-configured operator could therefore attest state read from a regtest/testnet node if its deployment was misconfigured. | Every ownership, payment and root-spend path now verifies Core's chain identity plus runtime-valid tip fields before trusting state. The attestor independently requires the canonical message network to equal its verifier network. Mismatch and malformed-height regression tests force an infrastructure abstention. |
 | R-15 | Medium | The test-only Compose stack published Bitcoin RPC/ZMQ, ord and Anvil on every host interface despite using deliberately public regtest credentials and deterministic accounts. A machine on an untrusted LAN could expose its local test state to remote manipulation. The fresh ord volume was also mounted at a root-owned path after the container dropped privileges, preventing first-run initialization. | Every published test-stack port is now bound explicitly to `127.0.0.1`; services remain reachable to one another on the private Compose network. The ord image pre-creates `/data` for its unprivileged user, so a fresh named volume remains writable without running ord as root. The localhost deployment record is ignored, while real environment records remain commit-eligible. CI validates the composition and builds/runs the checksum-verified ord image. |
+| R-16 | High | GitHub's newly enabled dependency graph surfaced 139 alerts after the first merge: 95 came from an unused JavaScript development lockfile bundled with the vendored OpenZeppelin Solidity source, while the active workspace still used vulnerable Vite, Vitest and esbuild toolchains. The CI audit excluded development dependencies, so these toolchain advisories could recur without failing the protected check. | Removed the unexecuted vendor npm manifest/lockfile while preserving and documenting the pinned OpenZeppelin 5.1.0 Solidity boundary. Updated Vite to 6.4.3, Vitest to 3.2.6 and `tsx` to 4.23.12 (esbuild 0.25.12/0.28.2). The exact regenerated pnpm lockfile builds and passes all tests. The protected audit now covers the full workspace and fails at moderate severity; a live audit reports zero critical, high or moderate advisories and the one documented low residual. |
 
 The supplied smart-contract audit's six findings and two hardening recommendations remain resolved
 as mapped in [`AUDIT_REMEDIATION.md`](./AUDIT_REMEDIATION.md): Root-wide reservation mutual
@@ -77,12 +78,12 @@ fee conservation.
 | Solidity coverage policy | Aggregate minimum 95/95/85; per-source-file minimum 90/90/70 — **passed** |
 | TypeScript tests | **263 passed** across canonical messages, SDK, verifier, solver, relayer, web and attestor |
 | Type checking | **7 projects passed** |
-| TypeScript production build | **7 projects passed; Vite production bundle built (30 modules)** |
+| TypeScript production build | **7 projects passed; Vite 6.4.3 production bundle built (26 modules)** |
 | Cross-language vectors | **32 passed** |
 | Contract build/size | **passed**; largest runtime `HoodPupOfferEscrow` 16,035 bytes, 8,541 bytes below EIP-170 |
 | Gas snapshot | **848-test snapshot generated and `forge snapshot --check` passed** |
 | Slither 0.11.6 | **54 contracts, 100 detectors, 52 lower-severity results, 0 high, exit 0** |
-| Production dependency threshold | **0 critical, 0 high, 0 moderate; 1 accepted low** |
+| Full workspace dependency audit | **0 critical, 0 high, 0 moderate; 1 accepted low** |
 | Local key-material/mainnet-broadcast scan | **clean** |
 | Post-deploy verifier | **adversarial EOA-controller deployment rejected; contract-controller deployment matched all 35 intended entries with no deployer privilege** |
 | Workflow and Compose syntax | **passed** |

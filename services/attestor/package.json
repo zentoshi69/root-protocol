@@ -22,8 +22,8 @@
     "viem": "2.21.55"
   },
   "devDependencies": {
-    "tsx": "4.19.2",
+    "tsx": "4.23.12",
     "typescript": "5.7.2",
-    "vitest": "2.1.8"
+    "vitest": "3.2.6"
   }
 }
