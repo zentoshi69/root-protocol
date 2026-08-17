@@ -19,7 +19,7 @@
     "@hoodpups/bitcoin-verifier": "workspace:*",
     "@hoodpups/canonical-message": "workspace:*",
     "@hoodpups/protocol-sdk": "workspace:*",
-    "viem": "2.21.55"
+    "viem": "2.55.15"
   },
   "devDependencies": {
     "tsx": "4.23.12",

@@ -17,7 +17,7 @@
     "@hoodpups/protocol-sdk": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "viem": "2.21.55"
+    "viem": "2.55.15"
   },
   "devDependencies": {
     "@testing-library/react": "16.1.0",
