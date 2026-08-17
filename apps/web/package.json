@@ -16,13 +16,13 @@
     "@hoodpups/canonical-message": "workspace:*",
     "@hoodpups/protocol-sdk": "workspace:*",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react-dom": "19.2.8",
     "viem": "2.21.55"
   },
   "devDependencies": {
     "@testing-library/react": "16.1.0",
     "@types/react": "18.3.17",
-    "@types/react-dom": "18.3.5",
+    "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "4.3.4",
     "jsdom": "25.0.1",
     "typescript": "5.7.2",
